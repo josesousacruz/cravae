@@ -2,15 +2,16 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import { usarAutenticacaoStore } from '../stores/autenticacao'
 import AdminPainelView from '../views/AdminPainelView.vue'
-import CadastroView from '../views/CadastroView.vue'
 import CupomView from '../views/CupomView.vue'
-import EntrarView from '../views/EntrarView.vue'
 import InicioView from '../views/InicioView.vue'
 import PainelView from '../views/PainelView.vue'
 import RankingView from '../views/RankingView.vue'
 
 export const roteador = createRouter({
   history: createWebHistory(),
+  scrollBehavior() {
+    return { top: 0 }
+  },
   routes: [
     {
       path: '/',
@@ -24,13 +25,11 @@ export const roteador = createRouter({
     },
     {
       path: '/entrar',
-      name: 'entrar',
-      component: EntrarView,
+      redirect: { name: 'inicio', query: { modal: 'entrar' } },
     },
     {
       path: '/cadastro',
-      name: 'cadastro',
-      component: CadastroView,
+      redirect: { name: 'inicio', query: { modal: 'cadastro' } },
     },
     {
       path: '/painel',
@@ -42,6 +41,12 @@ export const roteador = createRouter({
       path: '/cupons/:id',
       name: 'cupom',
       component: CupomView,
+      meta: { requerAutenticacao: true },
+    },
+    {
+      path: '/checkout',
+      name: 'checkout',
+      component: () => import('../views/CheckoutView.vue'),
       meta: { requerAutenticacao: true },
     },
     {
@@ -71,7 +76,7 @@ function validarRota(
   autenticacao: ReturnType<typeof usarAutenticacaoStore>,
 ) {
   if (requerAutenticacao && !autenticacao.estaAutenticado) {
-    return { name: 'entrar' }
+    return { name: 'inicio', query: { modal: 'entrar' } }
   }
 
   if (requerAdministrador && !autenticacao.eAdministrador) {
