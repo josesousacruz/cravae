@@ -16,6 +16,7 @@ class AutenticacaoController extends Controller
         $usuario = Usuario::query()->create([
             'nome' => $request->string('nome')->toString(),
             'email' => $request->string('email')->toString(),
+            'telefone' => $request->string('telefone')->toString(),
             'password' => $request->string('password')->toString(),
             'perfil' => 'usuario',
         ]);

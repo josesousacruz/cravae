@@ -24,6 +24,7 @@ class TorneioMockadoSeeder extends Seeder
                 'status' => 'publicado',
                 'data_inicio' => now()->addDays(10),
                 'data_fim' => now()->addDays(40),
+                'valor_cupom' => 10.00,
             ],
         );
 

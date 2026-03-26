@@ -41,7 +41,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Backend: migrations (telefone, valor_cupom), ajustes no checkout e testes
+- [x] 02-01-PLAN.md — Backend: migrations (telefone, valor_cupom), ajustes no checkout e testes
 - [ ] 02-02-PLAN.md — Frontend: landpage, modal auth, checkout, header responsivo e infraestrutura UI
 - [ ] 02-03-PLAN.md — Frontend: painel de cupons, view com tabs, ranking e admin polish
 

@@ -16,6 +16,7 @@ class Torneio extends Model
         'status',
         'data_inicio',
         'data_fim',
+        'valor_cupom',
     ];
 
     protected function casts(): array
@@ -23,6 +24,7 @@ class Torneio extends Model
         return [
             'data_inicio' => 'datetime',
             'data_fim' => 'datetime',
+            'valor_cupom' => 'decimal:2',
         ];
     }
 

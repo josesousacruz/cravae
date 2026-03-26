@@ -12,6 +12,7 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
   const token = ref<string | null>(localStorage.getItem('token_acesso'))
   const nome = ref('Visitante')
   const email = ref('')
+  const telefone = ref<string | null>(null)
   const perfil = ref<PerfilUsuario>('visitante')
   const carregando = ref(false)
   const erro = ref<string | null>(null)
@@ -22,6 +23,7 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
   function aplicarUsuario(usuario: UsuarioAutenticado) {
     nome.value = usuario.nome
     email.value = usuario.email
+    telefone.value = usuario.telefone ?? null
     perfil.value = usuario.perfil
   }
 
@@ -59,7 +61,7 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
     }
   }
 
-  async function cadastrar(nomeUsuario: string, emailUsuario: string, senha: string, confirmarSenha: string) {
+  async function cadastrar(nomeUsuario: string, emailUsuario: string, telefoneUsuario: string, senha: string, confirmarSenha: string) {
     carregando.value = true
     erro.value = null
 
@@ -69,6 +71,7 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
         corpo: {
           nome: nomeUsuario,
           email: emailUsuario,
+          telefone: telefoneUsuario,
           password: senha,
           password_confirmation: confirmarSenha,
         },
@@ -117,12 +120,14 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
     perfil.value = 'visitante'
     nome.value = 'Visitante'
     email.value = ''
+    telefone.value = null
   }
 
   return {
     token,
     nome,
     email,
+    telefone,
     perfil,
     estaAutenticado,
     eAdministrador,

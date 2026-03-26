@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Cupom;
 use App\Models\PedidoCheckout;
+use App\Models\Torneio;
 use App\Models\Usuario;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -14,7 +15,7 @@ class ServicoCheckout
     {
         return PedidoCheckout::query()->create([
             'usuario_id' => $usuario->id,
-            'valor' => $valor ?? 10,
+            'valor' => $valor ?? Torneio::where('status', 'publicado')->latest('id')->value('valor_cupom') ?? 10,
             'status' => 'pendente',
             'referencia_checkout' => (string) Str::uuid(),
         ]);

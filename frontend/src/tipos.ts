@@ -4,6 +4,7 @@ export type UsuarioAutenticado = {
   id: number
   nome: string
   email: string
+  telefone: string | null
   perfil: PerfilUsuario
 }
 
@@ -119,6 +120,8 @@ export type Torneio = {
   edicao: string
   status: string
   data_inicio: string | null
+  data_fim: string | null
+  valor_cupom: number
   grupos: Grupo[]
   fases: Fase[]
   jogos: Jogo[]

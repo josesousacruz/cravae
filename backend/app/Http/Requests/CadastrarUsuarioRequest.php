@@ -26,6 +26,7 @@ class CadastrarUsuarioRequest extends FormRequest
         return [
             'nome' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:usuarios,email'],
+            'telefone' => ['required', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Password::min(8)],
         ];
     }
