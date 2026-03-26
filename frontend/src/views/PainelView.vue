@@ -1,77 +1,57 @@
 <template>
-  <div class="space-y-6">
+  <div class="mx-auto max-w-5xl space-y-6">
     <!-- Header do painel -->
-    <section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-dim to-bg-card p-6 sm:p-8">
-      <div class="relative z-10">
-        <span class="inline-block rounded-full bg-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
-          Meus Cupons
-        </span>
-        <h1 class="mt-3 text-2xl font-bold">Ola, {{ autenticacao.nome }}</h1>
-        <p class="mt-1 text-text-secondary">
-          Cada cupom representa um conjunto independente de apostas.
-        </p>
-
-        <button
-          type="button"
-          @click="comprarCupom"
-          :disabled="carregandoCompra"
-          class="mt-5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-bg transition-colors hover:bg-primary-hover disabled:opacity-50"
+    <section class="rounded-2xl bg-gradient-to-r from-primary-dim/30 to-bg-card p-6 sm:p-8">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 class="text-xl font-bold sm:text-2xl">Ola, {{ autenticacao.nome }}</h1>
+          <p class="mt-1 text-sm text-text-secondary">
+            Cada cupom representa um conjunto independente de apostas.
+          </p>
+        </div>
+        <RouterLink
+          to="/checkout"
+          class="inline-block rounded-xl bg-primary px-6 py-2.5 text-center font-semibold text-bg transition hover:bg-primary-hover"
         >
-          {{ carregandoCompra ? 'Processando...' : 'Comprar novo cupom' }}
-        </button>
-
-        <p v-if="mensagem" class="mt-3 text-sm text-primary">{{ mensagem }}</p>
-        <p v-if="erro" class="mt-3 text-sm text-danger">{{ erro }}</p>
+          Comprar novo cupom
+        </RouterLink>
       </div>
     </section>
 
     <!-- Lista de cupons -->
     <section>
-      <h2 class="mb-4 text-lg font-bold">Cupons ativos</h2>
-
-      <p v-if="!cupons.length" class="rounded-2xl border border-border bg-bg-card px-5 py-10 text-center text-text-muted">
-        Voce ainda nao possui cupons. Compre seu primeiro cupom para comecar a apostar.
-      </p>
-
-      <div v-else class="grid gap-4 sm:grid-cols-2">
-        <div
-          v-for="cupom in cupons"
-          :key="cupom.id"
-          class="rounded-2xl border border-border bg-bg-card p-5 transition-colors hover:border-border-light"
-        >
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-primary">Inter World Cup</p>
-              <p class="mt-1 text-lg font-bold">{{ cupom.codigo }}</p>
-            </div>
-            <span
-              class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
-              :class="cupom.status === 'ativo' ? 'bg-primary/20 text-primary' : 'bg-warning/20 text-warning'"
-            >
-              {{ cupom.status }}
-            </span>
-          </div>
-
-          <div class="mt-4 flex items-center gap-4 rounded-lg bg-bg-input px-3.5 py-2.5">
-            <div class="text-center">
-              <p class="text-lg font-bold text-primary">{{ cupom.pontuacao?.pontuacao_total ?? '0' }}</p>
-              <p class="text-[11px] text-text-muted">PONTOS</p>
-            </div>
-            <div class="h-8 w-px bg-border" />
-            <div class="text-center">
-              <p class="text-lg font-bold">{{ cupom.pontuacao?.quantidade_placares_exatos ?? 0 }}</p>
-              <p class="text-[11px] text-text-muted">EXATOS</p>
-            </div>
-          </div>
-
-          <RouterLink
-            :to="`/cupons/${cupom.id}`"
-            class="mt-4 flex w-full items-center justify-center rounded-lg border border-primary bg-primary/10 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-bg"
-          >
-            Fazer Palpites
-          </RouterLink>
-        </div>
+      <!-- Loading -->
+      <div v-if="carregando" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
+
+      <!-- Empty state -->
+      <div
+        v-else-if="!cupons.length"
+        class="rounded-2xl border border-border bg-bg-card px-8 py-16 text-center"
+      >
+        <h2 class="text-xl font-bold">Nenhum cupom ainda</h2>
+        <p class="mx-auto mt-2 max-w-md text-text-secondary">
+          Compre seu primeiro cupom e comece a fazer seus palpites para o bolao.
+        </p>
+        <RouterLink
+          to="/checkout"
+          class="mt-6 inline-block rounded-xl bg-primary px-8 py-3 text-lg font-semibold text-bg transition hover:bg-primary-hover"
+        >
+          Comprar primeiro cupom
+        </RouterLink>
+      </div>
+
+      <!-- Grid de cupons -->
+      <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <CupomCard v-for="cupom in cupons" :key="cupom.id" :cupom="cupom" />
+      </div>
+    </section>
+
+    <!-- Info torneio -->
+    <section class="mt-8">
+      <InfoTorneio />
     </section>
   </div>
 </template>
@@ -81,45 +61,31 @@ import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
-import type { Cupom, PedidoCheckout } from '../tipos'
+import { usarTorneioStore } from '../stores/torneio'
+import type { Cupom } from '../tipos'
+import SkeletonCard from '../components/SkeletonCard.vue'
+import CupomCard from '../components/CupomCard.vue'
+import InfoTorneio from '../components/InfoTorneio.vue'
 
 const autenticacao = usarAutenticacaoStore()
+const torneioStore = usarTorneioStore()
 const cupons = ref<Cupom[]>([])
-const carregandoCompra = ref(false)
-const mensagem = ref('')
-const erro = ref('')
+const carregando = ref(true)
 
 async function carregarCupons() {
-  const resposta = await requisicaoApi<{ cupons: Cupom[] }>('/cupons')
-  cupons.value = resposta.cupons
-}
-
-async function comprarCupom() {
-  carregandoCompra.value = true
-  mensagem.value = ''
-  erro.value = ''
-
+  carregando.value = true
   try {
-    const pedido = await requisicaoApi<{ pedido: PedidoCheckout }>('/pedidos-checkout', {
-      metodo: 'POST',
-      corpo: {},
-    })
-
-    await requisicaoApi(`/pedidos-checkout/${pedido.pedido.id}/simular-pagamento`, {
-      metodo: 'POST',
-      corpo: {},
-    })
-
-    mensagem.value = 'Cupom liberado com sucesso!'
-    await carregarCupons()
-  } catch (error) {
-    erro.value = error instanceof Error ? error.message : 'Nao foi possivel concluir a compra.'
+    const resposta = await requisicaoApi<{ cupons: Cupom[] }>('/cupons')
+    cupons.value = resposta.cupons
+  } catch {
+    // Erro silencioso - cupons ficam vazios
   } finally {
-    carregandoCompra.value = false
+    carregando.value = false
   }
 }
 
 onMounted(() => {
   carregarCupons()
+  torneioStore.carregar()
 })
 </script>
