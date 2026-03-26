@@ -1,88 +1,120 @@
 <template>
-  <div class="space-y-6">
-    <section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-dim to-bg-card p-6 sm:p-8">
-      <div class="relative z-10">
-        <span class="inline-block rounded-full bg-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
-          Ranking geral
-        </span>
-        <h1 class="mt-3 text-2xl font-bold">Classificacao por cupom</h1>
-        <p class="mt-1 text-text-secondary">Acompanhe a pontuacao de todos os participantes em tempo real.</p>
+  <div class="mx-auto max-w-5xl space-y-6">
+    <!-- Header -->
+    <div>
+      <h1 class="text-2xl font-bold">Ranking</h1>
+      <p class="mt-1 text-sm text-text-secondary">
+        Classificacao por cupom do torneio ativo.
+      </p>
+    </div>
+
+    <!-- Skeleton loading -->
+    <div v-if="carregando" class="rounded-2xl border border-border bg-bg-card overflow-hidden">
+      <div class="bg-bg-input px-4 py-3">
+        <div class="flex gap-4">
+          <div class="h-3 w-8 animate-pulse rounded bg-border"></div>
+          <div class="h-3 w-20 animate-pulse rounded bg-border"></div>
+          <div class="h-3 w-16 animate-pulse rounded bg-border"></div>
+          <div class="h-3 w-12 animate-pulse rounded bg-border"></div>
+          <div class="h-3 w-12 animate-pulse rounded bg-border"></div>
+        </div>
       </div>
-    </section>
-
-    <section class="rounded-2xl border border-border bg-bg-card">
-      <div v-if="carregando" class="px-5 py-10 text-center text-text-muted">Carregando ranking...</div>
-
-      <div v-else-if="!ranking.length" class="px-5 py-10 text-center text-text-muted">
-        Nenhum cupom pontuado ainda. Faca seus palpites para aparecer no ranking.
+      <div class="divide-y divide-border/50">
+        <div v-for="n in 5" :key="n" class="flex items-center gap-4 px-4 py-3">
+          <div class="h-8 w-8 animate-pulse rounded-full bg-bg-input"></div>
+          <div class="flex-1 space-y-1">
+            <div class="h-4 w-28 animate-pulse rounded bg-bg-input"></div>
+            <div class="h-3 w-20 animate-pulse rounded bg-bg-input"></div>
+          </div>
+          <div class="h-5 w-10 animate-pulse rounded bg-bg-input"></div>
+        </div>
       </div>
+    </div>
 
-      <div v-else class="overflow-x-auto">
+    <!-- Empty state -->
+    <div
+      v-else-if="!ranking.length"
+      class="rounded-2xl border border-border bg-bg-card py-12 text-center"
+    >
+      <p class="text-text-muted">
+        Nenhum resultado disponivel. O ranking sera atualizado conforme os resultados dos jogos forem lancados.
+      </p>
+    </div>
+
+    <!-- Tabela ranking -->
+    <div v-else class="rounded-2xl border border-border bg-bg-card overflow-hidden">
+      <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr class="border-b border-border text-left text-xs uppercase tracking-wider text-text-muted">
-              <th class="px-5 py-3.5">#</th>
-              <th class="px-5 py-3.5">Participante</th>
-              <th class="px-5 py-3.5 text-right">Pontos</th>
-              <th class="hidden px-5 py-3.5 text-right sm:table-cell">Exatos</th>
-              <th class="hidden px-5 py-3.5 text-right sm:table-cell">Classificados</th>
-              <th class="hidden px-5 py-3.5 text-right md:table-cell">Finais</th>
+            <tr class="bg-bg-input text-xs uppercase tracking-wider text-text-muted">
+              <th class="px-4 py-3 text-left">#</th>
+              <th class="px-4 py-3 text-left">Cupom</th>
+              <th class="px-4 py-3 text-left">Usuario</th>
+              <th class="px-4 py-3 text-right">Pontos</th>
+              <th class="px-4 py-3 text-right">Exatos</th>
             </tr>
           </thead>
           <tbody>
             <tr
               v-for="(item, i) in ranking"
               :key="item.id"
-              class="border-b border-border/50 transition-colors hover:bg-bg-card-hover"
+              class="border-t border-border/50 transition-colors hover:bg-bg-card-hover"
+              :class="item.cupom.id === cupomDestaque ? 'bg-primary/10 border-l-2 border-l-primary' : ''"
             >
-              <td class="px-5 py-3.5">
+              <td class="px-4 py-3">
                 <span
-                  class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold"
+                  class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold"
                   :class="{
-                    'bg-gold/20 text-gold': i === 0,
-                    'bg-silver/20 text-silver': i === 1,
-                    'bg-bronze/20 text-bronze': i === 2,
-                    'bg-bg-input text-text-muted': i > 2,
+                    'text-gold': i === 0,
+                    'text-silver': i === 1,
+                    'text-bronze': i === 2,
+                    'text-text-muted': i > 2,
                   }"
                 >
                   {{ i + 1 }}
                 </span>
               </td>
-              <td class="px-5 py-3.5">
-                <p class="font-medium">{{ item.cupom.usuario.nome }}</p>
-                <p class="text-xs text-text-muted">{{ item.cupom.codigo }}</p>
-              </td>
-              <td class="px-5 py-3.5 text-right">
-                <span class="text-lg font-bold text-primary">{{ item.pontuacao_total }}</span>
-              </td>
-              <td class="hidden px-5 py-3.5 text-right sm:table-cell">{{ item.quantidade_placares_exatos }}</td>
-              <td class="hidden px-5 py-3.5 text-right sm:table-cell">{{ item.quantidade_classificados_corretos }}</td>
-              <td class="hidden px-5 py-3.5 text-right md:table-cell">{{ item.quantidade_palpites_finais_corretos }}</td>
+              <td class="px-4 py-3 text-sm font-mono text-text-muted">{{ item.cupom.codigo }}</td>
+              <td class="px-4 py-3 text-sm font-medium">{{ item.cupom.usuario.nome }}</td>
+              <td class="px-4 py-3 text-right font-bold text-primary">{{ item.pontuacao_total }}</td>
+              <td class="px-4 py-3 text-right text-sm">{{ item.quantidade_placares_exatos }}</td>
             </tr>
           </tbody>
         </table>
       </div>
-    </section>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
-import type { RankingItem, Torneio } from '../tipos'
+import { usarTorneioStore } from '../stores/torneio'
+import type { RankingItem } from '../tipos'
+
+const rota = useRoute()
+const torneioStore = usarTorneioStore()
 
 const ranking = ref<RankingItem[]>([])
 const carregando = ref(true)
 
+const cupomDestaque = computed(() => {
+  const id = rota.query.cupom
+  return id ? Number(id) : null
+})
+
 onMounted(async () => {
   try {
-    const respostaTorneio = await requisicaoApi<{ torneio: Torneio }>('/torneio')
-    const respostaRanking = await requisicaoApi<{ ranking: RankingItem[] }>(
-      `/torneios/${respostaTorneio.torneio.id}/ranking`,
-    )
-    ranking.value = respostaRanking.ranking
+    await torneioStore.carregar()
+    if (torneioStore.torneio) {
+      const resposta = await requisicaoApi<{ ranking: RankingItem[] }>(
+        `/torneios/${torneioStore.torneio.id}/ranking`,
+      )
+      ranking.value = resposta.ranking
+    }
   } catch {
-    // torneio nao encontrado
+    // Erro silencioso
   } finally {
     carregando.value = false
   }

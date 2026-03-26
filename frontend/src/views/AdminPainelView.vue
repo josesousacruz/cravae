@@ -3,37 +3,37 @@
     <span class="text-text-muted">Carregando...</span>
   </div>
 
-  <div v-else class="space-y-6">
+  <div v-else class="mx-auto max-w-5xl space-y-6">
     <!-- Header -->
-    <section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-dim to-bg-card p-6 sm:p-8">
-      <div class="relative z-10">
-        <span class="inline-block rounded-full bg-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
-          Administracao
-        </span>
-        <h1 class="mt-3 text-2xl font-bold">{{ torneio.nome }} {{ torneio.edicao }}</h1>
-        <p class="mt-1 text-text-secondary">Gerencie resultados, regras e dados do torneio.</p>
-      </div>
+    <section class="rounded-2xl border border-border bg-bg-card p-6 sm:p-8">
+      <p class="text-xs uppercase tracking-wider text-text-muted mb-2">Administracao</p>
+      <h1 class="text-lg font-bold">{{ torneio.nome }} {{ torneio.edicao }}</h1>
+      <p class="mt-1 text-sm text-text-secondary">Gerencie resultados, regras e dados do torneio.</p>
       <p v-if="mensagem" class="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">{{ mensagem }}</p>
       <p v-if="erro" class="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{{ erro }}</p>
     </section>
 
     <!-- Tabs -->
-    <div class="flex gap-1 overflow-x-auto rounded-xl bg-bg-card p-1">
+    <div class="flex overflow-x-auto border-b border-border">
       <button
         v-for="tab in tabs"
         :key="tab.id"
         @click="tabAtiva = tab.id"
-        class="shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-        :class="tabAtiva === tab.id ? 'bg-primary text-bg' : 'text-text-secondary hover:text-text'"
+        class="whitespace-nowrap px-4 py-3 text-sm transition cursor-pointer"
+        :class="
+          tabAtiva === tab.id
+            ? 'border-b-2 border-primary text-primary font-medium'
+            : 'text-text-muted hover:text-text-secondary'
+        "
       >
         {{ tab.nome }}
       </button>
     </div>
 
     <!-- Regras de pontuacao -->
-    <section v-if="tabAtiva === 'regras'" class="rounded-2xl border border-border bg-bg-card p-5">
-      <h2 class="mb-4 text-lg font-bold">Regras de Pontuacao</h2>
-      <div class="space-y-2">
+    <section v-if="tabAtiva === 'regras'" class="rounded-2xl border border-border bg-bg-card p-6">
+      <h2 class="text-lg font-bold mb-4">Regras de Pontuacao</h2>
+      <div class="space-y-3">
         <div
           v-for="regra in torneio.regras_pontuacao"
           :key="regra.id"
@@ -47,7 +47,7 @@
           <button
             type="button"
             @click="salvarRegra(regra.id)"
-            class="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-bg transition-colors hover:bg-primary-hover"
+            class="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-bg transition hover:bg-primary-hover"
           >
             Salvar
           </button>
@@ -56,8 +56,8 @@
     </section>
 
     <!-- Resultados dos jogos -->
-    <section v-if="tabAtiva === 'jogos'" class="rounded-2xl border border-border bg-bg-card p-5">
-      <h2 class="mb-4 text-lg font-bold">Resultados dos Jogos</h2>
+    <section v-if="tabAtiva === 'jogos'" class="rounded-2xl border border-border bg-bg-card p-6">
+      <h2 class="text-lg font-bold mb-4">Resultados dos Jogos</h2>
       <div class="space-y-4">
         <div v-for="jogo in torneio.jogos" :key="jogo.id" class="rounded-xl bg-bg-input p-4">
           <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">
@@ -86,7 +86,7 @@
             <button
               type="button"
               @click="salvarResultadoJogo(jogo.id)"
-              class="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-bg transition-colors hover:bg-primary-hover"
+              class="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-bg transition hover:bg-primary-hover"
             >
               Salvar jogo
             </button>
@@ -96,8 +96,8 @@
     </section>
 
     <!-- Resultado final do torneio -->
-    <section v-if="tabAtiva === 'torneio'" class="rounded-2xl border border-border bg-bg-card p-5">
-      <h2 class="mb-4 text-lg font-bold">Resultado Final do Torneio</h2>
+    <section v-if="tabAtiva === 'torneio'" class="rounded-2xl border border-border bg-bg-card p-6">
+      <h2 class="text-lg font-bold mb-4">Resultado Final do Torneio</h2>
       <div class="space-y-3">
         <label class="block">
           <span class="mb-1.5 block text-xs text-text-muted">Campeao</span>
@@ -131,7 +131,7 @@
       <button
         type="button"
         @click="salvarResultadoTorneioFn"
-        class="mt-5 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-bg transition-colors hover:bg-primary-hover"
+        class="mt-5 w-full rounded-lg bg-primary py-2.5 text-sm font-medium text-bg transition hover:bg-primary-hover"
       >
         Salvar resultado final
       </button>
