@@ -82,14 +82,14 @@ async function confirmarPagamento() {
   processando.value = true
   try {
     // 1. Create checkout order
-    const pedido = await requisicaoApi<{ pedido_checkout: PedidoCheckout }>('/pedidos-checkout', {
+    const pedido = await requisicaoApi<{ pedido: PedidoCheckout }>('/pedidos-checkout', {
       metodo: 'POST',
       corpo: {},
     })
 
     // 2. Simulate payment
     await requisicaoApi<{ cupom: Cupom }>(
-      `/pedidos-checkout/${pedido.pedido_checkout.id}/simular-pagamento`,
+      `/pedidos-checkout/${pedido.pedido.id}/simular-pagamento`,
       { metodo: 'POST', corpo: {} },
     )
 
