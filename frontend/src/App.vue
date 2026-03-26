@@ -26,8 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { RouterView } from 'vue-router'
+import { onMounted, ref, watch } from 'vue'
+import { RouterView, useRoute, useRouter } from 'vue-router'
 import { usarAutenticacaoStore } from './stores/autenticacao'
 import AppHeader from './components/AppHeader.vue'
 import MobileMenu from './components/MobileMenu.vue'
@@ -35,6 +35,8 @@ import ToastContainer from './components/ToastContainer.vue'
 import ModalAuth from './components/ModalAuth.vue'
 
 const autenticacao = usarAutenticacaoStore()
+const route = useRoute()
+const router = useRouter()
 
 const menuAberto = ref(false)
 const modalAuthAberto = ref(false)
@@ -44,6 +46,19 @@ function abrirModalAuth(tab: 'entrar' | 'cadastro') {
   modalAuthTab.value = tab
   modalAuthAberto.value = true
 }
+
+// Watch for ?modal=entrar|cadastro query param (from /entrar and /cadastro redirects)
+watch(
+  () => route.query.modal,
+  (modal) => {
+    if (modal === 'entrar' || modal === 'cadastro') {
+      abrirModalAuth(modal)
+      // Clean query param without triggering navigation
+      router.replace({ ...route, query: { ...route.query, modal: undefined } })
+    }
+  },
+  { immediate: true },
+)
 
 onMounted(() => {
   autenticacao.carregarUsuario()
