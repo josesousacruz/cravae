@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Jogo extends Model
@@ -62,5 +63,10 @@ class Jogo extends Model
     public function resultado(): HasOne
     {
         return $this->hasOne(ResultadoJogo::class, 'jogo_id');
+    }
+
+    public function apostas(): HasMany
+    {
+        return $this->hasMany(Aposta::class, 'jogo_id');
     }
 }

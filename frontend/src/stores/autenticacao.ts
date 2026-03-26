@@ -1,30 +1,135 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import { requisicaoApi } from '../services/api'
+import type { PerfilUsuario, UsuarioAutenticado } from '../tipos'
 
-type PerfilUsuario = 'visitante' | 'usuario' | 'administrador'
+type RespostaAutenticacao = {
+  token: string
+  usuario: UsuarioAutenticado
+}
 
 export const usarAutenticacaoStore = defineStore('autenticacao', () => {
-  const nome = ref('Administrador Seed')
-  const perfil = ref<PerfilUsuario>('administrador')
-  const estaAutenticado = ref(false)
+  const token = ref<string | null>(localStorage.getItem('token_acesso'))
+  const nome = ref('Visitante')
+  const email = ref('')
+  const perfil = ref<PerfilUsuario>('visitante')
+  const carregando = ref(false)
+  const erro = ref<string | null>(null)
 
+  const estaAutenticado = computed(() => Boolean(token.value))
   const eAdministrador = computed(() => perfil.value === 'administrador')
 
-  function entrar() {
-    estaAutenticado.value = true
+  function aplicarUsuario(usuario: UsuarioAutenticado) {
+    nome.value = usuario.nome
+    email.value = usuario.email
+    perfil.value = usuario.perfil
   }
 
-  function sair() {
-    estaAutenticado.value = false
+  function definirToken(novoToken: string | null) {
+    token.value = novoToken
+
+    if (novoToken) {
+      localStorage.setItem('token_acesso', novoToken)
+      return
+    }
+
+    localStorage.removeItem('token_acesso')
+  }
+
+  async function entrar(emailUsuario: string, senha: string) {
+    carregando.value = true
+    erro.value = null
+
+    try {
+      const resposta = await requisicaoApi<RespostaAutenticacao>('/entrar', {
+        metodo: 'POST',
+        corpo: {
+          email: emailUsuario,
+          password: senha,
+        },
+      })
+
+      definirToken(resposta.token)
+      aplicarUsuario(resposta.usuario)
+    } catch (error) {
+      erro.value = error instanceof Error ? error.message : 'Nao foi possivel entrar.'
+      throw error
+    } finally {
+      carregando.value = false
+    }
+  }
+
+  async function cadastrar(nomeUsuario: string, emailUsuario: string, senha: string, confirmarSenha: string) {
+    carregando.value = true
+    erro.value = null
+
+    try {
+      const resposta = await requisicaoApi<RespostaAutenticacao>('/cadastro', {
+        metodo: 'POST',
+        corpo: {
+          nome: nomeUsuario,
+          email: emailUsuario,
+          password: senha,
+          password_confirmation: confirmarSenha,
+        },
+      })
+
+      definirToken(resposta.token)
+      aplicarUsuario(resposta.usuario)
+    } catch (error) {
+      erro.value = error instanceof Error ? error.message : 'Nao foi possivel cadastrar.'
+      throw error
+    } finally {
+      carregando.value = false
+    }
+  }
+
+  async function carregarUsuario() {
+    if (!token.value) {
+      return
+    }
+
+    try {
+      const resposta = await requisicaoApi<{ usuario: UsuarioAutenticado }>('/usuario', {
+        token: token.value,
+      })
+
+      aplicarUsuario(resposta.usuario)
+    } catch {
+      await sair()
+    }
+  }
+
+  async function sair() {
+    if (token.value) {
+      try {
+        await requisicaoApi('/sair', {
+          metodo: 'POST',
+          corpo: {},
+          token: token.value,
+        })
+      } catch {
+        // noop
+      }
+    }
+
+    definirToken(null)
     perfil.value = 'visitante'
     nome.value = 'Visitante'
+    email.value = ''
   }
 
   return {
+    token,
     nome,
+    email,
     perfil,
     estaAutenticado,
     eAdministrador,
+    carregando,
+    erro,
+    carregarUsuario,
+    cadastrar,
     entrar,
     sair,
   }

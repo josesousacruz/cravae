@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Torneio extends Model
 {
@@ -48,5 +49,10 @@ class Torneio extends Model
     public function regrasPontuacao(): HasMany
     {
         return $this->hasMany(RegraPontuacao::class, 'torneio_id');
+    }
+
+    public function resultadoTorneio(): HasOne
+    {
+        return $this->hasOne(ResultadoTorneio::class, 'torneio_id');
     }
 }

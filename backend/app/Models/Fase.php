@@ -40,4 +40,9 @@ class Fase extends Model
     {
         return $this->hasMany(Jogo::class, 'fase_id');
     }
+
+    public function regrasPontuacao(): HasMany
+    {
+        return $this->hasMany(RegraPontuacao::class, 'fase_id');
+    }
 }

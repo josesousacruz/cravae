@@ -40,4 +40,14 @@ class Selecao extends Model
     {
         return $this->hasMany(Jogador::class, 'selecao_id');
     }
+
+    public function jogosMandante(): HasMany
+    {
+        return $this->hasMany(Jogo::class, 'selecao_mandante_id');
+    }
+
+    public function jogosVisitante(): HasMany
+    {
+        return $this->hasMany(Jogo::class, 'selecao_visitante_id');
+    }
 }

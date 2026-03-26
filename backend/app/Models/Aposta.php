@@ -35,6 +35,41 @@ class Aposta extends Model
         return $this->belongsTo(Cupom::class, 'cupom_id');
     }
 
+    public function torneio(): BelongsTo
+    {
+        return $this->belongsTo(Torneio::class, 'torneio_id');
+    }
+
+    public function fase(): BelongsTo
+    {
+        return $this->belongsTo(Fase::class, 'fase_id');
+    }
+
+    public function rodada(): BelongsTo
+    {
+        return $this->belongsTo(Rodada::class, 'rodada_id');
+    }
+
+    public function grupo(): BelongsTo
+    {
+        return $this->belongsTo(Grupo::class, 'grupo_id');
+    }
+
+    public function jogo(): BelongsTo
+    {
+        return $this->belongsTo(Jogo::class, 'jogo_id');
+    }
+
+    public function selecao(): BelongsTo
+    {
+        return $this->belongsTo(Selecao::class, 'selecao_id');
+    }
+
+    public function jogador(): BelongsTo
+    {
+        return $this->belongsTo(Jogador::class, 'jogador_id');
+    }
+
     public function logs(): HasMany
     {
         return $this->hasMany(LogAposta::class, 'aposta_id');

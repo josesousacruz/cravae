@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -29,5 +30,15 @@ class Grupo extends Model
     public function jogos(): HasMany
     {
         return $this->hasMany(Jogo::class, 'grupo_id');
+    }
+
+    public function apostas(): HasMany
+    {
+        return $this->hasMany(Aposta::class, 'grupo_id');
+    }
+
+    public function selecoesOrdenadas(): Builder
+    {
+        return $this->selecoes()->getQuery()->orderBy('nome');
     }
 }
