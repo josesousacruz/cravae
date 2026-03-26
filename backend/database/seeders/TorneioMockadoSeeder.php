@@ -22,186 +22,303 @@ class TorneioMockadoSeeder extends Seeder
             ['nome' => 'Inter World Cup', 'edicao' => '2026'],
             [
                 'status' => 'publicado',
-                'data_inicio' => now()->addDays(10),
-                'data_fim' => now()->addDays(40),
+                'data_inicio' => '2026-06-11',
+                'data_fim' => '2026-07-19',
                 'valor_cupom' => 10.00,
             ],
         );
 
+        // ── Fases ──────────────────────────────────────────────
+
         $faseGrupos = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'fase_de_grupos'],
-            [
-                'nome' => 'Fase de Grupos',
-                'ordem' => 1,
-                'tipo' => 'grupos',
-                'data_fechamento' => now()->addDays(10)->subHour(),
-            ],
+            ['nome' => 'Fase de Grupos', 'ordem' => 1, 'tipo' => 'grupos', 'data_fechamento' => '2026-06-11 12:00:00'],
+        );
+
+        $oitavas = Fase::query()->updateOrCreate(
+            ['torneio_id' => $torneio->id, 'slug' => 'oitavas_de_final'],
+            ['nome' => 'Oitavas de Final', 'ordem' => 2, 'tipo' => 'eliminatoria', 'data_fechamento' => '2026-06-28 12:00:00'],
+        );
+
+        $quartas = Fase::query()->updateOrCreate(
+            ['torneio_id' => $torneio->id, 'slug' => 'quartas_de_final'],
+            ['nome' => 'Quartas de Final', 'ordem' => 3, 'tipo' => 'eliminatoria', 'data_fechamento' => '2026-07-04 12:00:00'],
         );
 
         $semifinais = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'semifinais'],
-            [
-                'nome' => 'Semifinais',
-                'ordem' => 2,
-                'tipo' => 'eliminatoria',
-                'data_fechamento' => now()->addDays(20)->subHour(),
-            ],
+            ['nome' => 'Semifinais', 'ordem' => 4, 'tipo' => 'eliminatoria', 'data_fechamento' => '2026-07-08 12:00:00'],
         );
 
         $terceiroLugar = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'terceiro_lugar'],
-            [
-                'nome' => 'Terceiro Lugar',
-                'ordem' => 3,
-                'tipo' => 'final',
-                'data_fechamento' => now()->addDays(25)->subHour(),
-            ],
+            ['nome' => 'Terceiro Lugar', 'ordem' => 5, 'tipo' => 'final', 'data_fechamento' => '2026-07-18 12:00:00'],
         );
 
         $final = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'final'],
-            [
-                'nome' => 'Final',
-                'ordem' => 4,
-                'tipo' => 'final',
-                'data_fechamento' => now()->addDays(26)->subHour(),
-            ],
+            ['nome' => 'Final', 'ordem' => 6, 'tipo' => 'final', 'data_fechamento' => '2026-07-19 12:00:00'],
         );
+
+        // ── Rodadas ────────────────────────────────────────────
 
         $rodada1 = Rodada::query()->updateOrCreate(
             ['fase_id' => $faseGrupos->id, 'ordem' => 1],
-            [
-                'nome' => 'Rodada 1',
-                'data_fechamento' => now()->addDays(10)->subHour(),
+            ['nome' => 'Rodada 1', 'data_fechamento' => '2026-06-11 12:00:00'],
+        );
+
+        $rodada2 = Rodada::query()->updateOrCreate(
+            ['fase_id' => $faseGrupos->id, 'ordem' => 2],
+            ['nome' => 'Rodada 2', 'data_fechamento' => '2026-06-18 12:00:00'],
+        );
+
+        $rodada3 = Rodada::query()->updateOrCreate(
+            ['fase_id' => $faseGrupos->id, 'ordem' => 3],
+            ['nome' => 'Rodada 3', 'data_fechamento' => '2026-06-24 12:00:00'],
+        );
+
+        // ── Grupos ─────────────────────────────────────────────
+
+        $gruposData = [
+            'A' => [
+                ['nome' => 'Mexico', 'sigla' => 'MEX'],
+                ['nome' => 'Africa do Sul', 'sigla' => 'RSA'],
+                ['nome' => 'Coreia do Sul', 'sigla' => 'KOR'],
+                ['nome' => 'A Definir (Repescagem UEFA D)', 'sigla' => 'UD4'],
             ],
-        );
+            'B' => [
+                ['nome' => 'Canada', 'sigla' => 'CAN'],
+                ['nome' => 'A Definir (Repescagem UEFA A)', 'sigla' => 'UA1'],
+                ['nome' => 'Qatar', 'sigla' => 'QAT'],
+                ['nome' => 'Suica', 'sigla' => 'SUI'],
+            ],
+            'C' => [
+                ['nome' => 'Brasil', 'sigla' => 'BRA'],
+                ['nome' => 'Marrocos', 'sigla' => 'MAR'],
+                ['nome' => 'Haiti', 'sigla' => 'HAI'],
+                ['nome' => 'Escocia', 'sigla' => 'SCO'],
+            ],
+            'D' => [
+                ['nome' => 'Estados Unidos', 'sigla' => 'USA'],
+                ['nome' => 'Paraguai', 'sigla' => 'PAR'],
+                ['nome' => 'Australia', 'sigla' => 'AUS'],
+                ['nome' => 'A Definir (Repescagem UEFA C)', 'sigla' => 'UC3'],
+            ],
+            'E' => [
+                ['nome' => 'Alemanha', 'sigla' => 'GER'],
+                ['nome' => 'Curacao', 'sigla' => 'CUW'],
+                ['nome' => 'Costa do Marfim', 'sigla' => 'CIV'],
+                ['nome' => 'Equador', 'sigla' => 'ECU'],
+            ],
+            'F' => [
+                ['nome' => 'Holanda', 'sigla' => 'NED'],
+                ['nome' => 'Japao', 'sigla' => 'JPN'],
+                ['nome' => 'A Definir (Repescagem UEFA B)', 'sigla' => 'UB2'],
+                ['nome' => 'Tunisia', 'sigla' => 'TUN'],
+            ],
+            'G' => [
+                ['nome' => 'Belgica', 'sigla' => 'BEL'],
+                ['nome' => 'Egito', 'sigla' => 'EGY'],
+                ['nome' => 'Ira', 'sigla' => 'IRN'],
+                ['nome' => 'Nova Zelandia', 'sigla' => 'NZL'],
+            ],
+            'H' => [
+                ['nome' => 'Espanha', 'sigla' => 'ESP'],
+                ['nome' => 'Cabo Verde', 'sigla' => 'CPV'],
+                ['nome' => 'Arabia Saudita', 'sigla' => 'KSA'],
+                ['nome' => 'Uruguai', 'sigla' => 'URU'],
+            ],
+            'I' => [
+                ['nome' => 'Franca', 'sigla' => 'FRA'],
+                ['nome' => 'Senegal', 'sigla' => 'SEN'],
+                ['nome' => 'A Definir (Intercontinental 2)', 'sigla' => 'IC2'],
+                ['nome' => 'Noruega', 'sigla' => 'NOR'],
+            ],
+            'J' => [
+                ['nome' => 'Argentina', 'sigla' => 'ARG'],
+                ['nome' => 'Argelia', 'sigla' => 'ALG'],
+                ['nome' => 'Austria', 'sigla' => 'AUT'],
+                ['nome' => 'Jordania', 'sigla' => 'JOR'],
+            ],
+            'K' => [
+                ['nome' => 'Portugal', 'sigla' => 'POR'],
+                ['nome' => 'A Definir (Intercontinental 1)', 'sigla' => 'IC1'],
+                ['nome' => 'Uzbequistao', 'sigla' => 'UZB'],
+                ['nome' => 'Colombia', 'sigla' => 'COL'],
+            ],
+            'L' => [
+                ['nome' => 'Inglaterra', 'sigla' => 'ENG'],
+                ['nome' => 'Croacia', 'sigla' => 'CRO'],
+                ['nome' => 'Gana', 'sigla' => 'GHA'],
+                ['nome' => 'Panama', 'sigla' => 'PAN'],
+            ],
+        ];
 
-        $grupoA = Grupo::query()->updateOrCreate(
-            ['torneio_id' => $torneio->id, 'nome' => 'Grupo A'],
-            ['ordem' => 1],
-        );
+        $grupos = [];
+        $selecoes = [];
+        $ordem = 1;
 
-        $grupoB = Grupo::query()->updateOrCreate(
-            ['torneio_id' => $torneio->id, 'nome' => 'Grupo B'],
-            ['ordem' => 2],
-        );
+        foreach ($gruposData as $letra => $times) {
+            $grupo = Grupo::query()->updateOrCreate(
+                ['torneio_id' => $torneio->id, 'nome' => "Grupo $letra"],
+                ['ordem' => $ordem++],
+            );
+            $grupos[$letra] = $grupo;
 
-        $selecoes = collect([
-            ['grupo' => $grupoA, 'nome' => 'Brasil', 'sigla' => 'BRA'],
-            ['grupo' => $grupoA, 'nome' => 'Japao', 'sigla' => 'JPN'],
-            ['grupo' => $grupoB, 'nome' => 'Franca', 'sigla' => 'FRA'],
-            ['grupo' => $grupoB, 'nome' => 'Mexico', 'sigla' => 'MEX'],
-        ])->map(function (array $dados) use ($torneio) {
-            $selecao = Selecao::query()->updateOrCreate(
-                ['torneio_id' => $torneio->id, 'sigla' => $dados['sigla']],
+            foreach ($times as $time) {
+                $selecao = Selecao::query()->updateOrCreate(
+                    ['torneio_id' => $torneio->id, 'sigla' => $time['sigla']],
+                    [
+                        'grupo_id' => $grupo->id,
+                        'nome' => $time['nome'],
+                        'slug' => Str::slug($time['nome']),
+                        'ativo' => true,
+                    ],
+                );
+
+                Jogador::query()->updateOrCreate(
+                    ['selecao_id' => $selecao->id, 'nome' => 'Camisa 9 '.$time['sigla']],
+                    [
+                        'apelido' => 'Artilheiro '.$time['sigla'],
+                        'posicao' => 'Atacante',
+                        'numero_camisa' => 9,
+                        'ativo' => true,
+                    ],
+                );
+
+                Jogador::query()->updateOrCreate(
+                    ['selecao_id' => $selecao->id, 'nome' => 'Camisa 10 '.$time['sigla']],
+                    [
+                        'apelido' => 'Meia '.$time['sigla'],
+                        'posicao' => 'Meia',
+                        'numero_camisa' => 10,
+                        'ativo' => true,
+                    ],
+                );
+
+                $selecoes[$time['sigla']] = $selecao;
+            }
+        }
+
+        // ── Jogos da Fase de Grupos (72 jogos) ────────────────
+
+        $jogosGrupos = [
+            // Rodada 1
+            ['rodada' => 1, 'grupo' => 'A', 'data' => '2026-06-11 18:00', 'mandante' => 'MEX', 'visitante' => 'RSA'],
+            ['rodada' => 1, 'grupo' => 'A', 'data' => '2026-06-11 21:00', 'mandante' => 'KOR', 'visitante' => 'UD4'],
+            ['rodada' => 1, 'grupo' => 'B', 'data' => '2026-06-12 15:00', 'mandante' => 'CAN', 'visitante' => 'UA1'],
+            ['rodada' => 1, 'grupo' => 'D', 'data' => '2026-06-12 18:00', 'mandante' => 'USA', 'visitante' => 'PAR'],
+            ['rodada' => 1, 'grupo' => 'C', 'data' => '2026-06-13 15:00', 'mandante' => 'HAI', 'visitante' => 'SCO'],
+            ['rodada' => 1, 'grupo' => 'D', 'data' => '2026-06-13 15:00', 'mandante' => 'AUS', 'visitante' => 'UC3'],
+            ['rodada' => 1, 'grupo' => 'C', 'data' => '2026-06-13 18:00', 'mandante' => 'BRA', 'visitante' => 'MAR'],
+            ['rodada' => 1, 'grupo' => 'B', 'data' => '2026-06-13 21:00', 'mandante' => 'QAT', 'visitante' => 'SUI'],
+            ['rodada' => 1, 'grupo' => 'E', 'data' => '2026-06-14 15:00', 'mandante' => 'CIV', 'visitante' => 'ECU'],
+            ['rodada' => 1, 'grupo' => 'E', 'data' => '2026-06-14 18:00', 'mandante' => 'GER', 'visitante' => 'CUW'],
+            ['rodada' => 1, 'grupo' => 'F', 'data' => '2026-06-14 18:00', 'mandante' => 'NED', 'visitante' => 'JPN'],
+            ['rodada' => 1, 'grupo' => 'F', 'data' => '2026-06-14 21:00', 'mandante' => 'UB2', 'visitante' => 'TUN'],
+            ['rodada' => 1, 'grupo' => 'H', 'data' => '2026-06-15 15:00', 'mandante' => 'KSA', 'visitante' => 'URU'],
+            ['rodada' => 1, 'grupo' => 'H', 'data' => '2026-06-15 18:00', 'mandante' => 'ESP', 'visitante' => 'CPV'],
+            ['rodada' => 1, 'grupo' => 'G', 'data' => '2026-06-15 18:00', 'mandante' => 'IRN', 'visitante' => 'NZL'],
+            ['rodada' => 1, 'grupo' => 'G', 'data' => '2026-06-15 21:00', 'mandante' => 'BEL', 'visitante' => 'EGY'],
+            ['rodada' => 1, 'grupo' => 'I', 'data' => '2026-06-16 15:00', 'mandante' => 'FRA', 'visitante' => 'SEN'],
+            ['rodada' => 1, 'grupo' => 'I', 'data' => '2026-06-16 18:00', 'mandante' => 'IC2', 'visitante' => 'NOR'],
+            ['rodada' => 1, 'grupo' => 'J', 'data' => '2026-06-16 18:00', 'mandante' => 'ARG', 'visitante' => 'ALG'],
+            ['rodada' => 1, 'grupo' => 'J', 'data' => '2026-06-16 21:00', 'mandante' => 'AUT', 'visitante' => 'JOR'],
+            ['rodada' => 1, 'grupo' => 'L', 'data' => '2026-06-17 15:00', 'mandante' => 'GHA', 'visitante' => 'PAN'],
+            ['rodada' => 1, 'grupo' => 'L', 'data' => '2026-06-17 18:00', 'mandante' => 'ENG', 'visitante' => 'CRO'],
+            ['rodada' => 1, 'grupo' => 'K', 'data' => '2026-06-17 18:00', 'mandante' => 'POR', 'visitante' => 'IC1'],
+            ['rodada' => 1, 'grupo' => 'K', 'data' => '2026-06-17 21:00', 'mandante' => 'UZB', 'visitante' => 'COL'],
+
+            // Rodada 2
+            ['rodada' => 2, 'grupo' => 'A', 'data' => '2026-06-18 15:00', 'mandante' => 'UD4', 'visitante' => 'RSA'],
+            ['rodada' => 2, 'grupo' => 'B', 'data' => '2026-06-18 18:00', 'mandante' => 'SUI', 'visitante' => 'UA1'],
+            ['rodada' => 2, 'grupo' => 'B', 'data' => '2026-06-18 18:00', 'mandante' => 'CAN', 'visitante' => 'QAT'],
+            ['rodada' => 2, 'grupo' => 'A', 'data' => '2026-06-18 21:00', 'mandante' => 'MEX', 'visitante' => 'KOR'],
+            ['rodada' => 2, 'grupo' => 'C', 'data' => '2026-06-19 15:00', 'mandante' => 'BRA', 'visitante' => 'HAI'],
+            ['rodada' => 2, 'grupo' => 'C', 'data' => '2026-06-19 15:00', 'mandante' => 'SCO', 'visitante' => 'MAR'],
+            ['rodada' => 2, 'grupo' => 'D', 'data' => '2026-06-19 18:00', 'mandante' => 'UC3', 'visitante' => 'PAR'],
+            ['rodada' => 2, 'grupo' => 'D', 'data' => '2026-06-19 21:00', 'mandante' => 'USA', 'visitante' => 'AUS'],
+            ['rodada' => 2, 'grupo' => 'E', 'data' => '2026-06-20 15:00', 'mandante' => 'GER', 'visitante' => 'CIV'],
+            ['rodada' => 2, 'grupo' => 'E', 'data' => '2026-06-20 18:00', 'mandante' => 'ECU', 'visitante' => 'CUW'],
+            ['rodada' => 2, 'grupo' => 'F', 'data' => '2026-06-20 18:00', 'mandante' => 'NED', 'visitante' => 'UB2'],
+            ['rodada' => 2, 'grupo' => 'F', 'data' => '2026-06-20 21:00', 'mandante' => 'TUN', 'visitante' => 'JPN'],
+            ['rodada' => 2, 'grupo' => 'H', 'data' => '2026-06-21 15:00', 'mandante' => 'URU', 'visitante' => 'CPV'],
+            ['rodada' => 2, 'grupo' => 'H', 'data' => '2026-06-21 18:00', 'mandante' => 'ESP', 'visitante' => 'KSA'],
+            ['rodada' => 2, 'grupo' => 'G', 'data' => '2026-06-21 18:00', 'mandante' => 'BEL', 'visitante' => 'IRN'],
+            ['rodada' => 2, 'grupo' => 'G', 'data' => '2026-06-21 21:00', 'mandante' => 'NZL', 'visitante' => 'EGY'],
+            ['rodada' => 2, 'grupo' => 'I', 'data' => '2026-06-22 15:00', 'mandante' => 'NOR', 'visitante' => 'SEN'],
+            ['rodada' => 2, 'grupo' => 'I', 'data' => '2026-06-22 18:00', 'mandante' => 'FRA', 'visitante' => 'IC2'],
+            ['rodada' => 2, 'grupo' => 'J', 'data' => '2026-06-22 18:00', 'mandante' => 'ARG', 'visitante' => 'AUT'],
+            ['rodada' => 2, 'grupo' => 'J', 'data' => '2026-06-22 21:00', 'mandante' => 'JOR', 'visitante' => 'ALG'],
+            ['rodada' => 2, 'grupo' => 'L', 'data' => '2026-06-23 15:00', 'mandante' => 'ENG', 'visitante' => 'GHA'],
+            ['rodada' => 2, 'grupo' => 'L', 'data' => '2026-06-23 18:00', 'mandante' => 'PAN', 'visitante' => 'CRO'],
+            ['rodada' => 2, 'grupo' => 'K', 'data' => '2026-06-23 18:00', 'mandante' => 'POR', 'visitante' => 'UZB'],
+            ['rodada' => 2, 'grupo' => 'K', 'data' => '2026-06-23 21:00', 'mandante' => 'COL', 'visitante' => 'IC1'],
+
+            // Rodada 3
+            ['rodada' => 3, 'grupo' => 'C', 'data' => '2026-06-24 18:00', 'mandante' => 'SCO', 'visitante' => 'BRA'],
+            ['rodada' => 3, 'grupo' => 'C', 'data' => '2026-06-24 18:00', 'mandante' => 'MAR', 'visitante' => 'HAI'],
+            ['rodada' => 3, 'grupo' => 'B', 'data' => '2026-06-24 18:00', 'mandante' => 'SUI', 'visitante' => 'CAN'],
+            ['rodada' => 3, 'grupo' => 'B', 'data' => '2026-06-24 18:00', 'mandante' => 'UA1', 'visitante' => 'QAT'],
+            ['rodada' => 3, 'grupo' => 'A', 'data' => '2026-06-24 21:00', 'mandante' => 'UD4', 'visitante' => 'MEX'],
+            ['rodada' => 3, 'grupo' => 'A', 'data' => '2026-06-24 21:00', 'mandante' => 'RSA', 'visitante' => 'KOR'],
+            ['rodada' => 3, 'grupo' => 'E', 'data' => '2026-06-25 18:00', 'mandante' => 'CUW', 'visitante' => 'CIV'],
+            ['rodada' => 3, 'grupo' => 'E', 'data' => '2026-06-25 18:00', 'mandante' => 'ECU', 'visitante' => 'GER'],
+            ['rodada' => 3, 'grupo' => 'F', 'data' => '2026-06-25 18:00', 'mandante' => 'JPN', 'visitante' => 'UB2'],
+            ['rodada' => 3, 'grupo' => 'F', 'data' => '2026-06-25 18:00', 'mandante' => 'TUN', 'visitante' => 'NED'],
+            ['rodada' => 3, 'grupo' => 'D', 'data' => '2026-06-25 21:00', 'mandante' => 'UC3', 'visitante' => 'USA'],
+            ['rodada' => 3, 'grupo' => 'D', 'data' => '2026-06-25 21:00', 'mandante' => 'PAR', 'visitante' => 'AUS'],
+            ['rodada' => 3, 'grupo' => 'I', 'data' => '2026-06-26 18:00', 'mandante' => 'NOR', 'visitante' => 'FRA'],
+            ['rodada' => 3, 'grupo' => 'I', 'data' => '2026-06-26 18:00', 'mandante' => 'SEN', 'visitante' => 'IC2'],
+            ['rodada' => 3, 'grupo' => 'G', 'data' => '2026-06-26 18:00', 'mandante' => 'EGY', 'visitante' => 'IRN'],
+            ['rodada' => 3, 'grupo' => 'G', 'data' => '2026-06-26 18:00', 'mandante' => 'NZL', 'visitante' => 'BEL'],
+            ['rodada' => 3, 'grupo' => 'H', 'data' => '2026-06-26 21:00', 'mandante' => 'CPV', 'visitante' => 'KSA'],
+            ['rodada' => 3, 'grupo' => 'H', 'data' => '2026-06-26 21:00', 'mandante' => 'URU', 'visitante' => 'ESP'],
+            ['rodada' => 3, 'grupo' => 'L', 'data' => '2026-06-27 18:00', 'mandante' => 'PAN', 'visitante' => 'ENG'],
+            ['rodada' => 3, 'grupo' => 'L', 'data' => '2026-06-27 18:00', 'mandante' => 'CRO', 'visitante' => 'GHA'],
+            ['rodada' => 3, 'grupo' => 'J', 'data' => '2026-06-27 18:00', 'mandante' => 'ALG', 'visitante' => 'AUT'],
+            ['rodada' => 3, 'grupo' => 'J', 'data' => '2026-06-27 18:00', 'mandante' => 'JOR', 'visitante' => 'ARG'],
+            ['rodada' => 3, 'grupo' => 'K', 'data' => '2026-06-27 21:00', 'mandante' => 'COL', 'visitante' => 'POR'],
+            ['rodada' => 3, 'grupo' => 'K', 'data' => '2026-06-27 21:00', 'mandante' => 'IC1', 'visitante' => 'UZB'],
+        ];
+
+        $rodadas = [1 => $rodada1, 2 => $rodada2, 3 => $rodada3];
+        $ordemJogo = 1;
+
+        foreach ($jogosGrupos as $jogo) {
+            Jogo::query()->updateOrCreate(
+                ['torneio_id' => $torneio->id, 'fase_id' => $faseGrupos->id, 'ordem_na_fase' => $ordemJogo],
                 [
-                    'grupo_id' => $dados['grupo']->id,
-                    'nome' => $dados['nome'],
-                    'slug' => Str::slug($dados['nome']),
-                    'ativo' => true,
+                    'rodada_id' => $rodadas[$jogo['rodada']]->id,
+                    'grupo_id' => $grupos[$jogo['grupo']]->id,
+                    'selecao_mandante_id' => $selecoes[$jogo['mandante']]->id,
+                    'selecao_visitante_id' => $selecoes[$jogo['visitante']]->id,
+                    'data_hora_inicio' => $jogo['data'],
+                    'status' => 'agendado',
                 ],
             );
+            $ordemJogo++;
+        }
 
-            Jogador::query()->updateOrCreate(
-                ['selecao_id' => $selecao->id, 'nome' => 'Camisa 9 '.$dados['sigla']],
-                [
-                    'apelido' => 'Artilheiro '.$dados['sigla'],
-                    'posicao' => 'Atacante',
-                    'numero_camisa' => 9,
-                    'ativo' => true,
-                ],
-            );
-
-            return $selecao;
-        })->keyBy('sigla');
-
-        Jogo::query()->updateOrCreate(
-            ['torneio_id' => $torneio->id, 'fase_id' => $faseGrupos->id, 'ordem_na_fase' => 1],
-            [
-                'rodada_id' => $rodada1->id,
-                'grupo_id' => $grupoA->id,
-                'selecao_mandante_id' => $selecoes['BRA']->id,
-                'selecao_visitante_id' => $selecoes['JPN']->id,
-                'data_hora_inicio' => now()->addDays(10),
-                'status' => 'agendado',
-            ],
-        );
-
-        Jogo::query()->updateOrCreate(
-            ['torneio_id' => $torneio->id, 'fase_id' => $faseGrupos->id, 'ordem_na_fase' => 2],
-            [
-                'rodada_id' => $rodada1->id,
-                'grupo_id' => $grupoB->id,
-                'selecao_mandante_id' => $selecoes['FRA']->id,
-                'selecao_visitante_id' => $selecoes['MEX']->id,
-                'data_hora_inicio' => now()->addDays(11),
-                'status' => 'agendado',
-            ],
-        );
-
-        Jogo::query()->updateOrCreate(
-            ['torneio_id' => $torneio->id, 'fase_id' => $semifinais->id, 'ordem_na_fase' => 1],
-            [
-                'rodada_id' => null,
-                'grupo_id' => null,
-                'selecao_mandante_id' => $selecoes['BRA']->id,
-                'selecao_visitante_id' => $selecoes['MEX']->id,
-                'data_hora_inicio' => now()->addDays(20),
-                'status' => 'agendado',
-            ],
-        );
-
-        Jogo::query()->updateOrCreate(
-            ['torneio_id' => $torneio->id, 'fase_id' => $semifinais->id, 'ordem_na_fase' => 2],
-            [
-                'rodada_id' => null,
-                'grupo_id' => null,
-                'selecao_mandante_id' => $selecoes['FRA']->id,
-                'selecao_visitante_id' => $selecoes['JPN']->id,
-                'data_hora_inicio' => now()->addDays(21),
-                'status' => 'agendado',
-            ],
-        );
-
-        Jogo::query()->updateOrCreate(
-            ['torneio_id' => $torneio->id, 'fase_id' => $terceiroLugar->id, 'ordem_na_fase' => 1],
-            [
-                'rodada_id' => null,
-                'grupo_id' => null,
-                'selecao_mandante_id' => $selecoes['MEX']->id,
-                'selecao_visitante_id' => $selecoes['JPN']->id,
-                'data_hora_inicio' => now()->addDays(25),
-                'status' => 'agendado',
-            ],
-        );
-
-        Jogo::query()->updateOrCreate(
-            ['torneio_id' => $torneio->id, 'fase_id' => $final->id, 'ordem_na_fase' => 1],
-            [
-                'rodada_id' => null,
-                'grupo_id' => null,
-                'selecao_mandante_id' => $selecoes['BRA']->id,
-                'selecao_visitante_id' => $selecoes['FRA']->id,
-                'data_hora_inicio' => now()->addDays(26),
-                'status' => 'agendado',
-            ],
-        );
+        // ── Regras de Pontuacao ────────────────────────────────
 
         $regras = [
-            ['fase' => $faseGrupos, 'chave' => 'placar_exato_fase_grupos', 'nome' => 'Placar exato fase de grupos', 'pontos' => 10],
-            ['fase' => $faseGrupos, 'chave' => 'vencedor_fase_grupos', 'nome' => 'Vencedor fase de grupos', 'pontos' => 5],
-            ['fase' => null, 'chave' => 'primeiro_colocado_grupo', 'nome' => 'Primeiro colocado do grupo', 'pontos' => 8],
-            ['fase' => null, 'chave' => 'segundo_colocado_grupo', 'nome' => 'Segundo colocado do grupo', 'pontos' => 6],
-            ['fase' => null, 'chave' => 'artilheiro', 'nome' => 'Artilheiro', 'pontos' => 20],
-            ['fase' => $semifinais, 'chave' => 'classificado_mata_mata', 'nome' => 'Classificado semifinal', 'pontos' => 10],
-            ['fase' => $semifinais, 'chave' => 'classificado_e_placar_mata_mata', 'nome' => 'Classificado e placar semifinal', 'pontos' => 16],
-            ['fase' => $terceiroLugar, 'chave' => 'classificado_mata_mata', 'nome' => 'Vencedor terceiro lugar', 'pontos' => 10],
-            ['fase' => $terceiroLugar, 'chave' => 'classificado_e_placar_mata_mata', 'nome' => 'Vencedor e placar terceiro lugar', 'pontos' => 16],
-            ['fase' => $final, 'chave' => 'classificado_mata_mata', 'nome' => 'Campeao da final', 'pontos' => 10],
-            ['fase' => $final, 'chave' => 'classificado_e_placar_mata_mata', 'nome' => 'Campeao e placar da final', 'pontos' => 16],
-            ['fase' => null, 'chave' => 'campeao', 'nome' => 'Campeao', 'pontos' => 25],
-            ['fase' => null, 'chave' => 'vice_campeao', 'nome' => 'Vice-campeao', 'pontos' => 15],
-            ['fase' => null, 'chave' => 'terceiro_colocado', 'nome' => 'Terceiro colocado', 'pontos' => 12],
+            ['fase' => $faseGrupos, 'chave' => 'placar_exato_fase_grupos', 'nome' => 'Placar Exato', 'descricao' => 'Acertou o placar exato do jogo', 'pontos' => 10],
+            ['fase' => $faseGrupos, 'chave' => 'vencedor_e_acertou_gols', 'nome' => 'Vencedor + Acertou Gols BR', 'descricao' => 'Acertou o vencedor e a quantidade de gols de um dos times', 'pontos' => 7],
+            ['fase' => $faseGrupos, 'chave' => 'apenas_vencedor', 'nome' => 'Apenas O Vencedor', 'descricao' => 'Acertou apenas quem venceu ou que empatou', 'pontos' => 5],
+            ['fase' => $faseGrupos, 'chave' => 'empate_sem_placar', 'nome' => 'Empate Sem Placar Exato', 'descricao' => 'Acertou que houve empate mas errou o placar', 'pontos' => 5],
+            ['fase' => $faseGrupos, 'chave' => 'acertou_1_placar', 'nome' => 'Acertou 1 Placar, Errou O Resultado', 'descricao' => 'Acertou a quantidade de gols de um time mas errou o resultado', 'pontos' => 2],
+            ['fase' => $faseGrupos, 'chave' => 'errou_tudo', 'nome' => 'Errou Tudo', 'descricao' => 'Errou tudo', 'pontos' => 0],
+            ['fase' => null, 'chave' => 'primeiro_colocado_grupo', 'nome' => 'Primeiro colocado do grupo', 'descricao' => 'Acertou o primeiro colocado de um grupo', 'pontos' => 8],
+            ['fase' => null, 'chave' => 'segundo_colocado_grupo', 'nome' => 'Segundo colocado do grupo', 'descricao' => 'Acertou o segundo colocado de um grupo', 'pontos' => 6],
+            ['fase' => null, 'chave' => 'artilheiro', 'nome' => 'Artilheiro', 'descricao' => 'Acertou o artilheiro da copa', 'pontos' => 20],
+            ['fase' => $oitavas, 'chave' => 'classificado_mata_mata', 'nome' => 'Classificado oitavas', 'descricao' => 'Acertou quem avancou nas oitavas', 'pontos' => 6],
+            ['fase' => $quartas, 'chave' => 'classificado_mata_mata', 'nome' => 'Classificado quartas', 'descricao' => 'Acertou quem avancou nas quartas', 'pontos' => 8],
+            ['fase' => $semifinais, 'chave' => 'classificado_mata_mata', 'nome' => 'Classificado semifinal', 'descricao' => 'Acertou quem avancou na semifinal', 'pontos' => 10],
+            ['fase' => $final, 'chave' => 'classificado_mata_mata', 'nome' => 'Campeao da final', 'descricao' => 'Acertou o campeao', 'pontos' => 10],
+            ['fase' => null, 'chave' => 'campeao', 'nome' => 'Campeao', 'descricao' => 'Acertou o campeao da copa', 'pontos' => 25],
+            ['fase' => null, 'chave' => 'vice_campeao', 'nome' => 'Vice-campeao', 'descricao' => 'Acertou o vice-campeao', 'pontos' => 15],
+            ['fase' => null, 'chave' => 'terceiro_colocado', 'nome' => 'Terceiro colocado', 'descricao' => 'Acertou o terceiro colocado', 'pontos' => 12],
         ];
 
         foreach ($regras as $regra) {
@@ -213,7 +330,7 @@ class TorneioMockadoSeeder extends Seeder
                 ],
                 [
                     'nome' => $regra['nome'],
-                    'descricao' => $regra['nome'].' do MVP',
+                    'descricao' => $regra['descricao'],
                     'pontos' => $regra['pontos'],
                     'ativo' => true,
                 ],
