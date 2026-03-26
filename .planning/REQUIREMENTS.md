@@ -14,9 +14,9 @@
 
 ### Cupons E Checkout
 
-- [ ] **CUP-01**: Usuário pode iniciar checkout simulado para compra de cupom
+- [x] **CUP-01**: Usuário pode iniciar checkout simulado para compra de cupom
 - [ ] **CUP-02**: Pedido de checkout possui status `pendente`, `pago` ou `cancelado`
-- [ ] **CUP-03**: Cupom só é ativado após confirmação de pagamento simulado
+- [x] **CUP-03**: Cupom só é ativado após confirmação de pagamento simulado
 - [ ] **CUP-04**: Usuário pode possuir múltiplos cupons
 - [ ] **CUP-05**: Cada cupom mantém conjunto independente de apostas
 
@@ -58,7 +58,7 @@
 
 ### Interface
 
-- [ ] **UI-01**: Aplicação funciona em layout web responsivo
+- [x] **UI-01**: Aplicação funciona em layout web responsivo
 - [ ] **UI-02**: Usuário autenticado consegue navegar entre cupons, apostas e ranking
 - [ ] **UI-03**: Interface administrativa permite operação completa do MVP sem uso direto do banco
 
@@ -98,9 +98,9 @@
 | AUTH-02 | Phase 1 | Pending |
 | AUTH-03 | Phase 1 | Pending |
 | AUTH-04 | Phase 1 | Pending |
-| CUP-01 | Phase 2 | Pending |
+| CUP-01 | Phase 2 | Complete |
 | CUP-02 | Phase 2 | Pending |
-| CUP-03 | Phase 2 | Pending |
+| CUP-03 | Phase 2 | Complete |
 | CUP-04 | Phase 2 | Pending |
 | CUP-05 | Phase 2 | Pending |
 | COMP-01 | Phase 1 | Pending |
@@ -127,7 +127,7 @@
 | ADM-02 | Phase 1 | Pending |
 | ADM-03 | Phase 1 | Pending |
 | ADM-04 | Phase 4 | Pending |
-| UI-01 | Phase 2 | Pending |
+| UI-01 | Phase 2 | Complete |
 | UI-02 | Phase 2 | Pending |
 | UI-03 | Phase 1 | Pending |
 

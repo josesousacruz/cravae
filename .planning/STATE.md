@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-26T19:21:46.786Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-03-26T19:35:34.737Z"
 last_activity: 2026-03-26
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 1
+  total_plans: 6
+  completed_plans: 4
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 01 (Fundacao Do MVP) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-03-26
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: Stable
 
 | Phase 02 P01 | 15min | 2 tasks | 14 files |
+| Phase 02 P02 | 8min | 2 tasks | 10 files |
 
 ### Decisions
 
@@ -64,6 +65,8 @@ Recent decisions affecting current work:
 - Phase 1: Projeto será estruturado em `backend/` e `frontend/` na mesma raiz
 - [Phase 02]: telefone nullable na migration para compatibilidade com admin seeder
 - [Phase 02]: valor_cupom com default 10.00 para retrocompatibilidade
+- [Phase 02]: Modal auth controlado pelo App.vue via emit, query param modal abre automaticamente
+- [Phase 02]: Checkout usa dois POSTs sequenciais: criar pedido e simular pagamento
 
 ### Pending Todos
 
@@ -75,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T19:21:46.781Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-26T19:35:34.730Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
