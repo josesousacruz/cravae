@@ -1,11 +1,11 @@
 <template>
-  <div class="mx-auto max-w-5xl">
+  <div class="mx-auto max-w-6xl">
     <!-- Loading -->
     <div v-if="carregando" class="flex items-center justify-center py-20">
       <span class="text-text-muted">Carregando...</span>
     </div>
 
-    <div v-else-if="cupom && torneio" class="space-y-6">
+    <div v-else-if="cupom && torneio" class="space-y-4">
       <!-- Breadcrumb -->
       <nav class="text-sm text-text-muted">
         <RouterLink to="/painel" class="hover:text-text-secondary transition">Meus Cupons</RouterLink>
@@ -13,201 +13,308 @@
         <span>Cupom {{ cupom.codigo }}</span>
       </nav>
 
-      <!-- Header do cupom -->
+      <!-- Header -->
       <div class="flex flex-wrap items-center justify-between gap-4">
         <h1 class="text-xl font-bold">Cupom {{ cupom.codigo }}</h1>
         <span
-          class="rounded-full px-2 py-0.5 text-xs uppercase tracking-wider"
-          :class="cupom.status === 'ativo' ? 'bg-primary/20 text-primary' : 'bg-warning/20 text-warning'"
+          class="rounded-full px-3 py-1 text-xs font-semibold"
+          :class="cupom.status === 'ativo' ? 'bg-primary text-bg' : 'bg-warning/20 text-warning'"
         >
           {{ cupom.status }}
         </span>
       </div>
 
-      <!-- Feedback -->
-      <p v-if="mensagem" class="rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">{{ mensagem }}</p>
-      <p v-if="erro" class="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{{ erro }}</p>
-
-      <!-- Tabs -->
+      <!-- Tabs: Palpites / Ranking / Meus Resultados -->
       <div class="flex overflow-x-auto border-b border-border">
         <button
           v-for="tab in tabs"
           :key="tab.id"
           @click="tabAtiva = tab.id"
-          class="whitespace-nowrap px-4 py-3 text-sm transition cursor-pointer"
+          class="flex items-center gap-2 whitespace-nowrap px-5 py-3 text-sm transition cursor-pointer"
           :class="tabAtiva === tab.id ? 'border-b-2 border-primary text-primary font-medium' : 'text-text-muted hover:text-text-secondary'"
         >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" :d="tab.icone" />
+          </svg>
           {{ tab.nome }}
         </button>
       </div>
 
       <!-- ═══════ Tab Palpites ═══════ -->
       <section v-if="tabAtiva === 'palpites'">
-        <!-- Sub-tabs -->
-        <div class="flex gap-2 mt-4 mb-6 overflow-x-auto">
-          <button
-            v-for="sub in subTabs"
-            :key="sub.id"
-            @click="subTabAtiva = sub.id"
-            class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition cursor-pointer"
-            :class="subTabAtiva === sub.id ? 'bg-primary/20 text-primary' : 'bg-bg-input text-text-muted hover:text-text-secondary'"
-          >
-            {{ sub.nome }}
-          </button>
-        </div>
+        <div class="grid gap-6 lg:grid-cols-[1fr_300px]">
+          <!-- Main column -->
+          <div class="space-y-4">
+            <!-- Fase navigator -->
+            <div class="flex items-center justify-between rounded-xl bg-bg-card border border-border px-4 py-3">
+              <button @click="faseAnterior" class="rounded-lg p-1.5 text-text-muted transition hover:bg-bg-input hover:text-text" :disabled="indiceFase <= 0">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+              </button>
+              <h2 class="text-base font-bold">{{ faseAtual?.nome ?? 'Fase de Grupos' }} - {{ rodadaAtual?.ordem ?? 1 }}</h2>
+              <button @click="faseProxima" class="rounded-lg p-1.5 text-text-muted transition hover:bg-bg-input hover:text-text">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+              </button>
+            </div>
 
-        <!-- Fase de Grupos -->
-        <div v-if="subTabAtiva === 'grupos'" class="rounded-2xl border border-border bg-bg-card p-5">
-          <h2 class="mb-2 text-lg font-bold">Fase de Grupos</h2>
-          <p class="mb-4 text-sm text-text-muted">Informe o placar de cada jogo da fase de grupos.</p>
-
-          <div v-for="grupo in torneio.grupos" :key="grupo.id" class="mb-6">
-            <h3 class="mb-3 text-sm font-bold text-primary">{{ grupo.nome }}</h3>
-            <div class="space-y-3">
-              <div
-                v-for="jogo in jogosDoGrupo(grupo.id)"
-                :key="jogo.id"
-                class="flex items-center gap-3 rounded-xl bg-bg-input p-3 sm:p-4"
+            <!-- Day selector -->
+            <div class="flex gap-1 overflow-x-auto pb-1">
+              <button
+                v-for="dia in diasComJogos"
+                :key="dia.data"
+                @click="diaSelecionado = dia.data"
+                class="flex shrink-0 flex-col items-center rounded-xl px-3 py-2 text-center transition cursor-pointer min-w-[56px]"
+                :class="diaSelecionado === dia.data
+                  ? 'bg-primary text-bg'
+                  : 'bg-bg-card border border-border text-text-muted hover:border-primary/40'"
               >
-                <div class="flex flex-1 items-center justify-end gap-2 text-right">
-                  <span class="text-sm font-semibold">{{ jogo.selecao_mandante.sigla }}</span>
+                <span class="text-[10px] uppercase font-medium">{{ dia.diaSemana }}</span>
+                <span class="text-lg font-bold leading-tight">{{ dia.diaNumero }}</span>
+                <span class="text-[10px]">({{ dia.totalJogos }})</span>
+              </button>
+            </div>
+
+            <!-- Deadline badge -->
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                {{ textoFechamento }}
+              </span>
+            </div>
+
+            <!-- Match cards -->
+            <div class="space-y-4">
+              <div
+                v-for="jogo in jogosDoDia"
+                :key="jogo.id"
+                class="rounded-2xl border border-border bg-bg-card p-5"
+              >
+                <!-- Match time / group -->
+                <div class="mb-4 flex items-center justify-between">
+                  <span class="text-xs text-text-muted">{{ formatarHora(jogo.data_hora_inicio) }}</span>
+                  <span v-if="jogo.grupo" class="text-xs font-medium text-primary">{{ jogo.grupo.nome }}</span>
+                  <span v-else class="text-xs font-medium text-primary">{{ jogo.fase.nome }}</span>
                 </div>
-                <input
-                  v-model="placaresGrupos[jogo.id].placar_mandante"
-                  type="number" min="0" class="!w-14" placeholder="-"
-                />
-                <span class="text-xs text-text-muted">x</span>
-                <input
-                  v-model="placaresGrupos[jogo.id].placar_visitante"
-                  type="number" min="0" class="!w-14" placeholder="-"
-                />
-                <div class="flex flex-1 items-center gap-2">
-                  <span class="text-sm font-semibold">{{ jogo.selecao_visitante.sigla }}</span>
+
+                <!-- Teams + score -->
+                <div class="flex items-center gap-4">
+                  <!-- Home team -->
+                  <div class="flex-1 text-center">
+                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-bg-input text-lg font-bold text-primary">
+                      {{ jogo.selecao_mandante.sigla.charAt(0) }}
+                    </div>
+                    <p class="mt-2 text-sm font-medium">{{ jogo.selecao_mandante.nome }}</p>
+                  </div>
+
+                  <!-- Score inputs with +/- buttons -->
+                  <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
+                      <button
+                        type="button"
+                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-border hover:text-text"
+                        @click="decrementar(jogo.id, 'mandante')"
+                      >-</button>
+                      <input
+                        v-model="placaresGrupos[jogo.id].placar_mandante"
+                        type="number" min="0"
+                        class="!w-12 text-center text-lg font-bold !rounded-lg !bg-bg-input !border-border"
+                        placeholder="0"
+                      />
+                      <button
+                        type="button"
+                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-border hover:text-text"
+                        @click="incrementar(jogo.id, 'mandante')"
+                      >+</button>
+                    </div>
+
+                    <span class="text-sm text-text-muted font-medium">x</span>
+
+                    <div class="flex items-center gap-1">
+                      <button
+                        type="button"
+                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-border hover:text-text"
+                        @click="decrementar(jogo.id, 'visitante')"
+                      >-</button>
+                      <input
+                        v-model="placaresGrupos[jogo.id].placar_visitante"
+                        type="number" min="0"
+                        class="!w-12 text-center text-lg font-bold !rounded-lg !bg-bg-input !border-border"
+                        placeholder="0"
+                      />
+                      <button
+                        type="button"
+                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-border hover:text-text"
+                        @click="incrementar(jogo.id, 'visitante')"
+                      >+</button>
+                    </div>
+                  </div>
+
+                  <!-- Away team -->
+                  <div class="flex-1 text-center">
+                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-bg-input text-lg font-bold text-primary">
+                      {{ jogo.selecao_visitante.sigla.charAt(0) }}
+                    </div>
+                    <p class="mt-2 text-sm font-medium">{{ jogo.selecao_visitante.nome }}</p>
+                  </div>
+                </div>
+
+                <!-- Knockout: who advances -->
+                <div v-if="jogo.fase.tipo !== 'grupos' && placaresEliminatorios[jogo.id]" class="mt-4">
+                  <label class="block">
+                    <span class="mb-1.5 block text-xs text-text-muted">Quem avanca?</span>
+                    <select v-model="placaresEliminatorios[jogo.id].selecao_classificada_id">
+                      <option value="">Selecione</option>
+                      <option :value="String(jogo.selecao_mandante.id)">{{ jogo.selecao_mandante.nome }}</option>
+                      <option :value="String(jogo.selecao_visitante.id)">{{ jogo.selecao_visitante.nome }}</option>
+                    </select>
+                  </label>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <button type="button" @click="salvarPlacaresGrupos" class="mt-2 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-bg transition-colors hover:bg-primary-hover">
-            Salvar placares da fase de grupos
-          </button>
-        </div>
-
-        <!-- Classificacao dos Grupos -->
-        <div v-if="subTabAtiva === 'classificacao'" class="rounded-2xl border border-border bg-bg-card p-5">
-          <h2 class="mb-2 text-lg font-bold">Classificados dos Grupos</h2>
-          <p class="mb-4 text-sm text-text-muted">Selecione o primeiro e segundo colocado de cada grupo.</p>
-
-          <div class="space-y-5">
-            <div v-for="grupo in torneio.grupos" :key="grupo.id" class="rounded-xl bg-bg-input p-4">
-              <h3 class="mb-3 text-sm font-bold text-primary">{{ grupo.nome }}</h3>
-              <div class="grid gap-3 sm:grid-cols-2">
-                <label class="block">
-                  <span class="mb-1.5 block text-xs text-text-muted">Primeiro colocado</span>
-                  <select v-model="classificacaoGrupos[grupo.id].primeiro">
-                    <option value="">Selecione</option>
-                    <option v-for="s in grupo.selecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
-                  </select>
-                </label>
-                <label class="block">
-                  <span class="mb-1.5 block text-xs text-text-muted">Segundo colocado</span>
-                  <select v-model="classificacaoGrupos[grupo.id].segundo">
-                    <option value="">Selecione</option>
-                    <option v-for="s in grupo.selecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
-                  </select>
-                </label>
+              <div v-if="!jogosDoDia.length" class="rounded-2xl border border-border bg-bg-card py-12 text-center">
+                <p class="text-text-muted">Nenhum jogo neste dia.</p>
               </div>
             </div>
-          </div>
 
-          <button type="button" @click="salvarClassificacao" class="mt-5 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-bg transition-colors hover:bg-primary-hover">
-            Salvar classificados dos grupos
-          </button>
-        </div>
-
-        <!-- Mata-Mata -->
-        <div v-if="subTabAtiva === 'mata-mata'" class="rounded-2xl border border-border bg-bg-card p-5">
-          <h2 class="mb-2 text-lg font-bold">Mata-Mata</h2>
-          <p class="mb-4 text-sm text-text-muted">Informe o placar e quem avanca em cada jogo eliminatorio.</p>
-
-          <div v-if="!jogosEliminatorios.length" class="py-8 text-center text-text-muted">
-            Jogos eliminatorios serao exibidos apos a definicao dos classificados.
-          </div>
-
-          <div v-else class="space-y-4">
-            <div v-for="jogo in jogosEliminatorios" :key="jogo.id" class="rounded-xl bg-bg-input p-4">
-              <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">{{ jogo.fase.nome }}</p>
-              <div class="flex items-center gap-3">
-                <div class="flex flex-1 items-center justify-end gap-2 text-right">
-                  <span class="text-sm font-semibold">{{ jogo.selecao_mandante.sigla }}</span>
-                </div>
-                <input v-model="placaresEliminatorios[jogo.id].placar_mandante" type="number" min="0" class="!w-14" placeholder="-" />
-                <span class="text-xs text-text-muted">x</span>
-                <input v-model="placaresEliminatorios[jogo.id].placar_visitante" type="number" min="0" class="!w-14" placeholder="-" />
-                <div class="flex flex-1 items-center gap-2">
-                  <span class="text-sm font-semibold">{{ jogo.selecao_visitante.sigla }}</span>
-                </div>
-              </div>
-              <label class="mt-3 block">
-                <span class="mb-1.5 block text-xs text-text-muted">Quem avanca?</span>
-                <select v-model="placaresEliminatorios[jogo.id].selecao_classificada_id">
-                  <option value="">Selecione</option>
-                  <option :value="String(jogo.selecao_mandante.id)">{{ jogo.selecao_mandante.nome }}</option>
-                  <option :value="String(jogo.selecao_visitante.id)">{{ jogo.selecao_visitante.nome }}</option>
-                </select>
-              </label>
-            </div>
-          </div>
-
-          <button v-if="jogosEliminatorios.length" type="button" @click="salvarMataMata" class="mt-5 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-bg transition-colors hover:bg-primary-hover">
-            Salvar palpites mata-mata
-          </button>
-        </div>
-
-        <!-- Finais & Artilheiro -->
-        <div v-if="subTabAtiva === 'finais'" class="space-y-6">
-          <div class="rounded-2xl border border-border bg-bg-card p-5">
-            <h2 class="mb-4 text-lg font-bold">Artilheiro</h2>
-            <select v-model="artilheiroId">
-              <option value="">Selecione o artilheiro</option>
-              <option v-for="jogador in jogadores" :key="jogador.id" :value="String(jogador.id)">
-                {{ jogador.nome }} ({{ jogador.selecao_sigla }})
-              </option>
-            </select>
-            <button type="button" @click="salvarArtilheiro" class="mt-4 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-bg transition-colors hover:bg-primary-hover">
-              Salvar artilheiro
+            <!-- Save button -->
+            <button
+              v-if="jogosDoDia.length"
+              type="button"
+              @click="salvarPalpitesDoDia"
+              class="w-full rounded-xl bg-primary py-3 text-sm font-bold text-bg transition-all hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/20"
+            >
+              Salvar palpites
             </button>
+
+            <!-- Sub-tabs for other bet types -->
+            <div class="flex gap-2 overflow-x-auto border-t border-border pt-4">
+              <button
+                v-for="sub in subTabs"
+                :key="sub.id"
+                @click="subTabAtiva = sub.id"
+                class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition cursor-pointer"
+                :class="subTabAtiva === sub.id ? 'bg-primary/20 text-primary' : 'bg-bg-input text-text-muted hover:text-text-secondary'"
+              >
+                {{ sub.nome }}
+              </button>
+            </div>
+
+            <!-- Classificacao dos Grupos -->
+            <div v-if="subTabAtiva === 'classificacao'" class="rounded-2xl border border-border bg-bg-card p-5">
+              <h2 class="mb-2 text-base font-bold">Classificados dos Grupos</h2>
+              <p class="mb-4 text-xs text-text-muted">Selecione o primeiro e segundo colocado de cada grupo.</p>
+              <div class="space-y-4">
+                <div v-for="grupo in torneio.grupos" :key="grupo.id" class="rounded-xl bg-bg-input p-4">
+                  <h3 class="mb-3 text-sm font-bold text-primary">{{ grupo.nome }}</h3>
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <label class="block">
+                      <span class="mb-1 block text-xs text-text-muted">Primeiro colocado</span>
+                      <select v-model="classificacaoGrupos[grupo.id].primeiro">
+                        <option value="">Selecione</option>
+                        <option v-for="s in grupo.selecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
+                      </select>
+                    </label>
+                    <label class="block">
+                      <span class="mb-1 block text-xs text-text-muted">Segundo colocado</span>
+                      <select v-model="classificacaoGrupos[grupo.id].segundo">
+                        <option value="">Selecione</option>
+                        <option v-for="s in grupo.selecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <button type="button" @click="salvarClassificacao" class="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-bg transition hover:bg-primary-hover">
+                Salvar classificados
+              </button>
+            </div>
+
+            <!-- Finais & Artilheiro -->
+            <div v-if="subTabAtiva === 'finais'" class="space-y-4">
+              <div class="rounded-2xl border border-border bg-bg-card p-5">
+                <h2 class="mb-4 text-base font-bold">Artilheiro</h2>
+                <select v-model="artilheiroId">
+                  <option value="">Selecione o artilheiro</option>
+                  <option v-for="j in jogadores" :key="j.id" :value="String(j.id)">{{ j.nome }} ({{ j.selecao_sigla }})</option>
+                </select>
+                <button type="button" @click="salvarArtilheiro" class="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-bg transition hover:bg-primary-hover">
+                  Salvar artilheiro
+                </button>
+              </div>
+              <div class="rounded-2xl border border-border bg-bg-card p-5">
+                <h2 class="mb-4 text-base font-bold">Palpites Finais</h2>
+                <div class="space-y-3">
+                  <label class="block">
+                    <span class="mb-1 block text-xs text-text-muted">Campeao</span>
+                    <select v-model="palpitesFinais.campeao">
+                      <option value="">Selecione</option>
+                      <option v-for="s in todasSelecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="mb-1 block text-xs text-text-muted">Vice-campeao</span>
+                    <select v-model="palpitesFinais.vice_campeao">
+                      <option value="">Selecione</option>
+                      <option v-for="s in todasSelecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="mb-1 block text-xs text-text-muted">Terceiro colocado</span>
+                    <select v-model="palpitesFinais.terceiro_colocado">
+                      <option value="">Selecione</option>
+                      <option v-for="s in todasSelecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
+                    </select>
+                  </label>
+                </div>
+                <button type="button" @click="salvarPalpitesFinais" class="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-bg transition hover:bg-primary-hover">
+                  Salvar palpites finais
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div class="rounded-2xl border border-border bg-bg-card p-5">
-            <h2 class="mb-4 text-lg font-bold">Palpites Finais</h2>
-            <p class="mb-4 text-sm text-text-muted">Quem sera campeao, vice e terceiro colocado?</p>
-            <div class="space-y-3">
-              <label class="block">
-                <span class="mb-1.5 block text-xs text-text-muted">Campeao</span>
-                <select v-model="palpitesFinais.campeao">
-                  <option value="">Selecione</option>
-                  <option v-for="s in todasSelecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
-                </select>
-              </label>
-              <label class="block">
-                <span class="mb-1.5 block text-xs text-text-muted">Vice-campeao</span>
-                <select v-model="palpitesFinais.vice_campeao">
-                  <option value="">Selecione</option>
-                  <option v-for="s in todasSelecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
-                </select>
-              </label>
-              <label class="block">
-                <span class="mb-1.5 block text-xs text-text-muted">Terceiro colocado</span>
-                <select v-model="palpitesFinais.terceiro_colocado">
-                  <option value="">Selecione</option>
-                  <option v-for="s in todasSelecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
-                </select>
-              </label>
+          <!-- Sidebar: Ranking ao Vivo -->
+          <div class="hidden lg:block">
+            <div class="sticky top-20 rounded-2xl border border-border bg-bg-card p-4">
+              <div class="flex items-center gap-2 mb-4">
+                <span class="text-lg">🏆</span>
+                <h3 class="text-sm font-bold">Ranking ao Vivo</h3>
+              </div>
+
+              <div v-if="carregandoRanking" class="space-y-2">
+                <div v-for="n in 5" :key="n" class="flex items-center gap-2">
+                  <div class="h-8 w-8 animate-pulse rounded-full bg-bg-input" />
+                  <div class="h-3 flex-1 animate-pulse rounded bg-bg-input" />
+                </div>
+              </div>
+
+              <div v-else-if="!ranking.length" class="py-4 text-center text-xs text-text-muted">
+                Nenhum palpite registrado
+              </div>
+
+              <div v-else class="space-y-2">
+                <div
+                  v-for="(item, i) in ranking.slice(0, 10)"
+                  :key="item.id"
+                  class="flex items-center gap-2 rounded-lg px-2 py-1.5 transition"
+                  :class="item.cupom.id === cupom.id ? 'bg-primary/10' : 'hover:bg-bg-input'"
+                >
+                  <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                    :class="{ 'bg-gold/20 text-gold': i === 0, 'bg-silver/20 text-silver': i === 1, 'bg-bronze/20 text-bronze': i === 2, 'bg-bg-input text-text-muted': i > 2 }">
+                    {{ i + 1 }}
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-xs font-medium">{{ item.cupom.usuario.nome }}</p>
+                    <p class="text-[10px] text-text-muted">{{ item.cupom.codigo }}</p>
+                  </div>
+                  <span class="text-sm font-bold" :class="item.cupom.id === cupom.id ? 'text-primary' : 'text-text'">
+                    {{ item.pontuacao_total }}
+                  </span>
+                  <span v-if="item.cupom.id === cupom.id" class="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-bg">
+                    Voce
+                  </span>
+                </div>
+              </div>
             </div>
-            <button type="button" @click="salvarPalpitesFinais" class="mt-5 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-bg transition-colors hover:bg-primary-hover">
-              Salvar palpites finais
-            </button>
           </div>
         </div>
       </section>
@@ -215,53 +322,26 @@
       <!-- ═══════ Tab Ranking ═══════ -->
       <section v-if="tabAtiva === 'ranking'">
         <div v-if="carregandoRanking" class="rounded-2xl border border-border bg-bg-card overflow-hidden">
-          <div class="bg-bg-input px-4 py-3">
-            <div class="flex gap-4">
-              <div class="h-3 w-8 animate-pulse rounded bg-border"></div>
-              <div class="h-3 w-20 animate-pulse rounded bg-border"></div>
-              <div class="h-3 w-16 animate-pulse rounded bg-border"></div>
-            </div>
-          </div>
           <div class="divide-y divide-border/50">
             <div v-for="n in 5" :key="n" class="flex items-center gap-4 px-4 py-3">
-              <div class="h-8 w-8 animate-pulse rounded-full bg-bg-input"></div>
-              <div class="flex-1 space-y-1">
-                <div class="h-4 w-28 animate-pulse rounded bg-bg-input"></div>
-              </div>
-              <div class="h-5 w-10 animate-pulse rounded bg-bg-input"></div>
+              <div class="h-8 w-8 animate-pulse rounded-full bg-bg-input" />
+              <div class="flex-1"><div class="h-4 w-28 animate-pulse rounded bg-bg-input" /></div>
+              <div class="h-5 w-10 animate-pulse rounded bg-bg-input" />
             </div>
           </div>
         </div>
-
         <div v-else-if="!ranking.length" class="rounded-2xl border border-border bg-bg-card py-8 text-center">
           <p class="text-text-muted">Nenhum resultado disponivel ainda.</p>
         </div>
-
         <div v-else class="rounded-2xl border border-border bg-bg-card overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full">
-              <thead>
-                <tr class="bg-bg-input text-xs uppercase tracking-wider text-text-muted">
-                  <th class="px-4 py-3 text-left">#</th>
-                  <th class="px-4 py-3 text-left">Cupom</th>
-                  <th class="px-4 py-3 text-left">Usuario</th>
-                  <th class="px-4 py-3 text-right">Pontos</th>
-                  <th class="px-4 py-3 text-right">Exatos</th>
-                </tr>
-              </thead>
+              <thead><tr class="bg-bg-input text-xs uppercase tracking-wider text-text-muted">
+                <th class="px-4 py-3 text-left">#</th><th class="px-4 py-3 text-left">Cupom</th><th class="px-4 py-3 text-left">Usuario</th><th class="px-4 py-3 text-right">Pontos</th><th class="px-4 py-3 text-right">Exatos</th>
+              </tr></thead>
               <tbody>
-                <tr
-                  v-for="(item, i) in ranking"
-                  :key="item.id"
-                  class="border-t border-border/50 transition-colors hover:bg-bg-card-hover"
-                  :class="item.cupom.id === cupom.id ? 'bg-primary/10 border-l-2 border-l-primary' : ''"
-                >
-                  <td class="px-4 py-3">
-                    <span class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold"
-                      :class="{ 'text-gold': i === 0, 'text-silver': i === 1, 'text-bronze': i === 2, 'text-text-muted': i > 2 }">
-                      {{ i + 1 }}
-                    </span>
-                  </td>
+                <tr v-for="(item, i) in ranking" :key="item.id" class="border-t border-border/50 transition hover:bg-bg-card-hover" :class="item.cupom.id === cupom.id ? 'bg-primary/10' : ''">
+                  <td class="px-4 py-3"><span class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold" :class="{ 'text-gold': i === 0, 'text-silver': i === 1, 'text-bronze': i === 2, 'text-text-muted': i > 2 }">{{ i + 1 }}</span></td>
                   <td class="px-4 py-3 text-sm font-mono text-text-muted">{{ item.cupom.codigo }}</td>
                   <td class="px-4 py-3 text-sm font-medium">{{ item.cupom.usuario.nome }}</td>
                   <td class="px-4 py-3 text-right font-bold text-primary">{{ item.pontuacao_total }}</td>
@@ -285,7 +365,7 @@
           </div>
         </div>
         <div v-else class="rounded-2xl border border-border bg-bg-card py-12 text-center">
-          <p class="text-text-muted">Nenhum evento de pontuacao registrado para este cupom ainda.</p>
+          <p class="text-text-muted">Nenhum evento de pontuacao registrado ainda.</p>
         </div>
       </section>
     </div>
@@ -293,12 +373,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { usarTorneioStore } from '../stores/torneio'
 import { useToast } from '../composables/useToast'
-import type { Aposta, Cupom, Jogador, RankingItem, Selecao, Torneio } from '../tipos'
+import type { Aposta, Cupom, Jogo, RankingItem, Selecao, Torneio } from '../tipos'
 
 const rota = useRoute()
 const torneioStore = usarTorneioStore()
@@ -310,23 +390,22 @@ const apostas = ref<Aposta[]>([])
 const ranking = ref<RankingItem[]>([])
 const carregando = ref(true)
 const carregandoRanking = ref(false)
-const mensagem = ref('')
-const erro = ref('')
 
 const tabAtiva = ref<'palpites' | 'ranking' | 'resultados'>('palpites')
-const subTabAtiva = ref<'grupos' | 'classificacao' | 'mata-mata' | 'finais'>('grupos')
+const subTabAtiva = ref<'jogos' | 'classificacao' | 'finais'>('jogos')
+const indiceFase = ref(0)
+const diaSelecionado = ref('')
 
 const tabs = [
-  { id: 'palpites' as const, nome: 'Palpites' },
-  { id: 'ranking' as const, nome: 'Ranking' },
-  { id: 'resultados' as const, nome: 'Meus Resultados' },
+  { id: 'palpites' as const, nome: 'Palpites', icone: 'M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125' },
+  { id: 'ranking' as const, nome: 'Ranking', icone: 'M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872' },
+  { id: 'resultados' as const, nome: 'Meus Resultados', icone: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z' },
 ]
 
 const subTabs = [
-  { id: 'grupos' as const, nome: 'Grupos' },
+  { id: 'jogos' as const, nome: 'Jogos' },
   { id: 'classificacao' as const, nome: 'Classificacao' },
-  { id: 'mata-mata' as const, nome: 'Mata-Mata' },
-  { id: 'finais' as const, nome: 'Finais' },
+  { id: 'finais' as const, nome: 'Finais & Artilheiro' },
 ]
 
 const placaresGrupos = ref<Record<number, { placar_mandante: string; placar_visitante: string }>>({})
@@ -335,21 +414,94 @@ const classificacaoGrupos = ref<Record<number, { primeiro: string; segundo: stri
 const artilheiroId = ref('')
 const palpitesFinais = ref({ campeao: '', vice_campeao: '', terceiro_colocado: '' })
 
-const jogosGrupos = computed(() => torneio.value?.jogos.filter((j) => j.fase.tipo === 'grupos') ?? [])
-const jogosEliminatorios = computed(() => torneio.value?.jogos.filter((j) => j.fase.tipo !== 'grupos') ?? [])
-const todasSelecoes = computed<Selecao[]>(() => torneio.value?.grupos.flatMap((g) => g.selecoes) ?? [])
-const jogadores = computed(() => {
-  return todasSelecoes.value.flatMap((s) =>
-    (s.jogadores ?? []).map((j) => ({ ...j, selecao_sigla: s.sigla })),
-  )
+// Fases e rodadas disponíveis
+const fasesRodadas = computed(() => {
+  if (!torneio.value) return []
+  const items: { fase: typeof torneio.value.fases[0]; rodada?: typeof torneio.value.jogos[0]['rodada'] }[] = []
+  const faseGrupos = torneio.value.fases.find(f => f.tipo === 'grupos')
+  if (faseGrupos) {
+    const rodadas = [...new Set(torneio.value.jogos.filter(j => j.fase_id === faseGrupos.id).map(j => j.rodada_id))].filter(Boolean)
+    const rodadaObjs = torneio.value.jogos.filter(j => j.rodada).map(j => j.rodada!).filter((r, i, a) => a.findIndex(x => x.id === r.id) === i).sort((a, b) => a.ordem - b.ordem)
+    for (const r of rodadaObjs) {
+      items.push({ fase: faseGrupos, rodada: r })
+    }
+  }
+  for (const fase of torneio.value.fases.filter(f => f.tipo !== 'grupos').sort((a, b) => a.ordem - b.ordem)) {
+    items.push({ fase })
+  }
+  return items
 })
 
-function jogosDoGrupo(grupoId: number) {
-  return jogosGrupos.value.filter((j) => j.grupo_id === grupoId)
+const faseAtual = computed(() => fasesRodadas.value[indiceFase.value]?.fase)
+const rodadaAtual = computed(() => fasesRodadas.value[indiceFase.value]?.rodada)
+
+// Jogos da fase/rodada atual
+const jogosFaseAtual = computed(() => {
+  if (!torneio.value || !faseAtual.value) return []
+  let jogos = torneio.value.jogos.filter(j => j.fase_id === faseAtual.value!.id)
+  if (rodadaAtual.value) {
+    jogos = jogos.filter(j => j.rodada_id === rodadaAtual.value!.id)
+  }
+  return jogos.sort((a, b) => new Date(a.data_hora_inicio).getTime() - new Date(b.data_hora_inicio).getTime())
+})
+
+// Dias com jogos
+const diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB']
+const diasComJogos = computed(() => {
+  const map = new Map<string, { data: string; diaSemana: string; diaNumero: number; totalJogos: number }>()
+  for (const jogo of jogosFaseAtual.value) {
+    const d = new Date(jogo.data_hora_inicio)
+    const key = jogo.data_hora_inicio.substring(0, 10)
+    if (!map.has(key)) {
+      map.set(key, { data: key, diaSemana: diasSemana[d.getDay()], diaNumero: d.getDate(), totalJogos: 0 })
+    }
+    map.get(key)!.totalJogos++
+  }
+  return [...map.values()].sort((a, b) => a.data.localeCompare(b.data))
+})
+
+// Jogos do dia selecionado
+const jogosDoDia = computed(() => {
+  if (!diaSelecionado.value) return jogosFaseAtual.value
+  return jogosFaseAtual.value.filter(j => j.data_hora_inicio.startsWith(diaSelecionado.value))
+})
+
+// Texto de fechamento
+const textoFechamento = computed(() => {
+  if (!faseAtual.value?.data_fechamento) return 'Sem prazo definido'
+  const diff = new Date(faseAtual.value.data_fechamento).getTime() - Date.now()
+  if (diff <= 0) return 'Fechado'
+  const dias = Math.floor(diff / 86400000)
+  if (dias > 30) return `Fecha em ${Math.floor(dias / 30)} meses`
+  if (dias > 0) return `Fecha em ${dias} dia${dias > 1 ? 's' : ''}`
+  const horas = Math.floor(diff / 3600000)
+  return `Fecha em ${horas}h`
+})
+
+const todasSelecoes = computed<Selecao[]>(() => torneio.value?.grupos.flatMap(g => g.selecoes) ?? [])
+const jogadores = computed(() => todasSelecoes.value.flatMap(s => (s.jogadores ?? []).map(j => ({ ...j, selecao_sigla: s.sigla }))))
+
+function faseAnterior() { if (indiceFase.value > 0) indiceFase.value-- }
+function faseProxima() { if (indiceFase.value < fasesRodadas.value.length - 1) indiceFase.value++ }
+
+function incrementar(jogoId: number, lado: 'mandante' | 'visitante') {
+  const campo = lado === 'mandante' ? 'placar_mandante' : 'placar_visitante'
+  const val = parseInt(placaresGrupos.value[jogoId][campo]) || 0
+  placaresGrupos.value[jogoId][campo] = String(val + 1)
+}
+
+function decrementar(jogoId: number, lado: 'mandante' | 'visitante') {
+  const campo = lado === 'mandante' ? 'placar_mandante' : 'placar_visitante'
+  const val = parseInt(placaresGrupos.value[jogoId][campo]) || 0
+  if (val > 0) placaresGrupos.value[jogoId][campo] = String(val - 1)
+}
+
+function formatarHora(dataHora: string) {
+  return new Date(dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 }
 
 function encontrarAposta(tipo: string, referenciaId?: number) {
-  return apostas.value.find((a) => {
+  return apostas.value.find(a => {
     if (a.tipo !== tipo) return false
     if (tipo === 'classificacao_grupo') return a.grupo_id === referenciaId
     if (tipo === 'artilheiro') return true
@@ -359,31 +511,29 @@ function encontrarAposta(tipo: string, referenciaId?: number) {
 }
 
 function preencherFormulario() {
-  for (const jogo of jogosGrupos.value) {
-    const aposta = encontrarAposta('placar_jogo_grupos', jogo.id)
+  if (!torneio.value) return
+  for (const jogo of torneio.value.jogos) {
+    const tipo = jogo.fase.tipo === 'grupos' ? 'placar_jogo_grupos' : 'placar_jogo_eliminatoria'
+    const aposta = encontrarAposta(tipo, jogo.id)
     placaresGrupos.value[jogo.id] = {
       placar_mandante: String(aposta?.conteudo.placar_mandante ?? ''),
       placar_visitante: String(aposta?.conteudo.placar_visitante ?? ''),
     }
+    if (jogo.fase.tipo !== 'grupos') {
+      placaresEliminatorios.value[jogo.id] = {
+        placar_mandante: String(aposta?.conteudo.placar_mandante ?? ''),
+        placar_visitante: String(aposta?.conteudo.placar_visitante ?? ''),
+        selecao_classificada_id: String(aposta?.conteudo.selecao_classificada_id ?? ''),
+      }
+    }
   }
-
-  for (const grupo of torneio.value?.grupos ?? []) {
+  for (const grupo of torneio.value.grupos) {
     const aposta = encontrarAposta('classificacao_grupo', grupo.id)
     classificacaoGrupos.value[grupo.id] = {
       primeiro: String(aposta?.conteudo.primeiro_colocado_id ?? ''),
       segundo: String(aposta?.conteudo.segundo_colocado_id ?? ''),
     }
   }
-
-  for (const jogo of jogosEliminatorios.value) {
-    const aposta = encontrarAposta('placar_jogo_eliminatoria', jogo.id)
-    placaresEliminatorios.value[jogo.id] = {
-      placar_mandante: String(aposta?.conteudo.placar_mandante ?? ''),
-      placar_visitante: String(aposta?.conteudo.placar_visitante ?? ''),
-      selecao_classificada_id: String(aposta?.conteudo.selecao_classificada_id ?? ''),
-    }
-  }
-
   artilheiroId.value = String(encontrarAposta('artilheiro')?.conteudo.jogador_id ?? '')
   palpitesFinais.value.campeao = String(encontrarAposta('campeao')?.conteudo.selecao_id ?? '')
   palpitesFinais.value.vice_campeao = String(encontrarAposta('vice_campeao')?.conteudo.selecao_id ?? '')
@@ -393,67 +543,49 @@ function preencherFormulario() {
 async function carregarDados() {
   carregando.value = true
   try {
-    const [respostaTorneio, respostaCupom, respostaApostas] = await Promise.all([
+    const [rT, rC, rA] = await Promise.all([
       requisicaoApi<{ torneio: Torneio }>('/torneio'),
       requisicaoApi<{ cupom: Cupom }>(`/cupons/${rota.params.id}`),
       requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${rota.params.id}/apostas`),
     ])
-    torneio.value = respostaTorneio.torneio
-    cupom.value = respostaCupom.cupom
-    apostas.value = respostaApostas.apostas
+    torneio.value = rT.torneio
+    cupom.value = rC.cupom
+    apostas.value = rA.apostas
     preencherFormulario()
   } catch {
-    erro.value = 'Falha ao carregar dados do cupom.'
+    mostrar('erro', 'Falha ao carregar dados do cupom.')
   } finally {
     carregando.value = false
   }
 }
 
-async function salvar(apostasParaSalvar: Record<string, unknown>[]) {
-  mensagem.value = ''
-  erro.value = ''
-  if (!apostasParaSalvar.length) {
-    mostrar('erro', 'Preencha pelo menos um palpite antes de salvar.')
-    return
-  }
+async function salvar(apostasArr: Record<string, unknown>[]) {
+  if (!apostasArr.length) { mostrar('erro', 'Preencha pelo menos um palpite.'); return }
   try {
-    await requisicaoApi(`/cupons/${rota.params.id}/apostas/lote`, {
-      metodo: 'POST',
-      corpo: { apostas: apostasParaSalvar },
-    })
+    await requisicaoApi(`/cupons/${rota.params.id}/apostas/lote`, { metodo: 'POST', corpo: { apostas: apostasArr } })
     mostrar('sucesso', 'Apostas salvas com sucesso!')
     await carregarDados()
-  } catch (error) {
-    mostrar('erro', error instanceof Error ? error.message : 'Falha ao salvar apostas.')
-  }
+  } catch (e) { mostrar('erro', e instanceof Error ? e.message : 'Falha ao salvar.') }
 }
 
-async function salvarPlacaresGrupos() {
-  await salvar(
-    jogosGrupos.value
-      .filter((j) => placaresGrupos.value[j.id].placar_mandante !== '' && placaresGrupos.value[j.id].placar_visitante !== '')
-      .map((j) => ({
-        tipo: 'placar_jogo_grupos',
-        jogo_id: j.id,
-        placar_mandante: Number(placaresGrupos.value[j.id].placar_mandante),
-        placar_visitante: Number(placaresGrupos.value[j.id].placar_visitante),
-      })),
-  )
+function salvarPalpitesDoDia() {
+  const jogosGrupo = jogosDoDia.value.filter(j => j.fase.tipo === 'grupos')
+  const jogosElim = jogosDoDia.value.filter(j => j.fase.tipo !== 'grupos')
+
+  const apostasGrupo = jogosGrupo
+    .filter(j => placaresGrupos.value[j.id].placar_mandante !== '' && placaresGrupos.value[j.id].placar_visitante !== '')
+    .map(j => ({ tipo: 'placar_jogo_grupos', jogo_id: j.id, placar_mandante: Number(placaresGrupos.value[j.id].placar_mandante), placar_visitante: Number(placaresGrupos.value[j.id].placar_visitante) }))
+
+  const apostasElim = jogosElim
+    .filter(j => placaresEliminatorios.value[j.id]?.placar_mandante !== '' && placaresEliminatorios.value[j.id]?.placar_visitante !== '' && placaresEliminatorios.value[j.id]?.selecao_classificada_id !== '')
+    .map(j => ({ tipo: 'placar_jogo_eliminatoria', jogo_id: j.id, placar_mandante: Number(placaresGrupos.value[j.id].placar_mandante), placar_visitante: Number(placaresGrupos.value[j.id].placar_visitante), selecao_classificada_id: Number(placaresEliminatorios.value[j.id].selecao_classificada_id) }))
+
+  salvar([...apostasGrupo, ...apostasElim])
 }
 
 async function salvarClassificacao() {
   if (!torneio.value) return
-  await salvar(
-    torneio.value.grupos
-      .filter((g) => classificacaoGrupos.value[g.id].primeiro !== '' && classificacaoGrupos.value[g.id].segundo !== '')
-      .map((g) => ({
-        tipo: 'classificacao_grupo',
-        torneio_id: torneio.value?.id,
-        grupo_id: g.id,
-        primeiro_colocado_id: Number(classificacaoGrupos.value[g.id].primeiro),
-        segundo_colocado_id: Number(classificacaoGrupos.value[g.id].segundo),
-      })),
-  )
+  await salvar(torneio.value.grupos.filter(g => classificacaoGrupos.value[g.id].primeiro !== '' && classificacaoGrupos.value[g.id].segundo !== '').map(g => ({ tipo: 'classificacao_grupo', torneio_id: torneio.value?.id, grupo_id: g.id, primeiro_colocado_id: Number(classificacaoGrupos.value[g.id].primeiro), segundo_colocado_id: Number(classificacaoGrupos.value[g.id].segundo) })))
 }
 
 async function salvarArtilheiro() {
@@ -461,49 +593,25 @@ async function salvarArtilheiro() {
   await salvar([{ tipo: 'artilheiro', torneio_id: torneio.value.id, jogador_id: Number(artilheiroId.value) }])
 }
 
-async function salvarMataMata() {
-  await salvar(
-    jogosEliminatorios.value
-      .filter((j) =>
-        placaresEliminatorios.value[j.id].placar_mandante !== '' &&
-        placaresEliminatorios.value[j.id].placar_visitante !== '' &&
-        placaresEliminatorios.value[j.id].selecao_classificada_id !== '',
-      )
-      .map((j) => ({
-        tipo: 'placar_jogo_eliminatoria',
-        jogo_id: j.id,
-        placar_mandante: Number(placaresEliminatorios.value[j.id].placar_mandante),
-        placar_visitante: Number(placaresEliminatorios.value[j.id].placar_visitante),
-        selecao_classificada_id: Number(placaresEliminatorios.value[j.id].selecao_classificada_id),
-      })),
-  )
-}
-
 async function salvarPalpitesFinais() {
   if (!torneio.value) return
-  await salvar(
-    [
-      ['campeao', palpitesFinais.value.campeao],
-      ['vice_campeao', palpitesFinais.value.vice_campeao],
-      ['terceiro_colocado', palpitesFinais.value.terceiro_colocado],
-    ]
-      .filter(([, valor]) => valor !== '')
-      .map(([tipo, valor]) => ({ tipo, torneio_id: torneio.value?.id, selecao_id: Number(valor) })),
-  )
+  await salvar([['campeao', palpitesFinais.value.campeao], ['vice_campeao', palpitesFinais.value.vice_campeao], ['terceiro_colocado', palpitesFinais.value.terceiro_colocado]].filter(([, v]) => v !== '').map(([tipo, valor]) => ({ tipo, torneio_id: torneio.value?.id, selecao_id: Number(valor) })))
 }
 
 async function carregarRanking() {
   if (!torneioStore.torneio) return
   carregandoRanking.value = true
   try {
-    const resposta = await requisicaoApi<{ ranking: RankingItem[] }>(`/torneios/${torneioStore.torneio.id}/ranking`)
-    ranking.value = resposta.ranking
-  } catch {
-    // Silencioso
-  } finally {
-    carregandoRanking.value = false
-  }
+    const r = await requisicaoApi<{ ranking: RankingItem[] }>(`/torneios/${torneioStore.torneio.id}/ranking`)
+    ranking.value = r.ranking
+  } catch {} finally { carregandoRanking.value = false }
 }
+
+// Auto-select first day when fase changes
+watch([indiceFase, jogosFaseAtual], () => {
+  if (diasComJogos.value.length) diaSelecionado.value = diasComJogos.value[0].data
+  else diaSelecionado.value = ''
+}, { immediate: true })
 
 onMounted(async () => {
   await Promise.all([carregarDados(), torneioStore.carregar()])
