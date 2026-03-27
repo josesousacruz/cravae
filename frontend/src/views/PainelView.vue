@@ -70,9 +70,40 @@
           </RouterLink>
         </div>
 
-        <!-- Cards horizontal scroll -->
-        <div v-else class="flex gap-4 overflow-x-auto scrollbar-none pb-2">
-          <CupomCard v-for="cupom in cupons" :key="cupom.id" :cupom="cupom" class="w-72 shrink-0 sm:w-80" />
+        <!-- Cards carousel -->
+        <div v-else class="relative group/carousel">
+          <!-- Left arrow -->
+          <button
+            v-if="cupons.length > 1"
+            @click="scrollCarousel(-1)"
+            class="absolute -left-3 top-1/2 z-10 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-bg-card border border-border text-text-muted shadow-lg transition opacity-0 group-hover/carousel:opacity-100 hover:bg-primary hover:text-bg hover:border-primary"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+          </button>
+
+          <!-- Cards -->
+          <div ref="carouselRef" class="flex snap-x snap-mandatory gap-4 overflow-x-auto scrollbar-none pb-2 scroll-smooth">
+            <CupomCard v-for="cupom in cupons" :key="cupom.id" :cupom="cupom" class="w-72 shrink-0 snap-start sm:w-80" />
+          </div>
+
+          <!-- Right arrow -->
+          <button
+            v-if="cupons.length > 1"
+            @click="scrollCarousel(1)"
+            class="absolute -right-3 top-1/2 z-10 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-bg-card border border-border text-text-muted shadow-lg transition opacity-0 group-hover/carousel:opacity-100 hover:bg-primary hover:text-bg hover:border-primary"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+          </button>
+
+          <!-- Dots indicator -->
+          <div v-if="cupons.length > 1" class="mt-3 flex justify-center gap-1.5">
+            <span
+              v-for="(_, i) in cupons"
+              :key="i"
+              class="h-1.5 rounded-full transition-all"
+              :class="i === cupomAtualIndex ? 'w-4 bg-primary' : 'w-1.5 bg-border'"
+            />
+          </div>
         </div>
       </div>
     </section>
@@ -85,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
@@ -99,6 +130,21 @@ const autenticacao = usarAutenticacaoStore()
 const torneioStore = usarTorneioStore()
 const cupons = ref<Cupom[]>([])
 const carregando = ref(true)
+const carouselRef = ref<HTMLElement | null>(null)
+const cupomAtualIndex = ref(0)
+
+function scrollCarousel(direction: number) {
+  if (!carouselRef.value) return
+  const cardWidth = carouselRef.value.querySelector(':scope > *')?.clientWidth ?? 320
+  carouselRef.value.scrollBy({ left: direction * (cardWidth + 16), behavior: 'smooth' })
+}
+
+function onCarouselScroll() {
+  if (!carouselRef.value) return
+  const el = carouselRef.value
+  const cardWidth = el.querySelector(':scope > *')?.clientWidth ?? 320
+  cupomAtualIndex.value = Math.round(el.scrollLeft / (cardWidth + 16))
+}
 
 async function carregarCupons() {
   carregando.value = true
@@ -115,5 +161,10 @@ async function carregarCupons() {
 onMounted(() => {
   carregarCupons()
   torneioStore.carregar()
+  carouselRef.value?.addEventListener('scroll', onCarouselScroll, { passive: true })
+})
+
+onUnmounted(() => {
+  carouselRef.value?.removeEventListener('scroll', onCarouselScroll)
 })
 </script>
