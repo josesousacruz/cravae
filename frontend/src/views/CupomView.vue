@@ -56,20 +56,20 @@
               </button>
             </div>
 
-            <!-- Day selector -->
-            <div class="flex gap-1 overflow-x-auto pb-1">
+            <!-- Day selector — horizontal scroll, compact -->
+            <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               <button
                 v-for="dia in diasComJogos"
                 :key="dia.data"
                 @click="diaSelecionado = dia.data"
-                class="flex shrink-0 flex-col items-center rounded-xl px-3 py-2 text-center transition cursor-pointer min-w-[56px]"
+                class="flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-center transition cursor-pointer"
                 :class="diaSelecionado === dia.data
                   ? 'bg-primary text-bg'
                   : 'bg-bg-card border border-border text-text-muted hover:border-primary/40'"
               >
                 <span class="text-[10px] uppercase font-medium">{{ dia.diaSemana }}</span>
-                <span class="text-lg font-bold leading-tight">{{ dia.diaNumero }}</span>
-                <span class="text-[10px]">({{ dia.totalJogos }})</span>
+                <span class="text-sm font-bold">{{ dia.diaNumero }}</span>
+                <span class="text-[10px] opacity-70"><sup>({{ dia.totalJogos }})</sup></span>
               </button>
             </div>
 
