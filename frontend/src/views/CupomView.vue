@@ -62,22 +62,34 @@
                 v-for="dia in diasComJogos"
                 :key="dia.data"
                 @click="diaSelecionado = dia.data"
-                class="flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-center transition cursor-pointer"
+                class="relative flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-center transition cursor-pointer"
                 :class="diaSelecionado === dia.data
                   ? 'bg-primary text-bg'
-                  : 'bg-bg-card border border-border text-text-muted hover:border-primary/40'"
+                  : dia.semPalpite
+                    ? 'bg-bg-card border border-warning/50 text-text-muted'
+                    : 'bg-bg-card border border-border text-text-muted hover:border-primary/40'"
               >
+                <!-- Dot: sem palpite -->
+                <span v-if="dia.semPalpite && diaSelecionado !== dia.data" class="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-warning" />
                 <span class="text-[10px] uppercase font-medium">{{ dia.diaSemana }}</span>
                 <span class="text-sm font-bold">{{ dia.diaNumero }}</span>
                 <span class="text-[10px] opacity-70"><sup>({{ dia.totalJogos }})</sup></span>
               </button>
             </div>
 
-            <!-- Deadline badge -->
+            <!-- Auto-save indicator -->
             <div class="flex flex-wrap items-center gap-3">
               <span class="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 {{ textoFechamento }}
+              </span>
+              <span v-if="salvando" class="inline-flex items-center gap-1.5 text-xs text-primary animate-pulse">
+                <svg class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                Salvando...
+              </span>
+              <span v-else-if="ultimoSalvo" class="inline-flex items-center gap-1 text-xs text-text-muted">
+                <svg class="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                Salvo
               </span>
             </div>
 
@@ -86,74 +98,69 @@
               <div
                 v-for="jogo in jogosDoDia"
                 :key="jogo.id"
-                class="rounded-2xl border border-border bg-bg-card p-5"
+                class="rounded-2xl border bg-bg-card p-5 transition-colors"
+                :class="temPalpite(jogo.id) ? 'border-primary/30' : 'border-border'"
               >
-                <!-- Match time / group -->
+                <!-- Top row: palpite status + group -->
                 <div class="mb-4 flex items-center justify-between">
-                  <span class="text-xs text-text-muted">{{ formatarHora(jogo.data_hora_inicio) }}</span>
+                  <div class="flex items-center gap-2">
+                    <span v-if="temPalpite(jogo.id)" class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                      <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                      Com palpite
+                    </span>
+                    <span v-else class="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning">
+                      <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                      Sem palpite
+                    </span>
+                    <span class="text-xs text-text-muted">{{ formatarHora(jogo.data_hora_inicio) }}</span>
+                  </div>
                   <span v-if="jogo.grupo" class="text-xs font-medium text-primary">{{ jogo.grupo.nome }}</span>
                   <span v-else class="text-xs font-medium text-primary">{{ jogo.fase.nome }}</span>
                 </div>
 
                 <!-- Teams + score -->
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3 sm:gap-6">
                   <!-- Home team -->
                   <div class="flex-1 text-center">
-                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-bg-input text-lg font-bold text-primary">
-                      {{ jogo.selecao_mandante.sigla.charAt(0) }}
-                    </div>
-                    <p class="mt-2 text-sm font-medium">{{ jogo.selecao_mandante.nome }}</p>
+                    <img
+                      :src="bandeira(jogo.selecao_mandante.sigla)"
+                      :alt="jogo.selecao_mandante.nome"
+                      class="mx-auto h-10 w-14 rounded object-cover shadow"
+                      @error="($event.target as HTMLImageElement).style.display='none'"
+                    />
+                    <p class="mt-2 text-xs font-medium sm:text-sm">{{ jogo.selecao_mandante.nome }}</p>
                   </div>
 
                   <!-- Score inputs with +/- buttons -->
-                  <div class="flex items-center gap-2">
-                    <div class="flex items-center gap-1">
-                      <button
-                        type="button"
-                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-border hover:text-text"
-                        @click="decrementar(jogo.id, 'mandante')"
-                      >-</button>
-                      <input
-                        v-model="placaresGrupos[jogo.id].placar_mandante"
-                        type="number" min="0"
-                        class="!w-12 text-center text-lg font-bold !rounded-lg !bg-bg-input !border-border"
-                        placeholder="0"
-                      />
-                      <button
-                        type="button"
-                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-border hover:text-text"
-                        @click="incrementar(jogo.id, 'mandante')"
-                      >+</button>
+                  <div class="flex items-center gap-1.5 sm:gap-2">
+                    <div class="flex items-center gap-0.5">
+                      <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="decrementarPlacar(jogo.id, 'mandante')">-</button>
+                      <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresGrupos[jogo.id]?.placar_mandante !== '' ? 'text-text' : 'text-text-muted'">
+                        {{ placaresGrupos[jogo.id]?.placar_mandante !== '' ? placaresGrupos[jogo.id]?.placar_mandante : '-' }}
+                      </div>
+                      <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="incrementarPlacar(jogo.id, 'mandante')">+</button>
                     </div>
 
-                    <span class="text-sm text-text-muted font-medium">x</span>
+                    <span class="text-xs text-text-muted font-medium">x</span>
 
-                    <div class="flex items-center gap-1">
-                      <button
-                        type="button"
-                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-border hover:text-text"
-                        @click="decrementar(jogo.id, 'visitante')"
-                      >-</button>
-                      <input
-                        v-model="placaresGrupos[jogo.id].placar_visitante"
-                        type="number" min="0"
-                        class="!w-12 text-center text-lg font-bold !rounded-lg !bg-bg-input !border-border"
-                        placeholder="0"
-                      />
-                      <button
-                        type="button"
-                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-border hover:text-text"
-                        @click="incrementar(jogo.id, 'visitante')"
-                      >+</button>
+                    <div class="flex items-center gap-0.5">
+                      <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="decrementarPlacar(jogo.id, 'visitante')">-</button>
+                      <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresGrupos[jogo.id]?.placar_visitante !== '' ? 'text-text' : 'text-text-muted'">
+                        {{ placaresGrupos[jogo.id]?.placar_visitante !== '' ? placaresGrupos[jogo.id]?.placar_visitante : '-' }}
+                      </div>
+                      <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="incrementarPlacar(jogo.id, 'visitante')">+</button>
                     </div>
                   </div>
 
                   <!-- Away team -->
                   <div class="flex-1 text-center">
-                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-bg-input text-lg font-bold text-primary">
-                      {{ jogo.selecao_visitante.sigla.charAt(0) }}
-                    </div>
-                    <p class="mt-2 text-sm font-medium">{{ jogo.selecao_visitante.nome }}</p>
+                    <img
+                      :src="bandeira(jogo.selecao_visitante.sigla)"
+                      :alt="jogo.selecao_visitante.nome"
+                      class="mx-auto h-10 w-14 rounded object-cover shadow"
+                      @error="($event.target as HTMLImageElement).style.display='none'"
+                    />
+                    <p class="mt-2 text-xs font-medium sm:text-sm">{{ jogo.selecao_visitante.nome }}</p>
                   </div>
                 </div>
 
@@ -161,7 +168,7 @@
                 <div v-if="jogo.fase.tipo !== 'grupos' && placaresEliminatorios[jogo.id]" class="mt-4">
                   <label class="block">
                     <span class="mb-1.5 block text-xs text-text-muted">Quem avanca?</span>
-                    <select v-model="placaresEliminatorios[jogo.id].selecao_classificada_id">
+                    <select v-model="placaresEliminatorios[jogo.id].selecao_classificada_id" @change="agendarAutoSave()">
                       <option value="">Selecione</option>
                       <option :value="String(jogo.selecao_mandante.id)">{{ jogo.selecao_mandante.nome }}</option>
                       <option :value="String(jogo.selecao_visitante.id)">{{ jogo.selecao_visitante.nome }}</option>
@@ -174,16 +181,6 @@
                 <p class="text-text-muted">Nenhum jogo neste dia.</p>
               </div>
             </div>
-
-            <!-- Save button -->
-            <button
-              v-if="jogosDoDia.length"
-              type="button"
-              @click="salvarPalpitesDoDia"
-              class="w-full rounded-xl bg-primary py-3 text-sm font-bold text-bg transition-all hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/20"
-            >
-              Salvar palpites
-            </button>
 
             <!-- Sub-tabs for other bet types -->
             <div class="flex gap-2 overflow-x-auto border-t border-border pt-4">
@@ -378,7 +375,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { usarTorneioStore } from '../stores/torneio'
 import { useToast } from '../composables/useToast'
-import type { Aposta, Cupom, Jogo, RankingItem, Selecao, Torneio } from '../tipos'
+import type { Aposta, Cupom, RankingItem, Selecao, Torneio } from '../tipos'
 
 const rota = useRoute()
 const torneioStore = usarTorneioStore()
@@ -414,13 +411,39 @@ const classificacaoGrupos = ref<Record<number, { primeiro: string; segundo: stri
 const artilheiroId = ref('')
 const palpitesFinais = ref({ campeao: '', vice_campeao: '', terceiro_colocado: '' })
 
+// Auto-save
+const salvando = ref(false)
+const ultimoSalvo = ref(false)
+let autoSaveTimer: ReturnType<typeof setTimeout> | null = null
+
+// FIFA code → ISO 2-letter for flags
+const fifaParaIso: Record<string, string> = {
+  MEX: 'mx', RSA: 'za', KOR: 'kr', CAN: 'ca', QAT: 'qa', SUI: 'ch',
+  BRA: 'br', MAR: 'ma', HAI: 'ht', SCO: 'gb-sct', USA: 'us', PAR: 'py',
+  AUS: 'au', GER: 'de', CUW: 'cw', CIV: 'ci', ECU: 'ec', NED: 'nl',
+  JPN: 'jp', TUN: 'tn', BEL: 'be', EGY: 'eg', IRN: 'ir', NZL: 'nz',
+  ESP: 'es', CPV: 'cv', KSA: 'sa', URU: 'uy', FRA: 'fr', SEN: 'sn',
+  NOR: 'no', ARG: 'ar', ALG: 'dz', AUT: 'at', JOR: 'jo', POR: 'pt',
+  UZB: 'uz', COL: 'co', ENG: 'gb-eng', CRO: 'hr', GHA: 'gh', PAN: 'pa',
+  UD4: '', UA1: '', UC3: '', UB2: '', IC1: '', IC2: '',
+}
+
+function bandeira(sigla: string): string {
+  const iso = fifaParaIso[sigla]
+  if (!iso) return ''
+  return `https://flagcdn.com/w80/${iso}.png`
+}
+
+function temPalpite(jogoId: number): boolean {
+  return placaresGrupos.value[jogoId]?.placar_mandante !== '' && placaresGrupos.value[jogoId]?.placar_visitante !== ''
+}
+
 // Fases e rodadas disponíveis
 const fasesRodadas = computed(() => {
   if (!torneio.value) return []
   const items: { fase: typeof torneio.value.fases[0]; rodada?: typeof torneio.value.jogos[0]['rodada'] }[] = []
   const faseGrupos = torneio.value.fases.find(f => f.tipo === 'grupos')
   if (faseGrupos) {
-    const rodadas = [...new Set(torneio.value.jogos.filter(j => j.fase_id === faseGrupos.id).map(j => j.rodada_id))].filter(Boolean)
     const rodadaObjs = torneio.value.jogos.filter(j => j.rodada).map(j => j.rodada!).filter((r, i, a) => a.findIndex(x => x.id === r.id) === i).sort((a, b) => a.ordem - b.ordem)
     for (const r of rodadaObjs) {
       items.push({ fase: faseGrupos, rodada: r })
@@ -445,17 +468,19 @@ const jogosFaseAtual = computed(() => {
   return jogos.sort((a, b) => new Date(a.data_hora_inicio).getTime() - new Date(b.data_hora_inicio).getTime())
 })
 
-// Dias com jogos
+// Dias com jogos + indicador sem palpite
 const diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB']
 const diasComJogos = computed(() => {
-  const map = new Map<string, { data: string; diaSemana: string; diaNumero: number; totalJogos: number }>()
+  const map = new Map<string, { data: string; diaSemana: string; diaNumero: number; totalJogos: number; semPalpite: boolean }>()
   for (const jogo of jogosFaseAtual.value) {
     const d = new Date(jogo.data_hora_inicio)
     const key = jogo.data_hora_inicio.substring(0, 10)
     if (!map.has(key)) {
-      map.set(key, { data: key, diaSemana: diasSemana[d.getDay()], diaNumero: d.getDate(), totalJogos: 0 })
+      map.set(key, { data: key, diaSemana: diasSemana[d.getDay()], diaNumero: d.getDate(), totalJogos: 0, semPalpite: false })
     }
-    map.get(key)!.totalJogos++
+    const entry = map.get(key)!
+    entry.totalJogos++
+    if (!temPalpite(jogo.id)) entry.semPalpite = true
   }
   return [...map.values()].sort((a, b) => a.data.localeCompare(b.data))
 })
@@ -484,16 +509,65 @@ const jogadores = computed(() => todasSelecoes.value.flatMap(s => (s.jogadores ?
 function faseAnterior() { if (indiceFase.value > 0) indiceFase.value-- }
 function faseProxima() { if (indiceFase.value < fasesRodadas.value.length - 1) indiceFase.value++ }
 
-function incrementar(jogoId: number, lado: 'mandante' | 'visitante') {
+// Score starts at '-' (empty). First click on + sets to 0, then 1, 2...
+function incrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
   const campo = lado === 'mandante' ? 'placar_mandante' : 'placar_visitante'
-  const val = parseInt(placaresGrupos.value[jogoId][campo]) || 0
-  placaresGrupos.value[jogoId][campo] = String(val + 1)
+  const current = placaresGrupos.value[jogoId][campo]
+  if (current === '') {
+    placaresGrupos.value[jogoId][campo] = '0'
+  } else {
+    placaresGrupos.value[jogoId][campo] = String(Number(current) + 1)
+  }
+  agendarAutoSave()
 }
 
-function decrementar(jogoId: number, lado: 'mandante' | 'visitante') {
+function decrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
   const campo = lado === 'mandante' ? 'placar_mandante' : 'placar_visitante'
-  const val = parseInt(placaresGrupos.value[jogoId][campo]) || 0
-  if (val > 0) placaresGrupos.value[jogoId][campo] = String(val - 1)
+  const current = placaresGrupos.value[jogoId][campo]
+  if (current === '' || current === '0') {
+    placaresGrupos.value[jogoId][campo] = ''
+  } else {
+    placaresGrupos.value[jogoId][campo] = String(Number(current) - 1)
+  }
+  agendarAutoSave()
+}
+
+// Auto-save debounce 2s
+function agendarAutoSave() {
+  if (autoSaveTimer) clearTimeout(autoSaveTimer)
+  autoSaveTimer = setTimeout(() => autoSalvar(), 2000)
+}
+
+async function autoSalvar() {
+  const todos = jogosFaseAtual.value
+  const jogosGrupo = todos.filter(j => j.fase.tipo === 'grupos')
+  const jogosElim = todos.filter(j => j.fase.tipo !== 'grupos')
+
+  const apostasGrupo = jogosGrupo
+    .filter(j => placaresGrupos.value[j.id].placar_mandante !== '' && placaresGrupos.value[j.id].placar_visitante !== '')
+    .map(j => ({ tipo: 'placar_jogo_grupos', jogo_id: j.id, placar_mandante: Number(placaresGrupos.value[j.id].placar_mandante), placar_visitante: Number(placaresGrupos.value[j.id].placar_visitante) }))
+
+  const apostasElim = jogosElim
+    .filter(j => placaresEliminatorios.value[j.id]?.placar_mandante !== '' && placaresEliminatorios.value[j.id]?.placar_visitante !== '' && placaresEliminatorios.value[j.id]?.selecao_classificada_id !== '')
+    .map(j => ({ tipo: 'placar_jogo_eliminatoria', jogo_id: j.id, placar_mandante: Number(placaresGrupos.value[j.id].placar_mandante), placar_visitante: Number(placaresGrupos.value[j.id].placar_visitante), selecao_classificada_id: Number(placaresEliminatorios.value[j.id].selecao_classificada_id) }))
+
+  const apostasArr = [...apostasGrupo, ...apostasElim]
+  if (!apostasArr.length) return
+
+  salvando.value = true
+  ultimoSalvo.value = false
+  try {
+    await requisicaoApi(`/cupons/${rota.params.id}/apostas/lote`, { metodo: 'POST', corpo: { apostas: apostasArr } })
+    // Reload apostas silently
+    const rA = await requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${rota.params.id}/apostas`)
+    apostas.value = rA.apostas
+    ultimoSalvo.value = true
+    setTimeout(() => { ultimoSalvo.value = false }, 3000)
+  } catch {
+    mostrar('erro', 'Falha ao salvar automaticamente.')
+  } finally {
+    salvando.value = false
+  }
 }
 
 function formatarHora(dataHora: string) {
@@ -563,24 +637,10 @@ async function salvar(apostasArr: Record<string, unknown>[]) {
   if (!apostasArr.length) { mostrar('erro', 'Preencha pelo menos um palpite.'); return }
   try {
     await requisicaoApi(`/cupons/${rota.params.id}/apostas/lote`, { metodo: 'POST', corpo: { apostas: apostasArr } })
-    mostrar('sucesso', 'Apostas salvas com sucesso!')
-    await carregarDados()
+    mostrar('sucesso', 'Salvo com sucesso!')
+    const rA = await requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${rota.params.id}/apostas`)
+    apostas.value = rA.apostas
   } catch (e) { mostrar('erro', e instanceof Error ? e.message : 'Falha ao salvar.') }
-}
-
-function salvarPalpitesDoDia() {
-  const jogosGrupo = jogosDoDia.value.filter(j => j.fase.tipo === 'grupos')
-  const jogosElim = jogosDoDia.value.filter(j => j.fase.tipo !== 'grupos')
-
-  const apostasGrupo = jogosGrupo
-    .filter(j => placaresGrupos.value[j.id].placar_mandante !== '' && placaresGrupos.value[j.id].placar_visitante !== '')
-    .map(j => ({ tipo: 'placar_jogo_grupos', jogo_id: j.id, placar_mandante: Number(placaresGrupos.value[j.id].placar_mandante), placar_visitante: Number(placaresGrupos.value[j.id].placar_visitante) }))
-
-  const apostasElim = jogosElim
-    .filter(j => placaresEliminatorios.value[j.id]?.placar_mandante !== '' && placaresEliminatorios.value[j.id]?.placar_visitante !== '' && placaresEliminatorios.value[j.id]?.selecao_classificada_id !== '')
-    .map(j => ({ tipo: 'placar_jogo_eliminatoria', jogo_id: j.id, placar_mandante: Number(placaresGrupos.value[j.id].placar_mandante), placar_visitante: Number(placaresGrupos.value[j.id].placar_visitante), selecao_classificada_id: Number(placaresEliminatorios.value[j.id].selecao_classificada_id) }))
-
-  salvar([...apostasGrupo, ...apostasElim])
 }
 
 async function salvarClassificacao() {
