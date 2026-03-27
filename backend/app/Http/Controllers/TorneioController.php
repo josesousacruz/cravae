@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Aposta;
+use App\Models\Jogo;
 use App\Models\PontuacaoCupom;
 use App\Models\Torneio;
 use Illuminate\Http\JsonResponse;
@@ -28,6 +30,26 @@ class TorneioController extends Controller
 
         return response()->json([
             'ranking' => $ranking,
+        ]);
+    }
+
+    public function palpiteiros(Jogo $jogo): JsonResponse
+    {
+        $palpiteiros = Aposta::query()
+            ->where('jogo_id', $jogo->id)
+            ->whereIn('tipo', ['placar_jogo_grupos', 'placar_jogo_eliminatoria'])
+            ->with('cupom.usuario:id,nome')
+            ->get()
+            ->map(fn (Aposta $a) => [
+                'nome' => $a->cupom?->usuario?->nome ?? 'Anonimo',
+                'cupom_codigo' => $a->cupom?->codigo,
+            ])
+            ->unique('cupom_codigo')
+            ->values();
+
+        return response()->json([
+            'total' => $palpiteiros->count(),
+            'palpiteiros' => $palpiteiros,
         ]);
     }
 

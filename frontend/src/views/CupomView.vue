@@ -101,7 +101,7 @@
                 class="rounded-2xl border bg-bg-card p-5 transition-colors"
                 :class="temPalpite(jogo.id) ? 'border-primary/30' : 'border-border'"
               >
-                <!-- Top row: palpite status + group -->
+                <!-- Top row: palpite status + quem palpitou + group -->
                 <div class="mb-4 flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <span v-if="temPalpite(jogo.id)" class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
@@ -114,8 +114,51 @@
                     </span>
                     <span class="text-xs text-text-muted">{{ formatarHora(jogo.data_hora_inicio) }}</span>
                   </div>
-                  <span v-if="jogo.grupo" class="text-xs font-medium text-primary">{{ jogo.grupo.nome }}</span>
-                  <span v-else class="text-xs font-medium text-primary">{{ jogo.fase.nome }}</span>
+                  <div class="flex items-center gap-3">
+                    <span v-if="jogo.grupo" class="text-xs font-medium text-primary">{{ jogo.grupo.nome }}</span>
+                    <span v-else class="text-xs font-medium text-primary">{{ jogo.fase.nome }}</span>
+                    <!-- Quem palpitou -->
+                    <div class="relative">
+                      <button
+                        type="button"
+                        class="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-[10px] font-medium text-primary transition hover:bg-primary/10"
+                        @click="togglePalpiteiros(jogo.id)"
+                      >
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                        Quem palpitou
+                      </button>
+                      <!-- Popover -->
+                      <div
+                        v-if="palpiteirosAberto === jogo.id"
+                        class="absolute right-0 top-full z-20 mt-1 w-56 rounded-xl border border-border bg-bg-card p-3 shadow-xl"
+                      >
+                        <div class="flex items-center justify-between mb-2">
+                          <span class="text-xs font-bold text-text">Palpiteiros</span>
+                          <span class="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary">
+                            {{ palpiteirosCache[jogo.id]?.total ?? '...' }}
+                          </span>
+                        </div>
+                        <div v-if="!palpiteirosCache[jogo.id]" class="py-2 text-center">
+                          <span class="text-xs text-text-muted animate-pulse">Carregando...</span>
+                        </div>
+                        <div v-else-if="palpiteirosCache[jogo.id].total === 0" class="py-2 text-center">
+                          <span class="text-xs text-text-muted">Ninguem palpitou ainda</span>
+                        </div>
+                        <div v-else class="max-h-32 space-y-1 overflow-y-auto">
+                          <div
+                            v-for="(p, pi) in palpiteirosCache[jogo.id].palpiteiros"
+                            :key="pi"
+                            class="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-bg-input"
+                          >
+                            <div class="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-[9px] font-bold text-primary">
+                              {{ p.nome.charAt(0).toUpperCase() }}
+                            </div>
+                            <span class="text-xs text-text-secondary truncate">{{ p.nome }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Teams + score -->
@@ -415,6 +458,26 @@ const palpitesFinais = ref({ campeao: '', vice_campeao: '', terceiro_colocado: '
 const salvando = ref(false)
 const ultimoSalvo = ref(false)
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null
+
+// Quem palpitou
+const palpiteirosAberto = ref<number | null>(null)
+const palpiteirosCache = ref<Record<number, { total: number; palpiteiros: { nome: string; cupom_codigo: string }[] }>>({})
+
+async function togglePalpiteiros(jogoId: number) {
+  if (palpiteirosAberto.value === jogoId) {
+    palpiteirosAberto.value = null
+    return
+  }
+  palpiteirosAberto.value = jogoId
+  if (!palpiteirosCache.value[jogoId]) {
+    try {
+      const r = await requisicaoApi<{ total: number; palpiteiros: { nome: string; cupom_codigo: string }[] }>(`/jogos/${jogoId}/palpiteiros`)
+      palpiteirosCache.value[jogoId] = r
+    } catch {
+      palpiteirosCache.value[jogoId] = { total: 0, palpiteiros: [] }
+    }
+  }
+}
 
 // FIFA code → ISO 2-letter for flags
 const fifaParaIso: Record<string, string> = {

@@ -24,6 +24,7 @@ Route::get('/status', function () {
 
 Route::get('/torneio', [TorneioController::class, 'publico']);
 Route::get('/torneios/{torneio}/ranking', [TorneioController::class, 'ranking']);
+Route::get('/jogos/{jogo}/palpiteiros', [TorneioController::class, 'palpiteiros']);
 
 Route::post('/cadastro', [AutenticacaoController::class, 'cadastrar']);
 Route::post('/entrar', [AutenticacaoController::class, 'entrar'])->middleware('throttle:entrar');
