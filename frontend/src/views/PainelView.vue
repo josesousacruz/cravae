@@ -70,9 +70,9 @@
           </RouterLink>
         </div>
 
-        <!-- Cards grid: 1 col mobile, 2 col desktop -->
-        <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <CupomCard v-for="cupom in cupons" :key="cupom.id" :cupom="cupom" />
+        <!-- Cards horizontal scroll -->
+        <div v-else class="flex gap-4 overflow-x-auto scrollbar-none pb-2">
+          <CupomCard v-for="cupom in cupons" :key="cupom.id" :cupom="cupom" class="w-72 shrink-0 sm:w-80" />
         </div>
       </div>
     </section>
