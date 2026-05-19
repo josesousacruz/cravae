@@ -8,11 +8,13 @@ use App\Models\Jogo;
 use App\Models\LogAposta;
 use App\Models\Usuario;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ServicoApostas
 {
     public function __construct(
         private readonly ServicoFechamentoApostas $servicoFechamentoApostas,
+        private readonly ServicoBracketCupom $servicoBracketCupom,
     ) {
     }
 
@@ -23,7 +25,7 @@ class ServicoApostas
     {
         DB::transaction(function () use ($cupom, $usuario, $itens) {
             foreach ($itens as $item) {
-                $normalizado = $this->normalizarItem($item);
+                $normalizado = $this->normalizarItem($cupom, $item);
                 $this->servicoFechamentoApostas->validar($cupom, $normalizado);
 
                 $existente = $this->localizarAposta($cupom, $normalizado);
@@ -55,12 +57,29 @@ class ServicoApostas
      * @param array<string, mixed> $item
      * @return array<string, mixed>
      */
-    private function normalizarItem(array $item): array
+    private function normalizarItem(Cupom $cupom, array $item): array
     {
         $tipo = $item['tipo'];
 
         if (in_array($tipo, ['placar_jogo_grupos', 'placar_jogo_eliminatoria'], true)) {
             $jogo = Jogo::query()->with(['fase', 'rodada'])->findOrFail($item['jogo_id']);
+            $placarMandante = (int) $item['placar_mandante'];
+            $placarVisitante = (int) $item['placar_visitante'];
+            $penalMandante = isset($item['penal_mandante']) ? (int) $item['penal_mandante'] : null;
+            $penalVisitante = isset($item['penal_visitante']) ? (int) $item['penal_visitante'] : null;
+
+            $selecaoClassificadaId = null;
+
+            if ($tipo === 'placar_jogo_eliminatoria') {
+                $selecaoClassificadaId = $this->resolverClassificadoEliminatoria(
+                    $cupom,
+                    $jogo,
+                    $placarMandante,
+                    $placarVisitante,
+                    $penalMandante,
+                    $penalVisitante,
+                );
+            }
 
             return [
                 'tipo' => $tipo,
@@ -72,26 +91,11 @@ class ServicoApostas
                 'selecao_id' => null,
                 'jogador_id' => null,
                 'conteudo' => [
-                    'placar_mandante' => (int) $item['placar_mandante'],
-                    'placar_visitante' => (int) $item['placar_visitante'],
-                    'selecao_classificada_id' => isset($item['selecao_classificada_id']) ? (int) $item['selecao_classificada_id'] : null,
-                ],
-            ];
-        }
-
-        if ($tipo === 'classificacao_grupo') {
-            return [
-                'tipo' => $tipo,
-                'torneio_id' => (int) $item['torneio_id'],
-                'fase_id' => null,
-                'rodada_id' => null,
-                'grupo_id' => (int) $item['grupo_id'],
-                'jogo_id' => null,
-                'selecao_id' => null,
-                'jogador_id' => null,
-                'conteudo' => [
-                    'primeiro_colocado_id' => (int) $item['primeiro_colocado_id'],
-                    'segundo_colocado_id' => (int) $item['segundo_colocado_id'],
+                    'placar_mandante' => $placarMandante,
+                    'placar_visitante' => $placarVisitante,
+                    'penal_mandante' => $penalMandante,
+                    'penal_visitante' => $penalVisitante,
+                    'selecao_classificada_id' => $selecaoClassificadaId,
                 ],
             ];
         }
@@ -112,19 +116,46 @@ class ServicoApostas
             ];
         }
 
-        return [
-            'tipo' => $tipo,
-            'torneio_id' => (int) $item['torneio_id'],
-            'fase_id' => null,
-            'rodada_id' => null,
-            'grupo_id' => null,
-            'jogo_id' => null,
-            'selecao_id' => (int) $item['selecao_id'],
-            'jogador_id' => null,
-            'conteudo' => [
-                'selecao_id' => (int) $item['selecao_id'],
-            ],
-        ];
+        throw ValidationException::withMessages([
+            'apostas' => "Tipo de aposta nao suportado: {$tipo}.",
+        ]);
+    }
+
+    private function resolverClassificadoEliminatoria(
+        Cupom $cupom,
+        Jogo $jogo,
+        int $placarMandante,
+        int $placarVisitante,
+        ?int $penalMandante,
+        ?int $penalVisitante,
+    ): int {
+        $participantes = $this->servicoBracketCupom->participantesDoJogo($cupom, $jogo);
+        $mandante = $participantes['mandante'];
+        $visitante = $participantes['visitante'];
+
+        if (! $mandante || ! $visitante) {
+            throw ValidationException::withMessages([
+                'apostas' => 'Este confronto do mata-mata ainda nao possui participantes definidos para o cupom.',
+            ]);
+        }
+
+        if ($placarMandante > $placarVisitante) {
+            return (int) $mandante->id;
+        }
+
+        if ($placarVisitante > $placarMandante) {
+            return (int) $visitante->id;
+        }
+
+        if ($penalMandante === null || $penalVisitante === null || $penalMandante === $penalVisitante) {
+            throw ValidationException::withMessages([
+                'apostas' => 'Empates no mata-mata exigem penaltis validos.',
+            ]);
+        }
+
+        return $penalMandante > $penalVisitante
+            ? (int) $mandante->id
+            : (int) $visitante->id;
     }
 
     /**

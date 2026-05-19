@@ -1,420 +1,590 @@
 <template>
-  <div>
-    <!-- ═══════════════════════════════════════════════════════════
-         HERO
-         ═══════════════════════════════════════════════════════════ -->
-    <section class="relative overflow-hidden py-16 sm:py-24">
-      <!-- Glow effect -->
-      <div class="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/10 blur-[120px]" />
-
-      <div class="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div class="grid items-center gap-12 lg:grid-cols-2">
-          <!-- Text -->
+  <div class="min-h-screen bg-[#070909] text-white">
+    <header class="sticky top-0 z-50 border-b border-emerald-400/15 bg-[#070909]/90 backdrop-blur-xl">
+      <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:h-20 sm:px-6 lg:px-8">
+        <RouterLink to="/" class="flex items-center gap-3">
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-400/30 bg-emerald-400/10 text-sm font-black tracking-[0.2em] text-emerald-300">
+            IW
+          </div>
           <div>
-            <h1 class="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
-              Bolao de Futebol
-              <span class="text-primary">Online</span>
-            </h1>
-            <p class="mt-4 max-w-lg text-text-secondary sm:text-lg">
-              Compre seus cupons, faca seus palpites em segundos e acompanhe o ranking
-              em tempo real &mdash; a Copa 2026 na ponta dos dedos.
-            </p>
-
-            <div class="mt-8 flex flex-wrap gap-3">
-              <RouterLink
-                v-if="autenticacao.estaAutenticado"
-                to="/painel"
-                class="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-bg transition-all hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/25"
-              >
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                Meus Cupons
-              </RouterLink>
-              <template v-else>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-bg transition-all hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/25"
-                  @click="$emit('abrirModalAuth', 'cadastro')"
-                >
-                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                  Comecar agora
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 font-semibold text-text transition-all hover:border-primary hover:text-primary"
-                  @click="$emit('abrirModalAuth', 'entrar')"
-                >
-                  Ja tenho conta
-                </button>
-              </template>
-            </div>
-
-            <!-- Stats -->
-            <div class="mt-10 flex gap-8">
-              <div>
-                <p class="text-3xl font-extrabold text-text">48</p>
-                <p class="text-xs text-text-muted uppercase tracking-wider">Selecoes</p>
-              </div>
-              <div>
-                <p class="text-3xl font-extrabold text-text">72</p>
-                <p class="text-xs text-text-muted uppercase tracking-wider">Jogos</p>
-              </div>
-              <div>
-                <p class="text-3xl font-extrabold text-text">12</p>
-                <p class="text-xs text-text-muted uppercase tracking-wider">Grupos</p>
-              </div>
-            </div>
+            <p class="text-sm font-bold tracking-[0.18em] text-white">INTER WORLD CUP</p>
+            <p class="text-[11px] uppercase tracking-[0.3em] text-emerald-300/80">Bolao 2026</p>
           </div>
+        </RouterLink>
 
-          <!-- Mockup placeholder -->
-          <div class="relative hidden lg:block">
-            <div class="relative mx-auto w-72">
-              <!-- Phone frame -->
-              <div class="rounded-[2rem] border-2 border-border bg-bg-card p-3 shadow-2xl shadow-primary/10">
-                <div class="rounded-[1.5rem] bg-bg overflow-hidden">
-                  <div class="bg-gradient-to-b from-primary-dim/40 to-bg p-4 text-center">
-                    <div class="mx-auto mt-4 h-4 w-20 rounded bg-primary/30" />
-                    <p class="mt-3 text-xs text-text-muted">Rodada 1</p>
-                    <div class="mt-4 space-y-2">
-                      <div v-for="n in 3" :key="n" class="flex items-center justify-between rounded-lg bg-bg-input px-3 py-2">
-                        <span class="text-xs font-semibold text-text-secondary">{{ ['MEX', 'BRA', 'ARG'][n-1] }}</span>
-                        <span class="text-xs text-text-muted">vs</span>
-                        <span class="text-xs font-semibold text-text-secondary">{{ ['RSA', 'MAR', 'ALG'][n-1] }}</span>
-                      </div>
-                    </div>
-                    <div class="mt-4 rounded-xl bg-primary/20 p-3">
-                      <p class="text-xs font-bold text-primary">RANKING AO VIVO</p>
-                      <div class="mt-2 space-y-1">
-                        <div v-for="n in 3" :key="n" class="flex items-center justify-between">
-                          <span class="text-[10px] text-text-muted">{{ n }}o</span>
-                          <div class="h-1.5 flex-1 mx-2 rounded bg-bg-input">
-                            <div class="h-full rounded bg-primary" :style="{ width: `${100 - n * 25}%` }" />
-                          </div>
-                          <span class="text-[10px] font-bold text-primary">{{ [87, 65, 42][n-1] }}pts</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <!-- Glow behind phone -->
-              <div class="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-primary/5 blur-3xl" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+        <nav class="hidden items-center gap-7 text-sm text-zinc-300 lg:flex">
+          <a href="#como-funciona" class="transition hover:text-white">Como funciona</a>
+          <a href="#vantagens" class="transition hover:text-white">Vantagens</a>
+          <a href="#pontuacao" class="transition hover:text-white">Pontuacao</a>
+          <a href="#faq" class="transition hover:text-white">FAQ</a>
+        </nav>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         COMO FUNCIONA
-         ═══════════════════════════════════════════════════════════ -->
-    <section class="py-16 sm:py-20">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 text-center">
-        <h2 class="text-2xl font-bold sm:text-3xl">
-          Como funciona o <span class="text-primary">Bolao</span>
-        </h2>
-        <p class="mt-3 text-sm text-text-secondary">Veja como e facil participar em poucos passos</p>
-
-        <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div
-            v-for="(passo, i) in passos"
-            :key="i"
-            class="group relative rounded-2xl border border-border bg-bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+        <div class="flex items-center gap-3">
+          <RouterLink
+            v-if="autenticacao.estaAutenticado"
+            to="/painel"
+            class="hidden rounded-full border border-emerald-400/30 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:border-emerald-300 hover:text-white sm:inline-flex"
           >
-            <!-- Step number -->
-            <div class="absolute -top-3 left-6 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-bg">
-              {{ i + 1 }}
-            </div>
-            <!-- Icon -->
-            <div class="mx-auto mt-2 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
-              <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" :d="passo.icone" />
-              </svg>
-            </div>
-            <h3 class="mt-4 text-sm font-bold">{{ passo.titulo }}</h3>
-            <p class="mt-2 text-xs text-text-muted leading-relaxed">{{ passo.descricao }}</p>
+            Meus Cupons
+          </RouterLink>
+          <template v-else>
+            <button
+              type="button"
+              class="hidden rounded-full px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white sm:inline-flex"
+              @click="$emit('abrirModalAuth', 'entrar')"
+            >
+              Entrar
+            </button>
+            <button
+              type="button"
+              class="rounded-full bg-emerald-400 px-4 py-2 text-sm font-bold text-[#04110c] shadow-[0_0_24px_rgba(52,211,153,0.28)] transition hover:scale-[1.02] hover:bg-emerald-300"
+              @click="$emit('abrirModalAuth', autenticacao.estaAutenticado ? 'entrar' : 'cadastro')"
+            >
+              {{ autenticacao.estaAutenticado ? 'Abrir painel' : 'Criar conta' }}
+            </button>
+          </template>
+        </div>
+      </div>
+    </header>
+
+    <section class="relative overflow-hidden border-b border-white/5">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(52,211,153,0.08),transparent_28%),radial-gradient(circle_at_65%_25%,rgba(16,185,129,0.18),transparent_30%),radial-gradient(circle_at_50%_100%,rgba(16,185,129,0.08),transparent_40%)]" />
+      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-8 right-[-6rem] hidden w-60 opacity-30 xl:block">
+
+      <div class="relative mx-auto grid max-w-7xl gap-16 px-4 py-14 sm:px-6 lg:grid-cols-[1.02fr_1.1fr] lg:px-8 lg:py-24">
+        <div class="max-w-xl">
+          <div class="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-emerald-300">
+            Copa do Mundo 2026
           </div>
+          <h1 class="mt-8 text-5xl font-black leading-[0.95] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
+            Compre seu cupom,
+            <span class="block text-emerald-400">faca seus palpites</span>
+            <span class="block">e dispute o premio</span>
+          </h1>
+          <p class="mt-6 max-w-lg text-base leading-8 text-zinc-300 sm:text-xl">
+            Cada cupom e uma entrada independente no bolao da Copa 2026. Acompanhe sua pontuacao, suba no ranking e veja quem leva o premio no fim da competicao.
+          </p>
+
+          <div class="mt-10 flex flex-col gap-4 sm:flex-row">
+            <RouterLink
+              v-if="autenticacao.estaAutenticado"
+              to="/painel"
+              class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-7 py-4 text-sm font-black text-[#04110c] shadow-[0_0_32px_rgba(52,211,153,0.32)] transition hover:scale-[1.02] hover:bg-emerald-300"
+            >
+              Abrir meus cupons
+              <span aria-hidden="true">-></span>
+            </RouterLink>
+            <template v-else>
+              <button
+                type="button"
+                class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-7 py-4 text-sm font-black text-[#04110c] shadow-[0_0_32px_rgba(52,211,153,0.32)] transition hover:scale-[1.02] hover:bg-emerald-300"
+                @click="$emit('abrirModalAuth', 'cadastro')"
+              >
+                Criar conta e entrar
+                <span aria-hidden="true">-></span>
+              </button>
+              <button
+                type="button"
+                class="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-400/40 bg-white/[0.02] px-7 py-4 text-sm font-bold text-white transition hover:border-emerald-300 hover:bg-emerald-400/10"
+                @click="$emit('abrirModalAuth', 'entrar')"
+              >
+                Ja tenho conta
+              </button>
+            </template>
+          </div>
+
+          <p class="mt-8 flex items-center gap-2 text-sm text-zinc-400">
+            <span class="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.8)]" />
+            {{ provaSocial }}
+          </p>
+
+          <div class="mt-10 grid max-w-md grid-cols-3 gap-4">
+            <article
+              v-for="item in estatisticasHero"
+              :key="item.label"
+              class="rounded-[1.75rem] border border-white/8 bg-white/[0.03] px-4 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+            >
+              <p class="text-[11px] uppercase tracking-[0.24em] text-emerald-300">{{ item.label }}</p>
+              <p class="mt-3 text-3xl font-black tracking-[-0.04em] text-white">{{ item.value }}</p>
+              <p class="mt-1 text-xs text-zinc-500">{{ item.caption }}</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="relative min-h-[24rem] lg:min-h-[40rem]">
+          <div class="absolute inset-x-10 top-16 h-72 rounded-full bg-emerald-400/20 blur-[110px] sm:h-96" />
+          <img :src="heroLeftAsset" alt="Tela lateral esquerda do app" class="absolute left-[2%] top-[18%] hidden w-[28%] rotate-[-16deg] opacity-70 drop-shadow-[0_24px_60px_rgba(7,12,10,0.6)] md:block">
+          <img :src="heroCenterAsset" alt="Tela principal do app" class="relative z-10 mx-auto w-[54%] min-w-[18rem] drop-shadow-[0_32px_80px_rgba(0,0,0,0.65)] sm:w-[49%]">
+          <img :src="heroRightAsset" alt="Tela lateral direita do app" class="absolute right-[1%] top-[26%] hidden w-[29%] rotate-[17deg] opacity-85 drop-shadow-[0_24px_60px_rgba(7,12,10,0.6)] md:block">
         </div>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         O JEITO INTELIGENTE
-         ═══════════════════════════════════════════════════════════ -->
-    <section class="py-16 sm:py-20">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6">
-        <div class="grid items-center gap-12 lg:grid-cols-2">
-          <!-- Image placeholder -->
-          <div class="relative">
-            <div class="rounded-2xl border border-border bg-bg-card p-6 shadow-xl shadow-primary/5">
-              <div class="space-y-3">
-                <div v-for="(feat, i) in featuresInteligente" :key="i" class="flex items-center gap-3 rounded-xl bg-bg-input p-3">
-                  <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/20">
-                    <svg class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span class="text-sm text-text-secondary">{{ feat }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="pointer-events-none absolute -inset-4 -z-10 rounded-3xl bg-primary/5 blur-2xl" />
-          </div>
+    <section id="como-funciona" class="relative overflow-hidden border-b border-white/5 py-20 sm:py-24">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Passo a passo</p>
+          <h2 class="mt-4 text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">
+            Como funciona o bolao
+          </h2>
+          <p class="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-400">
+            Um fluxo simples para comprar o cupom, registrar os palpites, somar pontos e disputar o premio ate o fim da competicao.
+          </p>
+        </div>
 
-          <!-- Text -->
-          <div>
-            <h2 class="text-2xl font-bold sm:text-3xl">
-              O jeito inteligente de<br />fazer <span class="text-primary">bolao</span>
+        <div class="mt-14 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+          <article
+            v-for="passo in passos"
+            :key="passo.titulo"
+            class="group rounded-[2rem] border border-white/7 bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30"
+          >
+            <div class="rounded-[1.6rem] border border-emerald-400/10 bg-[#0d1311] p-3">
+              <img :src="passo.imagem" :alt="passo.titulo" class="mx-auto w-full rounded-[1.2rem]">
+            </div>
+            <div class="mt-5 flex items-center gap-3">
+              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-400/15 text-xs font-black text-emerald-300">
+                {{ passo.numero }}
+              </div>
+              <h3 class="text-base font-bold text-white">{{ passo.titulo }}</h3>
+            </div>
+            <p class="mt-3 text-sm leading-6 text-zinc-400">{{ passo.descricao }}</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="vantagens" class="relative overflow-hidden border-b border-white/5 py-20 sm:py-24">
+      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-10 right-[-7rem] hidden w-72 opacity-25 xl:block">
+      <div class="absolute left-[18%] top-16 h-64 w-64 rounded-full bg-emerald-400/8 blur-[120px]" />
+      <div class="relative mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
+        <div class="max-w-2xl">
+          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Vantagens</p>
+          <h2 class="mt-4 text-4xl font-black leading-tight tracking-[-0.04em] text-white sm:text-6xl">
+            O jeito mais claro de fazer bolao
+          </h2>
+          <p class="mt-6 max-w-xl text-lg leading-8 text-zinc-400">
+            O produto concentra o essencial da Copa 2026 em um unico fluxo: cupons independentes, palpites completos, calculo auditavel e ranking atualizado conforme os resultados sao lancados.
+          </p>
+
+          <ul class="mt-8 space-y-4">
+            <li v-for="item in beneficios" :key="item" class="flex items-start gap-3 text-base leading-7 text-zinc-200">
+              <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-400/10 text-xs font-black text-emerald-300">
+                ✓
+              </span>
+              <span>{{ item }}</span>
+            </li>
+          </ul>
+
+          <p class="mt-10 text-sm text-zinc-500">
+            Tudo pensado para reduzir confusao no palpite, na pontuacao e na operacao do torneio.
+          </p>
+        </div>
+
+        <div class="relative flex justify-center lg:justify-end">
+          <div class="absolute h-72 w-72 rounded-full bg-emerald-400/15 blur-[120px]" />
+          <img :src="featurePhoneAsset" alt="Tela inclinada do produto" class="relative z-10 w-[20rem] max-w-full drop-shadow-[0_32px_90px_rgba(0,0,0,0.7)] sm:w-[24rem]">
+        </div>
+      </div>
+    </section>
+
+    <section id="pontuacao" class="border-b border-white/5 py-20 sm:py-24">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+          <div class="max-w-2xl">
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Pontuacao</p>
+            <h2 class="mt-4 text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">
+            Defina o nivel da disputa
             </h2>
-            <p class="mt-4 text-sm text-text-secondary leading-relaxed">
-              Esqueca planilhas e grupos de WhatsApp. O Inter World Cup faz tudo por voce:
-              pontuacao automatica, ranking em tempo real e controle total dos seus palpites.
+            <p class="mt-5 text-lg leading-8 text-zinc-400">
+              O administrador define as regras do torneio e o sistema recalcula a pontuacao dos cupons quando os resultados entram. Assim, o participante entende com clareza por que subiu ou caiu no ranking.
             </p>
 
-            <ul class="mt-6 space-y-3">
-              <li v-for="(item, i) in beneficios" :key="i" class="flex items-start gap-3">
-                <svg class="mt-0.5 h-5 w-5 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="text-sm text-text-secondary">{{ item }}</span>
+            <ul class="mt-8 space-y-4">
+              <li class="flex items-start gap-3 text-base leading-7 text-zinc-200">
+                <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/25 bg-emerald-400/10 text-[11px] font-black text-emerald-300">✓</span>
+                <span>Regras configuraveis por torneio para refletir o modelo de disputa desejado.</span>
+              </li>
+              <li class="flex items-start gap-3 text-base leading-7 text-zinc-200">
+                <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/25 bg-emerald-400/10 text-[11px] font-black text-emerald-300">✓</span>
+                <span>Eventos de pontuacao por cupom para auditar de onde veio cada acerto.</span>
+              </li>
+              <li class="flex items-start gap-3 text-base leading-7 text-zinc-200">
+                <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/25 bg-emerald-400/10 text-[11px] font-black text-emerald-300">✓</span>
+                <span>Ranking consolidado com desempate por desempenho, sem depender de leitura manual.</span>
               </li>
             </ul>
           </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         REGRAS DE PONTUACAO
-         ═══════════════════════════════════════════════════════════ -->
-    <section class="py-16 sm:py-20">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 text-center">
-        <h2 class="text-2xl font-bold sm:text-3xl">
-          Defina o nivel da <span class="text-primary">disputa</span>
-        </h2>
-        <p class="mt-3 text-sm text-text-secondary">Pontuacao configurada para valorizar quem realmente entende de futebol</p>
-
-        <div v-if="regras.length" class="mt-12 mx-auto max-w-2xl">
-          <div class="rounded-2xl border border-border bg-bg-card overflow-hidden">
-            <div class="bg-gradient-to-r from-primary-dim/40 to-bg-card px-6 py-4">
-              <h3 class="text-sm font-bold text-primary uppercase tracking-wider">Tabela de Pontos</h3>
-            </div>
-            <div class="divide-y divide-border/50">
-              <div
-                v-for="regra in regras"
-                :key="regra.id"
-                class="flex items-center justify-between px-6 py-3 transition-colors hover:bg-bg-card-hover"
-              >
-                <div>
-                  <p class="text-sm font-medium">{{ regra.nome }}</p>
-                  <p v-if="regra.descricao" class="text-xs text-text-muted">{{ regra.descricao }}</p>
-                </div>
-                <span class="shrink-0 ml-4 rounded-full bg-primary/20 px-3 py-1 text-sm font-bold text-primary">
-                  +{{ regra.pontos }} pts
-                </span>
-              </div>
-            </div>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <article
+              v-for="regra in regrasExibidas"
+              :key="regra.id"
+              class="rounded-[1.8rem] border border-white/8 bg-white/[0.03] p-6"
+            >
+              <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">Regra ativa</p>
+              <h3 class="mt-4 text-lg font-bold text-white">{{ regra.nome }}</h3>
+              <p class="mt-3 text-sm leading-6 text-zinc-400">{{ regra.descricao || 'Pontuacao configurada para o torneio atual.' }}</p>
+              <p class="mt-5 text-3xl font-black tracking-[-0.04em] text-white">+{{ regra.pontos }}</p>
+            </article>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         COMPRE SEU CUPOM (CTA)
-         ═══════════════════════════════════════════════════════════ -->
-    <section class="py-16 sm:py-20">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6">
-        <div class="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-primary-dim/30 via-bg-card to-bg-card p-8 sm:p-12 text-center">
-          <!-- Glow -->
-          <div class="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-primary/10 blur-[100px]" />
+    <section class="border-b border-white/5 py-20 sm:py-24">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Perfis de uso</p>
+          <h2 class="mt-4 text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">
+            O sistema atende quem joga e quem administra
+          </h2>
+        </div>
 
-          <div class="relative">
-            <span class="inline-block rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
-              Copa do Mundo 2026
-            </span>
-            <h2 class="mt-4 text-2xl font-bold sm:text-3xl">
-              Garanta sua entrada no bolao
-            </h2>
-            <p class="mx-auto mt-3 max-w-lg text-sm text-text-secondary">
-              Cada cupom e um conjunto independente de palpites. Compre quantos quiser
-              e aumente suas chances de acertar.
-            </p>
-
-            <div class="mt-8 inline-flex flex-col items-center">
-              <p class="text-4xl font-extrabold text-primary">R$ 10,00</p>
-              <p class="mt-1 text-xs text-text-muted">por cupom</p>
-            </div>
-
-            <div class="mt-8">
-              <RouterLink
-                v-if="autenticacao.estaAutenticado"
-                to="/checkout"
-                class="inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3 font-semibold text-bg transition-all hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/25"
-              >
-                Comprar cupom
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-              </RouterLink>
-              <button
-                v-else
-                type="button"
-                class="inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3 font-semibold text-bg transition-all hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/25"
-                @click="$emit('abrirModalAuth', 'cadastro')"
-              >
-                Criar conta e comprar
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-              </button>
-            </div>
-          </div>
+        <div class="mt-14 grid gap-6 lg:grid-cols-3">
+          <article
+            v-for="perfil in perfisUso"
+            :key="perfil.nome"
+            class="rounded-[2rem] border border-white/7 bg-white/[0.03] p-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+          >
+            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">{{ perfil.badge }}</p>
+            <h3 class="mt-4 text-2xl font-black text-white">{{ perfil.nome }}</h3>
+            <p class="mt-4 text-sm leading-7 text-zinc-400">{{ perfil.descricao }}</p>
+            <ul class="mt-6 space-y-3">
+              <li v-for="item in perfil.itens" :key="item" class="flex items-start gap-3 text-sm leading-6 text-zinc-200">
+                <span class="mt-1 text-emerald-300">•</span>
+                <span>{{ item }}</span>
+              </li>
+            </ul>
+          </article>
         </div>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         FAQ
-         ═══════════════════════════════════════════════════════════ -->
-    <section class="py-16 sm:py-20">
-      <div class="mx-auto max-w-3xl px-4 sm:px-6 text-center">
-        <h2 class="text-2xl font-bold sm:text-3xl">
-          Perguntas frequentes sobre o<br /><span class="text-primary">Bolao</span>
-        </h2>
-        <p class="mt-3 text-sm text-text-secondary">Tudo o que voce precisa saber</p>
+    <section class="border-b border-white/5 py-20 sm:py-24">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Cobertura</p>
+          <h2 class="mt-4 text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">
+            Base pronta da Copa 2026
+          </h2>
+          <p class="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-400">
+            Como cada cupom depende do estado real da Copa, a base do torneio precisa estar consistente. Grupos, selecoes, fases e jogos sustentam a comparacao entre diferentes leituras.
+          </p>
+        </div>
 
-        <div class="mt-10 space-y-3 text-left">
-          <div
-            v-for="(item, i) in faq"
-            :key="i"
-            class="rounded-xl border border-border bg-bg-card overflow-hidden transition-all"
-            :class="faqAberto === i ? 'border-primary/30' : ''"
+        <div class="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <article
+            v-for="selecao in selecoesDestaque"
+            :key="selecao.id"
+            class="rounded-[1.6rem] border border-white/8 bg-white/[0.03] px-4 py-5 text-center"
+          >
+            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-400/10 text-base font-black text-emerald-300">
+              {{ selecao.sigla }}
+            </div>
+            <p class="mt-4 text-sm font-bold text-white">{{ selecao.nome }}</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" class="border-b border-white/5 py-20 sm:py-24">
+      <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">FAQ</p>
+          <h2 class="mt-4 text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">
+            Perguntas frequentes sobre o
+            <span class="block text-emerald-400">Inter World Cup</span>
+          </h2>
+        </div>
+
+        <div class="mt-14 space-y-4">
+          <article
+            v-for="(item, indice) in faq"
+            :key="item.pergunta"
+            class="overflow-hidden rounded-[1.7rem] border border-white/8 bg-white/[0.03]"
           >
             <button
               type="button"
-              class="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-bg-card-hover"
-              @click="faqAberto = faqAberto === i ? -1 : i"
+              class="flex w-full items-center justify-between gap-5 px-6 py-5 text-left"
+              @click="faqAberto = faqAberto === indice ? -1 : indice"
             >
-              <span class="text-sm font-medium pr-4">{{ item.pergunta }}</span>
-              <svg
-                class="h-5 w-5 shrink-0 text-text-muted transition-transform duration-200"
-                :class="faqAberto === i ? 'rotate-180' : ''"
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+              <span class="text-base font-semibold text-white">{{ item.pergunta }}</span>
+              <span class="text-xl text-zinc-500">{{ faqAberto === indice ? '-' : '+' }}</span>
             </button>
-            <div
-              class="overflow-hidden transition-all duration-200"
-              :class="faqAberto === i ? 'max-h-40 pb-4' : 'max-h-0'"
-            >
-              <p class="px-5 text-sm text-text-secondary leading-relaxed">{{ item.resposta }}</p>
+            <div class="grid transition-[grid-template-rows] duration-300" :class="faqAberto === indice ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'">
+              <div class="overflow-hidden">
+                <p class="px-6 pb-6 text-sm leading-7 text-zinc-400">{{ item.resposta }}</p>
+              </div>
             </div>
-          </div>
+          </article>
         </div>
 
-        <!-- CTA below FAQ -->
-        <div class="mt-10 flex flex-wrap justify-center gap-3">
-          <button
-            v-if="!autenticacao.estaAutenticado"
-            type="button"
-            class="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-bg transition-all hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/25"
-            @click="$emit('abrirModalAuth', 'cadastro')"
-          >
-            Criar minha conta
-          </button>
+        <div class="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <RouterLink
-            v-if="!autenticacao.estaAutenticado"
-            to="/"
-            class="rounded-full border border-border px-6 py-2.5 text-sm font-semibold text-text-secondary transition-all hover:border-primary hover:text-primary"
-            @click.prevent="$emit('abrirModalAuth', 'entrar')"
+            v-if="autenticacao.estaAutenticado"
+            to="/painel"
+            class="inline-flex items-center justify-center rounded-full bg-emerald-400 px-7 py-3 text-sm font-black text-[#04110c] transition hover:bg-emerald-300"
           >
-            Ja tenho conta
+            Ir para meu painel
           </RouterLink>
+          <template v-else>
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-full bg-emerald-400 px-7 py-3 text-sm font-black text-[#04110c] transition hover:bg-emerald-300"
+              @click="$emit('abrirModalAuth', 'cadastro')"
+            >
+              Criar minha conta
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-full border border-white/10 px-7 py-3 text-sm font-semibold text-zinc-200 transition hover:border-emerald-400/30 hover:text-white"
+              @click="$emit('abrirModalAuth', 'entrar')"
+            >
+              Ja tenho conta
+            </button>
+          </template>
         </div>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         FOOTER
-         ═══════════════════════════════════════════════════════════ -->
-    <footer class="border-t border-border py-10">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6">
-        <div class="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
-          <div class="flex items-center gap-2">
-            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-bg">IW</div>
-            <span class="text-sm font-bold text-text-secondary">Inter World Cup</span>
+    <footer class="relative overflow-hidden py-14">
+      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-0 right-[-6rem] hidden w-64 opacity-15 xl:block">
+      <div class="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] lg:px-8">
+        <div>
+          <div class="flex items-center gap-3">
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-400/30 bg-emerald-400/10 text-sm font-black tracking-[0.2em] text-emerald-300">
+              IW
+            </div>
+            <div>
+              <p class="text-sm font-bold tracking-[0.18em] text-white">INTER WORLD CUP</p>
+              <p class="text-[11px] uppercase tracking-[0.3em] text-emerald-300/80">Bolao 2026</p>
+            </div>
           </div>
-          <p class="text-xs text-text-muted">&copy; 2026 Inter World Cup. Todos os direitos reservados.</p>
+          <p class="mt-6 max-w-sm text-sm leading-7 text-zinc-500">
+            Plataforma focada em cupons independentes para que cada usuario possa testar multiplas estrategias, comparar desempenho e acompanhar o ranking da Copa com clareza.
+          </p>
         </div>
+
+        <div>
+          <h3 class="text-sm font-bold uppercase tracking-[0.25em] text-zinc-300">Navegacao</h3>
+          <ul class="mt-5 space-y-3 text-sm text-zinc-500">
+            <li><a href="#como-funciona" class="transition hover:text-white">Como funciona</a></li>
+            <li><a href="#vantagens" class="transition hover:text-white">Vantagens</a></li>
+            <li><a href="#pontuacao" class="transition hover:text-white">Pontuacao</a></li>
+            <li><a href="#faq" class="transition hover:text-white">FAQ</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-bold uppercase tracking-[0.25em] text-zinc-300">Produto</h3>
+          <ul class="mt-5 space-y-3 text-sm text-zinc-500">
+            <li>Cupons independentes</li>
+            <li>Palpites por fase</li>
+            <li>Ranking consolidado</li>
+            <li>Painel admin</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-bold uppercase tracking-[0.25em] text-zinc-300">Acesso</h3>
+          <div class="mt-5 space-y-3">
+            <RouterLink
+              v-if="autenticacao.estaAutenticado"
+              to="/painel"
+              class="inline-flex rounded-full border border-emerald-400/25 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:border-emerald-300 hover:text-white"
+            >
+              Abrir painel
+            </RouterLink>
+            <template v-else>
+              <button
+                type="button"
+                class="inline-flex rounded-full bg-emerald-400 px-4 py-2 text-sm font-black text-[#04110c] transition hover:bg-emerald-300"
+                @click="$emit('abrirModalAuth', 'cadastro')"
+              >
+                Criar conta
+              </button>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <div class="mx-auto mt-12 max-w-7xl border-t border-white/5 px-4 pt-6 text-xs text-zinc-600 sm:px-6 lg:px-8">
+        © 2026 Inter World Cup. Todos os direitos reservados.
       </div>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { usarAutenticacaoStore } from '../stores/autenticacao'
+import featurePhoneAsset from '../assets/feature-phone-tilted.webp'
+import heroCenterAsset from '../assets/Hero-center.webp'
+import heroLeftAsset from '../assets/hero-left.webp'
+import heroRightAsset from '../assets/Hero-right.webp'
+import step01Asset from '../assets/step-01.webp'
+import step02Asset from '../assets/step-02.webp'
+import step03Asset from '../assets/step-03.webp'
+import step04Asset from '../assets/step-04.webp'
+import step05Asset from '../assets/step-05.webp'
+import trophyAsset from '../assets/trophy.webp'
 import { requisicaoApi } from '../services/api'
-import type { RegraPontuacao, Torneio } from '../tipos'
+import { usarAutenticacaoStore } from '../stores/autenticacao'
+import type { RegraPontuacao, Selecao, Torneio } from '../tipos'
 
 defineEmits<{ abrirModalAuth: [modo: 'entrar' | 'cadastro'] }>()
 
 const autenticacao = usarAutenticacaoStore()
-const regras = ref<RegraPontuacao[]>([])
 const faqAberto = ref(-1)
+const torneio = ref<Torneio | null>(null)
+const regras = ref<RegraPontuacao[]>([])
 
 const passos = [
   {
-    titulo: 'Crie sua conta',
-    descricao: 'Cadastre-se em segundos com nome, email e telefone.',
-    icone: 'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z',
+    numero: '01',
+    titulo: 'Entrar na conta',
+    descricao: 'Acesse o sistema e va direto para o fluxo principal do bolao.',
+    imagem: step01Asset,
   },
   {
-    titulo: 'Compre um cupom',
-    descricao: 'Cada cupom e uma entrada independente no bolao. Compre quantos quiser.',
-    icone: 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z',
+    numero: '02',
+    titulo: 'Comprar cupom',
+    descricao: 'Cada cupom ativa uma entrada independente para disputar o premio.',
+    imagem: step02Asset,
   },
   {
-    titulo: 'Faca seus palpites',
-    descricao: 'Preencha placares, classificados, artilheiro e campeao para cada cupom.',
-    icone: 'M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10',
+    numero: '03',
+    titulo: 'Registrar palpites',
+    descricao: 'Preencha seus palpites da fase de grupos, artilheiro e mata-mata.',
+    imagem: step03Asset,
   },
   {
-    titulo: 'Acompanhe o ranking',
-    descricao: 'Veja sua posicao atualizada automaticamente apos cada rodada.',
-    icone: 'M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.023 6.023 0 01-2.27.308m4.75 0a6.023 6.023 0 002.27.308',
+    numero: '04',
+    titulo: 'Somar pontos',
+    descricao: 'Com os resultados oficiais lancados, o sistema recalcula sua pontuacao.',
+    imagem: step04Asset,
   },
-]
-
-const featuresInteligente = [
-  'Ranking automatico em tempo real',
-  'Palpites independentes por cupom',
-  'Pontuacao configuravel e transparente',
-  'Todas as 48 selecoes da Copa 2026',
-  '72 jogos da fase de grupos',
-  'Fase eliminatoria completa',
+  {
+    numero: '05',
+    titulo: 'Subir no ranking',
+    descricao: 'Acompanhe sua posicao e veja qual cupom esta mais perto de levar o premio.',
+    imagem: step05Asset,
+  },
 ]
 
 const beneficios = [
-  'Pontuacao calculada automaticamente a cada resultado',
-  'Ranking atualizado em tempo real para todos os cupons',
-  'Regras claras e visiveis antes de apostar',
-  'Sem planilhas, sem confusao — tudo no sistema',
-  'Multiplos cupons para aumentar suas chances',
+  'Cupons independentes para testar estrategias diferentes',
+  'Palpites completos para grupos, artilheiro e mata-mata',
+  'Regras de pontuacao visiveis e configuraveis no backend',
+  'Ranking por cupom com criterios de desempate consistentes',
+  'Estado do torneio vindo da API para manter o fluxo de palpites consistente',
+  'Painel admin para resultados, regras e operacao do torneio',
+]
+
+const perfisUso = [
+  {
+    nome: 'Participante',
+    badge: 'Joga',
+    descricao: 'Entra no sistema, escolhe seus cupons e acompanha a evolucao dos palpites ao longo da Copa.',
+    itens: ['Compra e ativa cupom', 'Salva palpites por fase', 'Consulta pontuacao e ranking'],
+  },
+  {
+    nome: 'Competicao',
+    badge: 'Disputa',
+    descricao: 'O torneio estrutura fases, jogos e regras para que o ranking tenha lastro em eventos auditaveis.',
+    itens: ['Grupos e fases cadastrados', 'Pontuacao por regra ativa', 'Ranking consolidado por cupom'],
+  },
+  {
+    nome: 'Administrador',
+    badge: 'Opera',
+    descricao: 'Lanca resultados, ajusta regras e garante que o sistema reflita o estado oficial do torneio.',
+    itens: ['Painel para jogos e regras', 'Recalculo da pontuacao', 'Fluxo operacional mais seguro'],
+  },
 ]
 
 const faq = [
-  { pergunta: 'O que e o Inter World Cup?', resposta: 'E um bolao online para a Copa do Mundo 2026. Voce compra cupons, faz palpites sobre os jogos e concorre no ranking geral.' },
-  { pergunta: 'Como funciona a compra de cupom?', resposta: 'Cada cupom custa R$ 10,00 e representa uma entrada independente. Voce pode comprar quantos cupons quiser, cada um com seus proprios palpites.' },
-  { pergunta: 'Quanto custa participar?', resposta: 'Cada cupom custa R$ 10,00. No MVP o pagamento e simulado, mas o fluxo e identico ao real.' },
-  { pergunta: 'Preciso instalar algum aplicativo?', resposta: 'Nao! O sistema e 100% web e responsivo. Funciona no celular, tablet e computador sem instalar nada.' },
-  { pergunta: 'Quais palpites posso fazer?', resposta: 'Placares de todos os 72 jogos da fase de grupos, classificados de cada grupo, jogos mata-mata, artilheiro, campeao, vice e terceiro colocado.' },
-  { pergunta: 'Como funciona a pontuacao?', resposta: 'A pontuacao e configurada por regras no sistema. Placar exato vale mais, seguido de acertar o vencedor e gols parciais. Veja a tabela de pontos acima.' },
+  {
+    pergunta: 'Como funciona a compra de cupom?',
+    resposta: 'Cada cupom funciona como uma entrada independente. O usuario pode comprar mais de um e usar estrategias diferentes em cada conjunto de palpites.',
+  },
+  {
+    pergunta: 'Quais palpites entram no produto?',
+    resposta: 'O fluxo cobre fase de grupos, mata-mata progressivo por cupom, artilheiro e ranking consolidado com criterios de desempate.',
+  },
+  {
+    pergunta: 'O ranking atualiza automaticamente?',
+    resposta: 'Quando os resultados sao lancados e o recalculo e executado, o ranking reflete a pontuacao mais recente do torneio.',
+  },
+  {
+    pergunta: 'Preciso instalar app para participar?',
+    resposta: 'Nao. A plataforma roda no navegador e foi pensada para funcionar bem no celular e no desktop.',
+  },
+  {
+    pergunta: 'Quem administra os resultados?',
+    resposta: 'O administrador usa o painel para salvar resultados e acionar o recalculo da pontuacao do torneio.',
+  },
 ]
+
+const estatisticasHero = computed(() => {
+  const selecoes = torneio.value?.grupos.flatMap((grupo) => grupo.selecoes) ?? []
+  const jogos = torneio.value?.jogos ?? []
+  const valorCupom = torneio.value?.valor_cupom
+
+  return [
+    {
+      label: 'Selecoes',
+      value: selecoes.length || 48,
+      caption: 'no torneio',
+    },
+    {
+      label: 'Jogos',
+      value: jogos.length || 72,
+      caption: 'na competicao',
+    },
+    {
+      label: 'Cupom',
+      value: valorCupom ? `R$ ${Number(valorCupom).toFixed(0)}` : 'R$ 10',
+      caption: 'por entrada',
+    },
+  ]
+})
+
+const provaSocial = computed(() => {
+  const quantidadeRegras = regras.value.length
+
+  if (!quantidadeRegras) {
+    return 'Fluxo de palpites e ranking construidos em cima do estado real do torneio.'
+  }
+
+  return `${quantidadeRegras} regras ativas prontas para sustentar o calculo da pontuacao.`
+})
+
+const regrasExibidas = computed(() => {
+  if (regras.value.length) {
+    return regras.value.slice(0, 4)
+  }
+
+  return [
+    { id: 1, nome: 'Placar exato', descricao: 'Premia quem acerta o resultado completo do jogo.', pontos: 10, ativo: true, chave: 'placar_exato', fase_id: null },
+    { id: 2, nome: 'Vencedor correto', descricao: 'Reconhece o acerto do vencedor mesmo sem o placar cheio.', pontos: 5, ativo: true, chave: 'vencedor', fase_id: null },
+    { id: 3, nome: 'Classificado do mata-mata', descricao: 'Valoriza quem projeta a progressao correta do bracket.', pontos: 8, ativo: true, chave: 'classificado', fase_id: null },
+    { id: 4, nome: 'Artilheiro', descricao: 'Inclui o palpite de artilheiro no total do cupom.', pontos: 12, ativo: true, chave: 'artilheiro', fase_id: null },
+  ] satisfies RegraPontuacao[]
+})
+
+const selecoesDestaque = computed<Selecao[]>(() => {
+  const selecoes = torneio.value?.grupos.flatMap((grupo) => grupo.selecoes) ?? []
+  return selecoes.slice(0, 12)
+})
 
 onMounted(async () => {
   try {
     const resposta = await requisicaoApi<{ torneio: Torneio }>('/torneio')
-    regras.value = resposta.torneio.regras_pontuacao?.filter((r) => r.ativo) ?? []
+    torneio.value = resposta.torneio
+    regras.value = resposta.torneio.regras_pontuacao?.filter((regra) => regra.ativo).slice(0, 6) ?? []
   } catch {
-    // Silencioso
+    torneio.value = null
+    regras.value = []
   }
 })
 </script>

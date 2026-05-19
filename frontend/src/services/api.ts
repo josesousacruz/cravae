@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8888/api'
+const hostname = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1'
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? `http://${hostname}:8888/api`
 
 type MetodoHttp = 'GET' | 'POST' | 'PUT'
 

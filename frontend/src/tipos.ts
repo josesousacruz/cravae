@@ -92,9 +92,35 @@ export type Jogo = {
   fase: Fase
   rodada?: Rodada | null
   grupo?: Grupo | null
-  selecao_mandante: Selecao
-  selecao_visitante: Selecao
+  selecao_mandante: Selecao | null
+  selecao_visitante: Selecao | null
+  participantes_admin?: Selecao[]
   resultado?: ResultadoJogo | null
+}
+
+export type BracketJogoCupom = {
+  id: number
+  jogo_base_id: number
+  fase_id: number
+  rodada_id: number | null
+  grupo_id: number | null
+  data_hora_inicio: string
+  ordem_na_fase: number
+  status: string
+  fase: Fase
+  rodada?: Rodada | null
+  grupo?: Grupo | null
+  selecao_mandante: Selecao | null
+  selecao_visitante: Selecao | null
+  resultado?: ResultadoJogo | null
+  bloqueado: boolean
+  motivo_bloqueio: string | null
+}
+
+export type ResumoBracketCupom = {
+  campeao_selecao_id: number | null
+  vice_campeao_selecao_id: number | null
+  terceiro_colocado_selecao_id: number | null
 }
 
 export type RegraPontuacao = {

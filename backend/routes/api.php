@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/sair', [AutenticacaoController::class, 'sair']);
     Route::get('/cupons', [CupomController::class, 'index']);
     Route::get('/cupons/{cupom}', [CupomController::class, 'show']);
+    Route::get('/cupons/{cupom}/bracket', [CupomController::class, 'bracket']);
     Route::get('/cupons/{cupom}/apostas', [ApostaController::class, 'index']);
     Route::post('/cupons/{cupom}/apostas/lote', [ApostaController::class, 'salvarLote']);
     Route::post('/pedidos-checkout', [PedidoCheckoutController::class, 'store']);

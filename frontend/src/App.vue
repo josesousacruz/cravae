@@ -1,15 +1,17 @@
 <template>
   <div class="min-h-screen flex flex-col">
     <AppHeader
+      v-if="!landingAtiva"
       @abrir-modal-auth="abrirModalAuth"
       @toggle-menu="menuAberto = !menuAberto"
     />
     <MobileMenu
+      v-if="!landingAtiva"
       :aberto="menuAberto"
       @fechar="menuAberto = false"
       @abrir-modal-auth="abrirModalAuth"
     />
-    <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
+    <main :class="landingAtiva ? 'w-full flex-1' : 'mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6'">
       <RouterView v-slot="{ Component }">
         <Transition name="fade" mode="out-in">
           <component :is="Component" @abrir-modal-auth="abrirModalAuth" />
@@ -26,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import { usarAutenticacaoStore } from './stores/autenticacao'
 import AppHeader from './components/AppHeader.vue'
@@ -41,6 +43,7 @@ const router = useRouter()
 const menuAberto = ref(false)
 const modalAuthAberto = ref(false)
 const modalAuthTab = ref<'entrar' | 'cadastro'>('entrar')
+const landingAtiva = computed(() => route.name === 'inicio')
 
 function abrirModalAuth(tab: 'entrar' | 'cadastro') {
   modalAuthTab.value = tab

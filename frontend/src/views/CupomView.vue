@@ -5,7 +5,7 @@
       <span class="text-text-muted">Carregando...</span>
     </div>
 
-    <div v-else-if="cupom && torneio" class="space-y-4">
+    <div v-else-if="cupom && torneio" class="space-y-4 pb-24 sm:pb-0">
       <!-- Breadcrumb -->
       <nav class="text-sm text-text-muted">
         <RouterLink to="/painel" class="hover:text-text-secondary transition">Meus Cupons</RouterLink>
@@ -25,7 +25,7 @@
       </div>
 
       <!-- Tabs: Palpites / Ranking / Meus Resultados -->
-      <div class="flex overflow-x-auto border-b border-border">
+      <div class="hidden overflow-x-auto border-b border-border sm:flex">
         <button
           v-for="tab in tabs"
           :key="tab.id"
@@ -41,17 +41,17 @@
       </div>
 
       <!-- ═══════ Tab Palpites ═══════ -->
-      <section v-if="tabAtiva === 'palpites'">
-        <div class="grid gap-6 lg:grid-cols-[1fr_300px]">
+      <section v-if="tabAtiva === 'palpites'" class="min-w-0 overflow-x-hidden">
+        <div class="min-w-0 gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_300px]">
           <!-- Main column -->
-          <div class="space-y-4">
+          <div class="min-w-0 space-y-4">
             <!-- Fase navigator -->
-            <div class="flex items-center justify-between rounded-xl bg-bg-card border border-border px-4 py-3">
-              <button @click="faseAnterior" class="rounded-lg p-1.5 text-text-muted transition hover:bg-bg-input hover:text-text" :disabled="indiceFase <= 0">
+            <div class="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-border bg-bg-card px-3 py-3 sm:px-4">
+              <button @click="faseAnterior" class="shrink-0 rounded-lg p-1.5 text-text-muted transition hover:bg-bg-input hover:text-text" :disabled="indiceFase <= 0">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
               </button>
-              <h2 class="text-base font-bold">{{ faseAtual?.nome ?? 'Fase de Grupos' }} - {{ rodadaAtual?.ordem ?? 1 }}</h2>
-              <button @click="faseProxima" class="rounded-lg p-1.5 text-text-muted transition hover:bg-bg-input hover:text-text">
+              <h2 class="min-w-0 truncate text-center text-sm font-bold sm:text-base">{{ tituloFaseAtual }}</h2>
+              <button @click="faseProxima" class="shrink-0 rounded-lg p-1.5 text-text-muted transition hover:bg-bg-input hover:text-text">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
               </button>
             </div>
@@ -76,7 +76,7 @@
               </button>
             </div>
 
-            <!-- Sub-tabs: Jogos | Artilheiro (below dates) -->
+            <!-- Sub-tabs -->
             <div class="flex gap-2 overflow-x-auto">
               <button
                 v-for="sub in subTabs"
@@ -108,17 +108,17 @@
             <!-- ═══ Sub-tab: Jogos ═══ -->
             <template v-if="subTabAtiva === 'jogos'">
             <!-- Match cards -->
-            <div class="space-y-4">
+            <div class="min-w-0 space-y-4">
               <div
                 v-for="jogo in jogosDoDia"
                 :key="jogo.id"
-                class="rounded-2xl border bg-bg-card p-5 transition-colors"
-                :class="temPalpite(jogo.id) ? 'border-primary/30' : 'border-border'"
+                class="min-w-0 overflow-hidden rounded-2xl border bg-bg-card p-4 transition-colors sm:p-5"
+                :class="jogoCompleto(jogo) ? 'border-primary/30' : 'border-border'"
               >
                 <!-- Top row: palpite status + quem palpitou + group -->
-                <div class="mb-4 flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <span v-if="temPalpite(jogo.id)" class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex min-w-0 flex-wrap items-center gap-2">
+                    <span v-if="jogoCompleto(jogo)" class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                       <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                       Com palpite
                     </span>
@@ -128,7 +128,7 @@
                     </span>
                     <span class="text-xs text-text-muted">{{ formatarHora(jogo.data_hora_inicio) }}</span>
                   </div>
-                  <div class="flex items-center gap-3">
+                  <div class="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
                     <span v-if="jogo.grupo" class="text-xs font-medium text-primary">{{ jogo.grupo.nome }}</span>
                     <span v-else class="text-xs font-medium text-primary">{{ jogo.fase.nome }}</span>
                     <!-- Quem palpitou -->
@@ -144,7 +144,7 @@
                       <!-- Popover -->
                       <div
                         v-if="palpiteirosAberto === jogo.id"
-                        class="absolute right-0 top-full z-20 mt-1 w-56 rounded-xl border border-border bg-bg-card p-3 shadow-xl"
+                        class="absolute right-0 top-full z-20 mt-1 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-bg-card p-3 shadow-xl"
                       >
                         <div class="flex items-center justify-between mb-2">
                           <span class="text-xs font-bold text-text">Palpiteiros</span>
@@ -176,20 +176,20 @@
                 </div>
 
                 <!-- Teams + score -->
-                <div class="flex items-center gap-3 sm:gap-6">
+                <div class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-4 sm:flex sm:items-center sm:gap-6">
                   <!-- Home team -->
-                  <div class="flex-1 text-center">
+                  <div class="min-w-0 text-center">
                     <img
-                      :src="bandeira(jogo.selecao_mandante.sigla)"
-                      :alt="jogo.selecao_mandante.nome"
+                      :src="bandeira(jogo.selecao_mandante?.sigla ?? '')"
+                      :alt="jogo.selecao_mandante?.nome ?? 'A definir'"
                       class="mx-auto h-10 w-14 rounded object-cover shadow"
                       @error="($event.target as HTMLImageElement).style.display='none'"
                     />
-                    <p class="mt-2 text-xs font-medium sm:text-sm">{{ jogo.selecao_mandante.nome }}</p>
+                    <p class="mt-2 break-words text-xs font-medium sm:text-sm">{{ jogo.selecao_mandante?.nome ?? 'A definir' }}</p>
                   </div>
 
                   <!-- Score inputs with +/- buttons -->
-                  <div class="flex items-center gap-1.5 sm:gap-2">
+                  <div class="flex items-center justify-center gap-1 sm:gap-2">
                     <div class="flex items-center gap-0.5">
                       <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="decrementarPlacar(jogo.id, 'mandante')">-</button>
                       <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresGrupos[jogo.id]?.placar_mandante !== '' ? 'text-text' : 'text-text-muted'">
@@ -210,27 +210,39 @@
                   </div>
 
                   <!-- Away team -->
-                  <div class="flex-1 text-center">
+                  <div class="min-w-0 text-center">
                     <img
-                      :src="bandeira(jogo.selecao_visitante.sigla)"
-                      :alt="jogo.selecao_visitante.nome"
+                      :src="bandeira(jogo.selecao_visitante?.sigla ?? '')"
+                      :alt="jogo.selecao_visitante?.nome ?? 'A definir'"
                       class="mx-auto h-10 w-14 rounded object-cover shadow"
                       @error="($event.target as HTMLImageElement).style.display='none'"
                     />
-                    <p class="mt-2 text-xs font-medium sm:text-sm">{{ jogo.selecao_visitante.nome }}</p>
+                    <p class="mt-2 break-words text-xs font-medium sm:text-sm">{{ jogo.selecao_visitante?.nome ?? 'A definir' }}</p>
                   </div>
                 </div>
 
-                <!-- Knockout: who advances -->
+                <!-- Knockout: penalties on draw -->
                 <div v-if="jogo.fase.tipo !== 'grupos' && placaresEliminatorios[jogo.id]" class="mt-4">
-                  <label class="block">
-                    <span class="mb-1.5 block text-xs text-text-muted">Quem avanca?</span>
-                    <select v-model="placaresEliminatorios[jogo.id].selecao_classificada_id" @change="agendarAutoSave()">
-                      <option value="">Selecione</option>
-                      <option :value="String(jogo.selecao_mandante.id)">{{ jogo.selecao_mandante.nome }}</option>
-                      <option :value="String(jogo.selecao_visitante.id)">{{ jogo.selecao_visitante.nome }}</option>
-                    </select>
-                  </label>
+                  <div v-if="precisaPenaltis(jogo.id)" class="rounded-xl border border-primary/20 bg-primary/5 p-3">
+                    <span class="mb-2 block text-xs font-medium text-primary">Empate: informe os penaltis</span>
+                    <div class="flex items-center justify-center gap-2">
+                      <div class="flex items-center gap-0.5">
+                        <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="decrementarPenal(jogo.id, 'mandante')">-</button>
+                        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresEliminatorios[jogo.id].penal_mandante !== '' ? 'text-text' : 'text-text-muted'">
+                          {{ placaresEliminatorios[jogo.id].penal_mandante !== '' ? placaresEliminatorios[jogo.id].penal_mandante : '-' }}
+                        </div>
+                        <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="incrementarPenal(jogo.id, 'mandante')">+</button>
+                      </div>
+                      <span class="text-xs text-text-muted font-medium">x</span>
+                      <div class="flex items-center gap-0.5">
+                        <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="decrementarPenal(jogo.id, 'visitante')">-</button>
+                        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresEliminatorios[jogo.id].penal_visitante !== '' ? 'text-text' : 'text-text-muted'">
+                          {{ placaresEliminatorios[jogo.id].penal_visitante !== '' ? placaresEliminatorios[jogo.id].penal_visitante : '-' }}
+                        </div>
+                        <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="incrementarPenal(jogo.id, 'visitante')">+</button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -241,7 +253,6 @@
 
             </template>
 
-            <!-- ═══ Sub-tab: Artilheiro ═══ -->
             <div v-if="subTabAtiva === 'artilheiro'" class="space-y-4">
               <div class="rounded-2xl border border-border bg-bg-card p-5">
                 <h2 class="mb-2 text-base font-bold">Artilheiro da Copa</h2>
@@ -257,30 +268,21 @@
               </div>
 
               <div class="rounded-2xl border border-border bg-bg-card p-5">
-                <h2 class="mb-2 text-base font-bold">Palpites Finais</h2>
-                <p class="mb-4 text-xs text-text-muted">Campeao, vice e terceiro colocado.</p>
-                <div class="space-y-3">
-                  <label class="block">
-                    <span class="mb-1 block text-xs text-text-muted">Campeao</span>
-                    <select v-model="palpitesFinais.campeao" @change="agendarAutoSave()">
-                      <option value="">Selecione</option>
-                      <option v-for="s in todasSelecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
-                    </select>
-                  </label>
-                  <label class="block">
-                    <span class="mb-1 block text-xs text-text-muted">Vice-campeao</span>
-                    <select v-model="palpitesFinais.vice_campeao" @change="agendarAutoSave()">
-                      <option value="">Selecione</option>
-                      <option v-for="s in todasSelecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
-                    </select>
-                  </label>
-                  <label class="block">
-                    <span class="mb-1 block text-xs text-text-muted">Terceiro colocado</span>
-                    <select v-model="palpitesFinais.terceiro_colocado" @change="agendarAutoSave()">
-                      <option value="">Selecione</option>
-                      <option v-for="s in todasSelecoes" :key="s.id" :value="String(s.id)">{{ s.nome }}</option>
-                    </select>
-                  </label>
+                <h2 class="mb-2 text-base font-bold">Resumo do Mata-Mata</h2>
+                <p class="mb-4 text-xs text-text-muted">Campeao, vice e terceiro sao definidos pelos seus palpites no bracket.</p>
+                <div class="grid gap-3 sm:grid-cols-3">
+                  <div class="rounded-xl bg-bg-input p-3">
+                    <span class="block text-[10px] uppercase text-text-muted">Campeao</span>
+                    <span class="mt-1 block text-sm font-medium">{{ resumoBracket.campeao ?? 'A definir' }}</span>
+                  </div>
+                  <div class="rounded-xl bg-bg-input p-3">
+                    <span class="block text-[10px] uppercase text-text-muted">Vice</span>
+                    <span class="mt-1 block text-sm font-medium">{{ resumoBracket.vice ?? 'A definir' }}</span>
+                  </div>
+                  <div class="rounded-xl bg-bg-input p-3">
+                    <span class="block text-[10px] uppercase text-text-muted">Terceiro</span>
+                    <span class="mt-1 block text-sm font-medium">{{ resumoBracket.terceiro ?? 'A definir' }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -288,45 +290,44 @@
 
           <!-- Sidebar: Ranking ao Vivo -->
           <div class="hidden lg:block">
-            <div class="sticky top-20 rounded-2xl border border-border bg-bg-card p-4">
-              <div class="flex items-center gap-2 mb-4">
-                <span class="text-lg">🏆</span>
+            <div class="sticky top-20 overflow-hidden rounded-3xl border border-primary/20 bg-[radial-gradient(circle_at_top,#123225,transparent_40%),linear-gradient(180deg,#111513,#0b0d0c)] p-4">
+              <div class="mb-4 flex items-center justify-between gap-2">
                 <h3 class="text-sm font-bold">Ranking ao Vivo</h3>
+                <span class="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">Top 3</span>
               </div>
 
-              <div v-if="carregandoRanking" class="space-y-2">
-                <div v-for="n in 5" :key="n" class="flex items-center gap-2">
-                  <div class="h-8 w-8 animate-pulse rounded-full bg-bg-input" />
-                  <div class="h-3 flex-1 animate-pulse rounded bg-bg-input" />
-                </div>
+              <div v-if="carregandoRanking" class="space-y-3">
+                <div v-for="n in 3" :key="n" class="h-24 animate-pulse rounded-2xl bg-bg-card/50" />
               </div>
 
               <div v-else-if="!ranking.length" class="py-4 text-center text-xs text-text-muted">
                 Nenhum palpite registrado
               </div>
 
-              <div v-else class="space-y-2">
-                <div
-                  v-for="(item, i) in ranking.slice(0, 10)"
+              <div v-else class="space-y-3">
+                <article
+                  v-for="(item, i) in podioRanking"
                   :key="item.id"
-                  class="flex items-center gap-2 rounded-lg px-2 py-1.5 transition"
-                  :class="item.cupom.id === cupom.id ? 'bg-primary/10' : 'hover:bg-bg-input'"
+                  class="rounded-2xl border px-3 py-3"
+                  :class="classePosicaoRanking(i)"
                 >
-                  <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                    :class="{ 'bg-gold/20 text-gold': i === 0, 'bg-silver/20 text-silver': i === 1, 'bg-bronze/20 text-bronze': i === 2, 'bg-bg-input text-text-muted': i > 2 }">
-                    {{ i + 1 }}
+                  <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full border text-xs font-bold" :class="classePosicaoRanking(i)">
+                      {{ i + 1 }}
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full border border-current/40 text-sm font-bold">
+                      {{ iniciaisRanking(item.cupom.usuario.nome) }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-sm font-medium">{{ item.cupom.usuario.nome }}</p>
+                      <p class="text-[10px] uppercase tracking-[0.18em] text-text-muted">Cupom {{ item.cupom.codigo }}</p>
+                    </div>
+                    <div class="text-right">
+                      <strong class="block text-lg font-black">{{ item.pontuacao_total }}</strong>
+                      <span class="text-[10px] text-text-muted">pts</span>
+                    </div>
                   </div>
-                  <div class="min-w-0 flex-1">
-                    <p class="truncate text-xs font-medium">{{ item.cupom.usuario.nome }}</p>
-                    <p class="text-[10px] text-text-muted">{{ item.cupom.codigo }}</p>
-                  </div>
-                  <span class="text-sm font-bold" :class="item.cupom.id === cupom.id ? 'text-primary' : 'text-text'">
-                    {{ item.pontuacao_total }}
-                  </span>
-                  <span v-if="item.cupom.id === cupom.id" class="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-bg">
-                    Voce
-                  </span>
-                </div>
+                </article>
               </div>
             </div>
           </div>
@@ -335,35 +336,82 @@
 
       <!-- ═══════ Tab Ranking ═══════ -->
       <section v-if="tabAtiva === 'ranking'">
-        <div v-if="carregandoRanking" class="rounded-2xl border border-border bg-bg-card overflow-hidden">
-          <div class="divide-y divide-border/50">
-            <div v-for="n in 5" :key="n" class="flex items-center gap-4 px-4 py-3">
-              <div class="h-8 w-8 animate-pulse rounded-full bg-bg-input" />
-              <div class="flex-1"><div class="h-4 w-28 animate-pulse rounded bg-bg-input" /></div>
-              <div class="h-5 w-10 animate-pulse rounded bg-bg-input" />
-            </div>
+        <div v-if="carregandoRanking" class="space-y-4">
+          <div class="h-48 animate-pulse rounded-3xl border border-border bg-bg-card" />
+          <div class="rounded-3xl border border-border bg-bg-card p-4">
+            <div v-for="n in 4" :key="n" class="mb-3 h-16 animate-pulse rounded-2xl bg-bg-input last:mb-0" />
           </div>
         </div>
         <div v-else-if="!ranking.length" class="rounded-2xl border border-border bg-bg-card py-8 text-center">
           <p class="text-text-muted">Nenhum resultado disponivel ainda.</p>
         </div>
-        <div v-else class="rounded-2xl border border-border bg-bg-card overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead><tr class="bg-bg-input text-xs uppercase tracking-wider text-text-muted">
-                <th class="px-4 py-3 text-left">#</th><th class="px-4 py-3 text-left">Cupom</th><th class="px-4 py-3 text-left">Usuario</th><th class="px-4 py-3 text-right">Pontos</th><th class="px-4 py-3 text-right">Exatos</th>
-              </tr></thead>
-              <tbody>
-                <tr v-for="(item, i) in ranking" :key="item.id" class="border-t border-border/50 transition hover:bg-bg-card-hover" :class="item.cupom.id === cupom.id ? 'bg-primary/10' : ''">
-                  <td class="px-4 py-3"><span class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold" :class="{ 'text-gold': i === 0, 'text-silver': i === 1, 'text-bronze': i === 2, 'text-text-muted': i > 2 }">{{ i + 1 }}</span></td>
-                  <td class="px-4 py-3 text-sm font-mono text-text-muted">{{ item.cupom.codigo }}</td>
-                  <td class="px-4 py-3 text-sm font-medium">{{ item.cupom.usuario.nome }}</td>
-                  <td class="px-4 py-3 text-right font-bold text-primary">{{ item.pontuacao_total }}</td>
-                  <td class="px-4 py-3 text-right text-sm">{{ item.quantidade_placares_exatos }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div v-else class="space-y-4">
+          <section class="overflow-hidden rounded-[28px] border border-primary/20 bg-[radial-gradient(circle_at_top,#123225,transparent_45%),linear-gradient(180deg,#111513,#0a0c0b)] p-5 sm:p-6">
+            <div class="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <span class="inline-flex rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Podio</span>
+                <h2 class="mt-3 text-xl font-bold">Top 3 do bolao</h2>
+                <p class="mt-1 text-sm text-text-secondary">Seu cupom continua destacado na classificacao geral logo abaixo.</p>
+              </div>
+              <span class="rounded-full border border-border bg-bg-card/60 px-3 py-1 text-xs text-text-muted">
+                {{ ranking.length }} participante{{ ranking.length === 1 ? '' : 's' }}
+              </span>
+            </div>
+
+            <div class="mt-6 grid gap-4 lg:grid-cols-[1fr_1.15fr_1fr] lg:items-end">
+              <article
+                v-for="item in podioRankingExibicao"
+                :key="item.ranking.id"
+                class="rounded-3xl border p-5 text-center"
+                :class="item.posicao === 1 ? 'border-primary/40 bg-primary/10 lg:-translate-y-3' : item.posicao === 2 ? 'border-silver/40 bg-silver/10' : 'border-bronze/40 bg-bronze/10'"
+              >
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold" :class="item.posicao === 1 ? 'border-primary/40 text-primary' : item.posicao === 2 ? 'border-silver/40 text-silver' : 'border-bronze/40 text-bronze'">
+                  {{ item.posicao }}
+                </span>
+                <div class="mx-auto mt-4 flex h-20 w-20 items-center justify-center rounded-full border border-current/40 text-2xl font-bold" :class="item.posicao === 1 ? 'text-primary' : item.posicao === 2 ? 'text-silver' : 'text-bronze'">
+                  {{ iniciaisRanking(item.ranking.cupom.usuario.nome) }}
+                </div>
+                <p class="mt-4 text-lg font-bold">{{ item.ranking.cupom.usuario.nome }}</p>
+                <p class="mt-1 text-xs uppercase tracking-[0.18em] text-text-muted">{{ item.rotulo }}</p>
+                <p class="mt-4 text-4xl font-black text-primary">{{ item.ranking.pontuacao_total }}</p>
+                <p class="text-xs text-text-muted">pontos</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="rounded-3xl border border-border bg-bg-card p-4 sm:p-5">
+            <div class="mb-4">
+              <h3 class="text-lg font-bold">Classificacao geral</h3>
+              <p class="text-sm text-text-secondary">Todos os cupons em ordem de pontuacao.</p>
+            </div>
+            <div class="space-y-3">
+              <article
+                v-for="(item, i) in ranking"
+                :key="item.id"
+                class="flex items-center gap-3 rounded-2xl border px-4 py-3"
+                :class="item.cupom.id === cupom.id ? 'border-primary/40 bg-primary/10' : 'border-border bg-bg-input/60'"
+              >
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold" :class="classePosicaoRanking(i)">
+                  {{ i + 1 }}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <strong class="truncate text-sm">{{ item.cupom.usuario.nome }}</strong>
+                    <span v-if="item.cupom.id === cupom.id" class="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-bg">Voce</span>
+                  </div>
+                  <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+                    <span>Cupom {{ item.cupom.codigo }}</span>
+                    <span>{{ item.quantidade_placares_exatos }} exatos</span>
+                    <span>{{ item.quantidade_classificados_corretos }} classificados</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <strong class="block text-2xl font-black text-primary">{{ item.pontuacao_total }}</strong>
+                  <span class="text-xs text-text-muted">pts</span>
+                </div>
+              </article>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -382,6 +430,24 @@
           <p class="text-text-muted">Nenhum evento de pontuacao registrado ainda.</p>
         </div>
       </section>
+
+      <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg-card/95 px-2 py-2 backdrop-blur sm:hidden">
+        <div class="mx-auto grid max-w-md grid-cols-3 gap-1">
+          <button
+            v-for="tab in tabs"
+            :key="`mobile-${tab.id}`"
+            type="button"
+            class="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition"
+            :class="tabAtiva === tab.id ? 'text-primary' : 'text-text-muted'"
+            @click="tabAtiva = tab.id"
+          >
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" :d="tab.icone" />
+            </svg>
+            <span>{{ tab.nome === 'Meus Resultados' ? 'Resultados' : tab.nome }}</span>
+          </button>
+        </div>
+      </nav>
     </div>
   </div>
 </template>
@@ -392,7 +458,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { usarTorneioStore } from '../stores/torneio'
 import { useToast } from '../composables/useToast'
-import type { Aposta, Cupom, RankingItem, Selecao, Torneio } from '../tipos'
+import type { Aposta, BracketJogoCupom, Cupom, RankingItem, ResumoBracketCupom, Selecao, Torneio } from '../tipos'
 
 const rota = useRoute()
 const torneioStore = usarTorneioStore()
@@ -401,6 +467,12 @@ const { mostrar } = useToast()
 const torneio = ref<Torneio | null>(null)
 const cupom = ref<Cupom | null>(null)
 const apostas = ref<Aposta[]>([])
+const bracketCupom = ref<BracketJogoCupom[]>([])
+const resumoBracketIds = ref<ResumoBracketCupom>({
+  campeao_selecao_id: null,
+  vice_campeao_selecao_id: null,
+  terceiro_colocado_selecao_id: null,
+})
 const ranking = ref<RankingItem[]>([])
 const carregando = ref(true)
 const carregandoRanking = ref(false)
@@ -422,15 +494,14 @@ const subTabs = [
 ]
 
 const placaresGrupos = ref<Record<number, { placar_mandante: string; placar_visitante: string }>>({})
-const placaresEliminatorios = ref<Record<number, { placar_mandante: string; placar_visitante: string; selecao_classificada_id: string }>>({})
-const classificacaoGrupos = ref<Record<number, { primeiro: string; segundo: string }>>({})
+const placaresEliminatorios = ref<Record<number, { placar_mandante: string; placar_visitante: string; penal_mandante: string; penal_visitante: string }>>({})
 const artilheiroId = ref('')
-const palpitesFinais = ref({ campeao: '', vice_campeao: '', terceiro_colocado: '' })
 
 // Auto-save
 const salvando = ref(false)
 const ultimoSalvo = ref(false)
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null
+let salvarNovamente = false
 
 // Quem palpitou
 const palpiteirosAberto = ref<number | null>(null)
@@ -464,15 +535,38 @@ const fifaParaIso: Record<string, string> = {
   UD4: '', UA1: '', UC3: '', UB2: '', IC1: '', IC2: '',
 }
 
+type JogoCupom = Torneio['jogos'][number] | BracketJogoCupom
+
 function bandeira(sigla: string): string {
   const iso = fifaParaIso[sigla]
   if (!iso) return ''
   return `https://flagcdn.com/w80/${iso}.png`
 }
 
-function temPalpite(jogoId: number): boolean {
+function jogoPossuiPlacares(jogoId: number): boolean {
   return placaresGrupos.value[jogoId]?.placar_mandante !== '' && placaresGrupos.value[jogoId]?.placar_visitante !== ''
 }
+
+function precisaPenaltis(jogoId: number): boolean {
+  const placar = placaresGrupos.value[jogoId]
+  return Boolean(placar && placar.placar_mandante !== '' && placar.placar_visitante !== '' && placar.placar_mandante === placar.placar_visitante)
+}
+
+function jogoCompleto(jogo: JogoCupom): boolean {
+  if (!jogoPossuiPlacares(jogo.id)) return false
+  if (jogo.fase.tipo === 'grupos') return true
+  if (!precisaPenaltis(jogo.id)) return true
+  const penal = placaresEliminatorios.value[jogo.id]
+  return Boolean(
+    penal
+    && penal.penal_mandante !== ''
+    && penal.penal_visitante !== ''
+    && penal.penal_mandante !== penal.penal_visitante,
+  )
+}
+
+const jogosGruposDoTorneio = computed(() => torneio.value?.jogos.filter((jogo) => jogo.fase.tipo === 'grupos') ?? [])
+const jogosEliminatoriosDoCupom = computed(() => bracketCupom.value.filter((jogo) => jogo.fase.tipo !== 'grupos'))
 
 // Fases e rodadas disponíveis
 const fasesRodadas = computed(() => {
@@ -480,12 +574,18 @@ const fasesRodadas = computed(() => {
   const items: { fase: typeof torneio.value.fases[0]; rodada?: typeof torneio.value.jogos[0]['rodada'] }[] = []
   const faseGrupos = torneio.value.fases.find(f => f.tipo === 'grupos')
   if (faseGrupos) {
-    const rodadaObjs = torneio.value.jogos.filter(j => j.rodada).map(j => j.rodada!).filter((r, i, a) => a.findIndex(x => x.id === r.id) === i).sort((a, b) => a.ordem - b.ordem)
+    const rodadaObjs = jogosGruposDoTorneio.value.filter(j => j.rodada).map(j => j.rodada!).filter((r, i, a) => a.findIndex(x => x.id === r.id) === i).sort((a, b) => a.ordem - b.ordem)
     for (const r of rodadaObjs) {
       items.push({ fase: faseGrupos, rodada: r })
     }
   }
-  for (const fase of torneio.value.fases.filter(f => f.tipo !== 'grupos').sort((a, b) => a.ordem - b.ordem)) {
+  const fasesEliminatoriasDisponiveis = jogosEliminatoriosDoCupom.value
+    .filter((jogo) => !jogo.bloqueado)
+    .map((jogo) => jogo.fase)
+    .filter((fase, indice, fases) => fases.findIndex((item) => item.id === fase.id) === indice)
+    .sort((a, b) => a.ordem - b.ordem)
+
+  for (const fase of fasesEliminatoriasDisponiveis) {
     items.push({ fase })
   }
   return items
@@ -493,12 +593,15 @@ const fasesRodadas = computed(() => {
 
 const faseAtual = computed(() => fasesRodadas.value[indiceFase.value]?.fase)
 const rodadaAtual = computed(() => fasesRodadas.value[indiceFase.value]?.rodada)
+const tituloFaseAtual = computed(() => rodadaAtual.value ? `${faseAtual.value?.nome ?? 'Fase de Grupos'} - ${rodadaAtual.value.ordem}` : (faseAtual.value?.nome ?? 'Fase de Grupos'))
 
 // Jogos da fase/rodada atual
 const jogosFaseAtual = computed(() => {
   if (!torneio.value || !faseAtual.value) return []
-  let jogos = torneio.value.jogos.filter(j => j.fase_id === faseAtual.value!.id)
-  if (rodadaAtual.value) {
+  let jogos: JogoCupom[] = faseAtual.value.tipo === 'grupos'
+    ? jogosGruposDoTorneio.value.filter(j => j.fase_id === faseAtual.value!.id)
+    : jogosEliminatoriosDoCupom.value.filter(j => j.fase_id === faseAtual.value!.id && !j.bloqueado)
+  if (rodadaAtual.value && faseAtual.value.tipo === 'grupos') {
     jogos = jogos.filter(j => j.rodada_id === rodadaAtual.value!.id)
   }
   return jogos.sort((a, b) => new Date(a.data_hora_inicio).getTime() - new Date(b.data_hora_inicio).getTime())
@@ -516,7 +619,7 @@ const diasComJogos = computed(() => {
     }
     const entry = map.get(key)!
     entry.totalJogos++
-    if (!temPalpite(jogo.id)) entry.semPalpite = true
+    if (!jogoCompleto(jogo)) entry.semPalpite = true
   }
   return [...map.values()].sort((a, b) => a.data.localeCompare(b.data))
 })
@@ -529,8 +632,9 @@ const jogosDoDia = computed(() => {
 
 // Texto de fechamento
 const textoFechamento = computed(() => {
-  if (!faseAtual.value?.data_fechamento) return 'Sem prazo definido'
-  const diff = new Date(faseAtual.value.data_fechamento).getTime() - Date.now()
+  const referencia = rodadaAtual.value?.data_fechamento ?? jogosFaseAtual.value[0]?.data_hora_inicio ?? faseAtual.value?.data_fechamento
+  if (!referencia) return 'Sem prazo definido'
+  const diff = new Date(referencia).getTime() - Date.now()
   if (diff <= 0) return 'Fechado'
   const dias = Math.floor(diff / 86400000)
   if (dias > 30) return `Fecha em ${Math.floor(dias / 30)} meses`
@@ -541,6 +645,39 @@ const textoFechamento = computed(() => {
 
 const todasSelecoes = computed<Selecao[]>(() => torneio.value?.grupos.flatMap(g => g.selecoes) ?? [])
 const jogadores = computed(() => todasSelecoes.value.flatMap(s => (s.jogadores ?? []).map(j => ({ ...j, selecao_sigla: s.sigla }))))
+const resumoBracket = computed(() => {
+  if (!torneio.value) return { campeao: null, vice: null, terceiro: null }
+
+  const nomeSelecao = (id: number | null | undefined) => todasSelecoes.value.find((selecao) => selecao.id === id)?.nome ?? null
+
+  return {
+    campeao: nomeSelecao(resumoBracketIds.value.campeao_selecao_id),
+    vice: nomeSelecao(resumoBracketIds.value.vice_campeao_selecao_id),
+    terceiro: nomeSelecao(resumoBracketIds.value.terceiro_colocado_selecao_id),
+  }
+})
+const podioRanking = computed(() => ranking.value.slice(0, 3))
+const podioRankingExibicao = computed(() => [
+  podioRanking.value[1] ? { ranking: podioRanking.value[1], posicao: 2, rotulo: 'Segundo lugar' } : null,
+  podioRanking.value[0] ? { ranking: podioRanking.value[0], posicao: 1, rotulo: 'Primeiro lugar' } : null,
+  podioRanking.value[2] ? { ranking: podioRanking.value[2], posicao: 3, rotulo: 'Terceiro lugar' } : null,
+].filter((item): item is { ranking: RankingItem; posicao: number; rotulo: string } => Boolean(item)))
+
+function classePosicaoRanking(indice: number) {
+  if (indice === 0) return 'border-primary/40 bg-primary/10 text-primary'
+  if (indice === 1) return 'border-silver/40 bg-silver/10 text-silver'
+  if (indice === 2) return 'border-bronze/40 bg-bronze/10 text-bronze'
+  return 'border-border bg-bg-card text-text-muted'
+}
+
+function iniciaisRanking(nome: string) {
+  return nome
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((parte) => parte[0]?.toUpperCase() ?? '')
+    .join('')
+}
 
 function faseAnterior() { if (indiceFase.value > 0) indiceFase.value-- }
 function faseProxima() { if (indiceFase.value < fasesRodadas.value.length - 1) indiceFase.value++ }
@@ -568,35 +705,61 @@ function decrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
   agendarAutoSave()
 }
 
+function incrementarPenal(jogoId: number, lado: 'mandante' | 'visitante') {
+  const campo = lado === 'mandante' ? 'penal_mandante' : 'penal_visitante'
+  const current = placaresEliminatorios.value[jogoId][campo]
+  placaresEliminatorios.value[jogoId][campo] = current === '' ? '0' : String(Number(current) + 1)
+  agendarAutoSave()
+}
+
+function decrementarPenal(jogoId: number, lado: 'mandante' | 'visitante') {
+  const campo = lado === 'mandante' ? 'penal_mandante' : 'penal_visitante'
+  const current = placaresEliminatorios.value[jogoId][campo]
+  if (current === '' || current === '0') {
+    placaresEliminatorios.value[jogoId][campo] = ''
+  } else {
+    placaresEliminatorios.value[jogoId][campo] = String(Number(current) - 1)
+  }
+  agendarAutoSave()
+}
+
 // Auto-save debounce 2s
 function agendarAutoSave() {
   if (autoSaveTimer) clearTimeout(autoSaveTimer)
-  autoSaveTimer = setTimeout(() => autoSalvar(), 2000)
+  if (salvando.value) {
+    salvarNovamente = true
+  }
+  autoSaveTimer = setTimeout(() => {
+    void autoSalvar()
+  }, 1200)
 }
 
-async function autoSalvar() {
+function montarApostasParaEnvio() {
   if (!torneio.value) return
   const apostasArr: Record<string, unknown>[] = []
+  const jogosDoCupom: JogoCupom[] = [...jogosGruposDoTorneio.value, ...jogosEliminatoriosDoCupom.value]
 
   // All games with both scores filled
-  for (const jogo of torneio.value.jogos) {
+  for (const jogo of jogosDoCupom) {
     const p = placaresGrupos.value[jogo.id]
     if (!p || p.placar_mandante === '' || p.placar_visitante === '') continue
     if (jogo.fase.tipo === 'grupos') {
       apostasArr.push({ tipo: 'placar_jogo_grupos', jogo_id: jogo.id, placar_mandante: Number(p.placar_mandante), placar_visitante: Number(p.placar_visitante) })
     } else {
       const e = placaresEliminatorios.value[jogo.id]
-      if (e?.selecao_classificada_id) {
-        apostasArr.push({ tipo: 'placar_jogo_eliminatoria', jogo_id: jogo.id, placar_mandante: Number(p.placar_mandante), placar_visitante: Number(p.placar_visitante), selecao_classificada_id: Number(e.selecao_classificada_id) })
+      if (!e) continue
+      const payload: Record<string, unknown> = {
+        tipo: 'placar_jogo_eliminatoria',
+        jogo_id: jogo.id,
+        placar_mandante: Number(p.placar_mandante),
+        placar_visitante: Number(p.placar_visitante),
       }
-    }
-  }
-
-  // Classificacao grupos
-  for (const grupo of torneio.value.grupos) {
-    const c = classificacaoGrupos.value[grupo.id]
-    if (c?.primeiro && c?.segundo) {
-      apostasArr.push({ tipo: 'classificacao_grupo', torneio_id: torneio.value.id, grupo_id: grupo.id, primeiro_colocado_id: Number(c.primeiro), segundo_colocado_id: Number(c.segundo) })
+      if (precisaPenaltis(jogo.id)) {
+        if (e.penal_mandante === '' || e.penal_visitante === '' || e.penal_mandante === e.penal_visitante) continue
+        payload.penal_mandante = Number(e.penal_mandante)
+        payload.penal_visitante = Number(e.penal_visitante)
+      }
+      apostasArr.push(payload)
     }
   }
 
@@ -605,25 +768,52 @@ async function autoSalvar() {
     apostasArr.push({ tipo: 'artilheiro', torneio_id: torneio.value.id, jogador_id: Number(artilheiroId.value) })
   }
 
-  // Palpites finais
-  if (palpitesFinais.value.campeao) apostasArr.push({ tipo: 'campeao', torneio_id: torneio.value.id, selecao_id: Number(palpitesFinais.value.campeao) })
-  if (palpitesFinais.value.vice_campeao) apostasArr.push({ tipo: 'vice_campeao', torneio_id: torneio.value.id, selecao_id: Number(palpitesFinais.value.vice_campeao) })
-  if (palpitesFinais.value.terceiro_colocado) apostasArr.push({ tipo: 'terceiro_colocado', torneio_id: torneio.value.id, selecao_id: Number(palpitesFinais.value.terceiro_colocado) })
+  return apostasArr
+}
 
-  if (!apostasArr.length) return
+async function recarregarEstadoDerivado() {
+  const [rC, rA, rB] = await Promise.all([
+    requisicaoApi<{ cupom: Cupom }>(`/cupons/${rota.params.id}`),
+    requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${rota.params.id}/apostas`),
+    requisicaoApi<{ bracket: BracketJogoCupom[]; resumo: ResumoBracketCupom }>(`/cupons/${rota.params.id}/bracket`),
+  ])
+
+  cupom.value = rC.cupom
+  apostas.value = rA.apostas
+  bracketCupom.value = rB.bracket
+  resumoBracketIds.value = rB.resumo
+  preencherFormulario('mesclar')
+}
+
+async function autoSalvar() {
+  if (!torneio.value) return
+  if (salvando.value) {
+    salvarNovamente = true
+    return
+  }
+
+  const apostasArr = montarApostasParaEnvio()
+  if (!apostasArr?.length) return
 
   salvando.value = true
   ultimoSalvo.value = false
+  salvarNovamente = false
   try {
     await requisicaoApi(`/cupons/${rota.params.id}/apostas/lote`, { metodo: 'POST', corpo: { apostas: apostasArr } })
-    const rA = await requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${rota.params.id}/apostas`)
-    apostas.value = rA.apostas
+    await recarregarEstadoDerivado()
     ultimoSalvo.value = true
     setTimeout(() => { ultimoSalvo.value = false }, 3000)
-  } catch {
-    mostrar('erro', 'Falha ao salvar automaticamente.')
+  } catch (error) {
+    mostrar('erro', error instanceof Error ? error.message : 'Falha ao salvar automaticamente.')
   } finally {
     salvando.value = false
+    if (salvarNovamente) {
+      salvarNovamente = false
+      if (autoSaveTimer) clearTimeout(autoSaveTimer)
+      autoSaveTimer = setTimeout(() => {
+        void autoSalvar()
+      }, 250)
+    }
   }
 }
 
@@ -634,55 +824,53 @@ function formatarHora(dataHora: string) {
 function encontrarAposta(tipo: string, referenciaId?: number) {
   return apostas.value.find(a => {
     if (a.tipo !== tipo) return false
-    if (tipo === 'classificacao_grupo') return a.grupo_id === referenciaId
     if (tipo === 'artilheiro') return true
-    if (['campeao', 'vice_campeao', 'terceiro_colocado'].includes(tipo)) return true
     return a.jogo_id === referenciaId
   })
 }
 
-function preencherFormulario() {
+function preencherFormulario(modo: 'substituir' | 'mesclar' = 'substituir') {
   if (!torneio.value) return
-  for (const jogo of torneio.value.jogos) {
+  const sobrescrever = modo === 'substituir'
+  const jogosDoCupom: JogoCupom[] = [...jogosGruposDoTorneio.value, ...jogosEliminatoriosDoCupom.value]
+  for (const jogo of jogosDoCupom) {
     const tipo = jogo.fase.tipo === 'grupos' ? 'placar_jogo_grupos' : 'placar_jogo_eliminatoria'
     const aposta = encontrarAposta(tipo, jogo.id)
-    placaresGrupos.value[jogo.id] = {
-      placar_mandante: String(aposta?.conteudo.placar_mandante ?? ''),
-      placar_visitante: String(aposta?.conteudo.placar_visitante ?? ''),
+    if (sobrescrever || !placaresGrupos.value[jogo.id]) {
+      placaresGrupos.value[jogo.id] = {
+        placar_mandante: String(aposta?.conteudo.placar_mandante ?? ''),
+        placar_visitante: String(aposta?.conteudo.placar_visitante ?? ''),
+      }
     }
-    if (jogo.fase.tipo !== 'grupos') {
+    if (jogo.fase.tipo !== 'grupos' && (sobrescrever || !placaresEliminatorios.value[jogo.id])) {
       placaresEliminatorios.value[jogo.id] = {
         placar_mandante: String(aposta?.conteudo.placar_mandante ?? ''),
         placar_visitante: String(aposta?.conteudo.placar_visitante ?? ''),
-        selecao_classificada_id: String(aposta?.conteudo.selecao_classificada_id ?? ''),
+        penal_mandante: String(aposta?.conteudo.penal_mandante ?? ''),
+        penal_visitante: String(aposta?.conteudo.penal_visitante ?? ''),
       }
     }
   }
-  for (const grupo of torneio.value.grupos) {
-    const aposta = encontrarAposta('classificacao_grupo', grupo.id)
-    classificacaoGrupos.value[grupo.id] = {
-      primeiro: String(aposta?.conteudo.primeiro_colocado_id ?? ''),
-      segundo: String(aposta?.conteudo.segundo_colocado_id ?? ''),
-    }
+  if (sobrescrever || !artilheiroId.value) {
+    artilheiroId.value = String(encontrarAposta('artilheiro')?.conteudo.jogador_id ?? '')
   }
-  artilheiroId.value = String(encontrarAposta('artilheiro')?.conteudo.jogador_id ?? '')
-  palpitesFinais.value.campeao = String(encontrarAposta('campeao')?.conteudo.selecao_id ?? '')
-  palpitesFinais.value.vice_campeao = String(encontrarAposta('vice_campeao')?.conteudo.selecao_id ?? '')
-  palpitesFinais.value.terceiro_colocado = String(encontrarAposta('terceiro_colocado')?.conteudo.selecao_id ?? '')
 }
 
 async function carregarDados() {
   carregando.value = true
   try {
-    const [rT, rC, rA] = await Promise.all([
+    const [rT, rC, rA, rB] = await Promise.all([
       requisicaoApi<{ torneio: Torneio }>('/torneio'),
       requisicaoApi<{ cupom: Cupom }>(`/cupons/${rota.params.id}`),
       requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${rota.params.id}/apostas`),
+      requisicaoApi<{ bracket: BracketJogoCupom[]; resumo: ResumoBracketCupom }>(`/cupons/${rota.params.id}/bracket`),
     ])
     torneio.value = rT.torneio
     cupom.value = rC.cupom
     apostas.value = rA.apostas
-    preencherFormulario()
+    bracketCupom.value = rB.bracket
+    resumoBracketIds.value = rB.resumo
+    preencherFormulario('substituir')
   } catch {
     mostrar('erro', 'Falha ao carregar dados do cupom.')
   } finally {
@@ -705,6 +893,16 @@ watch([indiceFase, jogosFaseAtual], () => {
   if (diasComJogos.value.length) diaSelecionado.value = diasComJogos.value[0].data
   else diaSelecionado.value = ''
 }, { immediate: true })
+
+watch(fasesRodadas, (items) => {
+  if (!items.length) {
+    indiceFase.value = 0
+    return
+  }
+  if (indiceFase.value > items.length - 1) {
+    indiceFase.value = items.length - 1
+  }
+})
 
 onMounted(async () => {
   await Promise.all([carregarDados(), torneioStore.carregar()])

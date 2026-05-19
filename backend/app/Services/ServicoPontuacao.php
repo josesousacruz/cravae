@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Aposta;
 use App\Models\Cupom;
 use App\Models\EventoPontuacao;
-use App\Models\Grupo;
 use App\Models\PontuacaoCupom;
 use App\Models\RegraPontuacao;
 use App\Models\Torneio;
@@ -14,6 +13,11 @@ use Illuminate\Support\Facades\DB;
 
 class ServicoPontuacao
 {
+    public function __construct(
+        private readonly ServicoBracketCupom $servicoBracketCupom,
+    ) {
+    }
+
     public function recalcularTorneio(Torneio $torneio): void
     {
         Cupom::query()
@@ -68,24 +72,16 @@ class ServicoPontuacao
                     continue;
                 }
 
-                if ($aposta->tipo === 'classificacao_grupo') {
-                    $total += $this->pontuarClassificacaoGrupo($aposta, $regras);
-                    continue;
-                }
-
                 if ($aposta->tipo === 'artilheiro') {
                     $pontos = $this->pontuarArtilheiro($aposta, $torneio, $regras);
                     $total += $pontos;
                     $palpitesFinaisCorretos += $pontos > 0 ? 1 : 0;
-                    continue;
-                }
-
-                if (in_array($aposta->tipo, ['campeao', 'vice_campeao', 'terceiro_colocado'], true)) {
-                    $pontos = $this->pontuarResultadoTorneio($aposta, $torneio, $regras);
-                    $total += $pontos;
-                    $palpitesFinaisCorretos += $pontos > 0 ? 1 : 0;
                 }
             }
+
+            $resultadoDerivado = $this->pontuarPodioDerivado($cupom, $torneio, $regras);
+            $total += $resultadoDerivado['pontos'];
+            $palpitesFinaisCorretos += $resultadoDerivado['acertos'];
 
             PontuacaoCupom::query()->updateOrCreate(
                 ['cupom_id' => $cupom->id],
@@ -122,19 +118,39 @@ class ServicoPontuacao
             return [$pontos, true];
         }
 
+        $golsMandanteCorretos = (int) $conteudo['placar_mandante'] === (int) $resultado->placar_mandante;
+        $golsVisitanteCorretos = (int) $conteudo['placar_visitante'] === (int) $resultado->placar_visitante;
         $acertouVencedor = $this->resolverResultadoPartida(
             (int) $conteudo['placar_mandante'],
             (int) $conteudo['placar_visitante'],
         ) === $this->resolverResultadoPartida($resultado->placar_mandante, $resultado->placar_visitante);
 
-        if (! $acertouVencedor) {
-            return [0, false];
+        if ($acertouVencedor && ($golsMandanteCorretos || $golsVisitanteCorretos)) {
+            $pontos = $this->obterPontosRegra($regras, 'vencedor_e_acertou_gols', $aposta->fase_id);
+            $this->registrarEvento($aposta, $regras, 'vencedor_e_acertou_gols', $pontos, 'Vencedor e gols de um dos times');
+
+            return [$pontos, false];
         }
 
-        $pontos = $this->obterPontosRegra($regras, 'vencedor_fase_grupos', $aposta->fase_id);
-        $this->registrarEvento($aposta, $regras, 'vencedor_fase_grupos', $pontos, 'Vencedor da fase de grupos');
+        if ($acertouVencedor) {
+            $chave = $this->resolverResultadoPartida($resultado->placar_mandante, $resultado->placar_visitante) === 'empate'
+                ? 'empate_sem_placar'
+                : 'apenas_vencedor';
+            $descricao = $chave === 'empate_sem_placar' ? 'Empate sem placar exato' : 'Apenas vencedor';
+            $pontos = $this->obterPontosRegra($regras, $chave, $aposta->fase_id);
+            $this->registrarEvento($aposta, $regras, $chave, $pontos, $descricao);
 
-        return [$pontos, false];
+            return [$pontos, false];
+        }
+
+        if ($golsMandanteCorretos || $golsVisitanteCorretos) {
+            $pontos = $this->obterPontosRegra($regras, 'acertou_1_placar', $aposta->fase_id);
+            $this->registrarEvento($aposta, $regras, 'acertou_1_placar', $pontos, 'Acertou um placar');
+
+            return [$pontos, false];
+        }
+
+        return [0, false];
     }
 
     /**
@@ -155,7 +171,12 @@ class ServicoPontuacao
 
         if ($classificadoCorreto && $placarExato) {
             $pontos = $this->obterPontosRegra($regras, 'classificado_e_placar_mata_mata', $aposta->fase_id);
-            $this->registrarEvento($aposta, $regras, 'classificado_e_placar_mata_mata', $pontos, 'Classificado e placar do mata-mata');
+            if ($pontos <= 0) {
+                $pontos = $this->obterPontosRegra($regras, 'classificado_mata_mata', $aposta->fase_id);
+                $this->registrarEvento($aposta, $regras, 'classificado_mata_mata', $pontos, 'Classificado do mata-mata');
+            } else {
+                $this->registrarEvento($aposta, $regras, 'classificado_e_placar_mata_mata', $pontos, 'Classificado e placar do mata-mata');
+            }
 
             return [$pontos, true, true];
         }
@@ -170,40 +191,6 @@ class ServicoPontuacao
         return [0, false, false];
     }
 
-    private function pontuarClassificacaoGrupo(Aposta $aposta, Collection $regras): int
-    {
-        $grupo = Grupo::query()
-            ->with(['selecoes', 'jogos.resultado'])
-            ->find($aposta->grupo_id);
-
-        if (! $grupo) {
-            return 0;
-        }
-
-        $classificacao = $this->calcularClassificacaoGrupo($grupo);
-
-        if (count($classificacao) < 2) {
-            return 0;
-        }
-
-        $pontos = 0;
-        $conteudo = $aposta->conteudo;
-
-        if ((int) ($conteudo['primeiro_colocado_id'] ?? 0) === $classificacao[0]) {
-            $valor = $this->obterPontosRegra($regras, 'primeiro_colocado_grupo');
-            $this->registrarEvento($aposta, $regras, 'primeiro_colocado_grupo', $valor, 'Primeiro colocado do grupo');
-            $pontos += $valor;
-        }
-
-        if ((int) ($conteudo['segundo_colocado_id'] ?? 0) === $classificacao[1]) {
-            $valor = $this->obterPontosRegra($regras, 'segundo_colocado_grupo');
-            $this->registrarEvento($aposta, $regras, 'segundo_colocado_grupo', $valor, 'Segundo colocado do grupo');
-            $pontos += $valor;
-        }
-
-        return $pontos;
-    }
-
     private function pontuarArtilheiro(Aposta $aposta, Torneio $torneio, Collection $regras): int
     {
         if ((int) ($aposta->conteudo['jogador_id'] ?? 0) !== (int) $torneio->resultadoTorneio?->artilheiro_jogador_id) {
@@ -216,77 +203,83 @@ class ServicoPontuacao
         return $pontos;
     }
 
-    private function pontuarResultadoTorneio(Aposta $aposta, Torneio $torneio, Collection $regras): int
-    {
-        $campoResultado = match ($aposta->tipo) {
-            'campeao' => 'campeao_selecao_id',
-            'vice_campeao' => 'vice_campeao_selecao_id',
-            default => 'terceiro_colocado_selecao_id',
-        };
-
-        if ((int) ($aposta->conteudo['selecao_id'] ?? 0) !== (int) ($torneio->resultadoTorneio?->{$campoResultado} ?? 0)) {
-            return 0;
-        }
-
-        $pontos = $this->obterPontosRegra($regras, $aposta->tipo);
-        $this->registrarEvento($aposta, $regras, $aposta->tipo, $pontos, 'Palpite final do torneio');
-
-        return $pontos;
-    }
-
     /**
-     * @return array<int, int>
+     * @return array{pontos:int,acertos:int}
      */
-    private function calcularClassificacaoGrupo(Grupo $grupo): array
+    private function pontuarPodioDerivado(Cupom $cupom, Torneio $torneio, Collection $regras): array
     {
-        $estatisticas = [];
+        $podioPrevisto = $this->resolverPodioPrevisto($cupom, $torneio);
+        $podioReal = $this->resolverPodioReal($torneio);
 
-        foreach ($grupo->selecoes as $selecao) {
-            $estatisticas[$selecao->id] = [
-                'id' => $selecao->id,
-                'pontos' => 0,
-                'saldo' => 0,
-                'gols_marcados' => 0,
-                'nome' => $selecao->nome,
-            ];
-        }
+        $total = 0;
+        $acertos = 0;
 
-        foreach ($grupo->jogos as $jogo) {
-            $resultado = $jogo->resultado;
-
-            if (! $resultado || $resultado->placar_mandante === null || $resultado->placar_visitante === null) {
+        foreach ([
+            'campeao' => 'campeao',
+            'vice' => 'vice_campeao',
+            'terceiro' => 'terceiro_colocado',
+        ] as $campo => $regra) {
+            if (! $podioPrevisto[$campo] || ! $podioReal[$campo] || $podioPrevisto[$campo] !== $podioReal[$campo]) {
                 continue;
             }
 
-            $mandanteId = $jogo->selecao_mandante_id;
-            $visitanteId = $jogo->selecao_visitante_id;
-
-            $estatisticas[$mandanteId]['gols_marcados'] += $resultado->placar_mandante;
-            $estatisticas[$visitanteId]['gols_marcados'] += $resultado->placar_visitante;
-            $estatisticas[$mandanteId]['saldo'] += $resultado->placar_mandante - $resultado->placar_visitante;
-            $estatisticas[$visitanteId]['saldo'] += $resultado->placar_visitante - $resultado->placar_mandante;
-
-            if ($resultado->placar_mandante > $resultado->placar_visitante) {
-                $estatisticas[$mandanteId]['pontos'] += 3;
-            } elseif ($resultado->placar_mandante < $resultado->placar_visitante) {
-                $estatisticas[$visitanteId]['pontos'] += 3;
-            } else {
-                $estatisticas[$mandanteId]['pontos'] += 1;
-                $estatisticas[$visitanteId]['pontos'] += 1;
+            $pontos = $this->obterPontosRegra($regras, $regra);
+            $regraId = $this->resolverIdRegra($regras, $regra);
+            if ($pontos <= 0 || $regraId <= 0) {
+                continue;
             }
+
+            $total += $pontos;
+            $acertos++;
+            EventoPontuacao::query()->create([
+                'cupom_id' => $cupom->id,
+                'regra_pontuacao_id' => $regraId,
+                'jogo_id' => null,
+                'aposta_id' => null,
+                'pontos' => $pontos,
+                'descricao' => 'Podio derivado do mata-mata',
+            ]);
         }
 
-        $ordenadas = array_values($estatisticas);
-
-        usort($ordenadas, function (array $a, array $b) {
-            return [$b['pontos'], $b['saldo'], $b['gols_marcados'], $a['nome']]
-                <=>
-                [$a['pontos'], $a['saldo'], $a['gols_marcados'], $b['nome']];
-        });
-
-        return array_column($ordenadas, 'id');
+        return ['pontos' => $total, 'acertos' => $acertos];
     }
 
+    /**
+     * @return array{campeao:?int,vice:?int,terceiro:?int}
+     */
+    private function resolverPodioPrevisto(Cupom $cupom, Torneio $torneio): array
+    {
+        $bracket = collect($this->servicoBracketCupom->gerar($cupom));
+        $final = $bracket->first(fn (array $jogo) => $jogo['fase']->slug === 'final');
+        $terceiroLugar = $bracket->first(fn (array $jogo) => $jogo['fase']->slug === 'terceiro_lugar');
+
+        $apostaFinal = $cupom->apostas->first(fn (Aposta $aposta) => $aposta->tipo === 'placar_jogo_eliminatoria' && $aposta->jogo_id === ($final['id'] ?? null));
+        $apostaTerceiro = $cupom->apostas->first(fn (Aposta $aposta) => $aposta->tipo === 'placar_jogo_eliminatoria' && $aposta->jogo_id === ($terceiroLugar['id'] ?? null));
+
+        $campeao = (int) ($apostaFinal?->conteudo['selecao_classificada_id'] ?? 0) ?: null;
+        $vice = $final && $campeao
+            ? collect([$final['selecao_mandante']?->id ?? null, $final['selecao_visitante']?->id ?? null])->first(fn ($id) => $id && (int) $id !== $campeao)
+            : null;
+        $terceiro = (int) ($apostaTerceiro?->conteudo['selecao_classificada_id'] ?? 0) ?: null;
+
+        return [
+            'campeao' => $campeao,
+            'vice' => $vice ? (int) $vice : null,
+            'terceiro' => $terceiro,
+        ];
+    }
+
+    /**
+     * @return array{campeao:?int,vice:?int,terceiro:?int}
+     */
+    private function resolverPodioReal(Torneio $torneio): array
+    {
+        return [
+            'campeao' => $torneio->resultadoTorneio?->campeao_selecao_id,
+            'vice' => $torneio->resultadoTorneio?->vice_campeao_selecao_id,
+            'terceiro' => $torneio->resultadoTorneio?->terceiro_colocado_selecao_id,
+        ];
+    }
     private function resolverResultadoPartida(int $placarMandante, int $placarVisitante): string
     {
         return match (true) {
@@ -331,5 +324,10 @@ class ServicoPontuacao
             'pontos' => $pontos,
             'descricao' => $descricao,
         ]);
+    }
+
+    private function resolverIdRegra(Collection $regras, string $chave): int
+    {
+        return (int) ($regras->first(fn (RegraPontuacao $item) => $item->chave === $chave && $item->fase_id === null)?->id ?? 0);
     }
 }

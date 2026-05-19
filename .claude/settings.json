@@ -10,7 +10,13 @@
       "Bash(cat:*)",
       "Bash(git status:*)",
       "Bash(git log:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "WebSearch",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:www.mlssoccer.com)",
+      "WebFetch(domain:www.fifa.com)",
+      "WebFetch(domain:bolaoai.com.br)",
+      "Bash(curl -sL -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/131.0.0.0 Safari/537.36\" https://bolaoai.com.br/)"
     ]
   },
   "hooks": {
