@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-6xl">
+  <div class="mx-auto" :class="tabAtiva === 'palpites' && subTabAtiva === 'chaveamento' ? 'max-w-none' : 'max-w-6xl'">
     <!-- Loading -->
     <div v-if="carregando" class="flex items-center justify-center py-20">
       <span class="text-text-muted">Carregando...</span>
@@ -42,7 +42,7 @@
 
       <!-- ═══════ Tab Palpites ═══════ -->
       <section v-if="tabAtiva === 'palpites'" class="min-w-0 overflow-x-hidden">
-        <div class="min-w-0 gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div class="min-w-0 gap-6" :class="subTabAtiva === 'chaveamento' ? '' : 'lg:grid lg:grid-cols-[minmax(0,1fr)_300px]'">
           <!-- Main column -->
           <div class="min-w-0 space-y-4">
             <!-- Fase navigator -->
@@ -253,43 +253,202 @@
 
             </template>
 
-            <div v-if="subTabAtiva === 'artilheiro'" class="space-y-4">
-              <div class="rounded-2xl border border-border bg-bg-card p-5">
-                <h2 class="mb-2 text-base font-bold">Artilheiro da Copa</h2>
-                <p class="mb-4 text-xs text-text-muted">Quem sera o artilheiro da Copa 2026?</p>
-                <select v-model="artilheiroId" @change="agendarAutoSave()">
-                  <option value="">Selecione o artilheiro</option>
-                  <option v-for="j in jogadores" :key="j.id" :value="String(j.id)">{{ j.nome }} ({{ j.selecao_sigla }})</option>
-                </select>
-                <div v-if="artilheiroId" class="mt-3 flex items-center gap-2">
-                  <svg class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  <span class="text-xs text-primary">Selecionado</span>
+            <div v-if="subTabAtiva === 'chaveamento'" class="space-y-4">
+              <section class="overflow-hidden rounded-3xl border border-[#d4af37]/35 bg-[radial-gradient(circle_at_50%_45%,rgba(212,175,55,0.16),transparent_18%),linear-gradient(135deg,#050505_0%,#171104_46%,#000000_100%)] shadow-2xl shadow-black/40">
+                <div class="border-b border-white/10 px-4 py-4 sm:px-5">
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <span class="text-[10px] font-black uppercase tracking-[0.28em] text-[#d4af37]">Chaveamento</span>
+                      <h2 class="mt-1 text-lg font-black text-white sm:text-2xl">Caminho ate a final</h2>
+                    </div>
+                    <span class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
+                      {{ gruposPreenchidos }}/{{ totalJogosGrupos }} jogos de grupos palpitados
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              <div class="rounded-2xl border border-border bg-bg-card p-5">
-                <h2 class="mb-2 text-base font-bold">Resumo do Mata-Mata</h2>
-                <p class="mb-4 text-xs text-text-muted">Campeao, vice e terceiro sao definidos pelos seus palpites no bracket.</p>
-                <div class="grid gap-3 sm:grid-cols-3">
-                  <div class="rounded-xl bg-bg-input p-3">
-                    <span class="block text-[10px] uppercase text-text-muted">Campeao</span>
-                    <span class="mt-1 block text-sm font-medium">{{ resumoBracket.campeao ?? 'A definir' }}</span>
+                <div class="p-3 sm:p-4">
+                  <div class="overflow-x-auto pb-2 scrollbar-none 2xl:overflow-visible">
+                    <div class="grid min-w-[1280px] grid-cols-[minmax(172px,1.05fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(112px,.68fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(172px,1.05fr)] items-center gap-2 2xl:min-w-0 2xl:w-full">
+                      <aside class="flex min-h-[920px] flex-col justify-around gap-3">
+                        <article
+                          v-for="grupo in gruposChaveamentoEsquerda"
+                          :key="grupo.letra"
+                          class="rounded-2xl border border-white/15 bg-white/10 p-3 text-white shadow-inner shadow-white/5 backdrop-blur"
+                        >
+                          <div class="mb-2 flex items-center justify-between">
+                            <strong class="flex h-7 w-7 items-center justify-center rounded-lg border border-[#d4af37]/60 bg-[#d4af37]/20 text-xs text-[#f8e7a1]">
+                              {{ grupo.letra }}
+                            </strong>
+                            <span class="text-[9px] font-bold uppercase tracking-[0.18em] text-white/55">Grupo {{ grupo.letra }}</span>
+                          </div>
+                          <div class="space-y-1.5">
+                            <div
+                              v-for="linha in grupo.tabela"
+                              :key="linha.selecao.id"
+                              class="grid grid-cols-[24px_1fr_30px] items-center gap-1.5 rounded-lg border px-2 py-1.5"
+                              :class="linha.posicao <= 2 ? 'border-[#d4af37]/35 bg-[#d4af37]/15' : linha.qualificadoTerceiro ? 'border-emerald-300/30 bg-emerald-300/10' : 'border-white/10 bg-black/10'"
+                            >
+                              <span class="text-[10px] font-black text-[#f8e7a1]">{{ linha.posicao }}o</span>
+                              <span class="min-w-0 truncate text-[11px] font-semibold">{{ linha.selecao.nome }}</span>
+                              <span class="rounded-md bg-black/20 px-1 py-0.5 text-center text-[9px] font-bold text-white/80">{{ linha.pontos }}</span>
+                            </div>
+                          </div>
+                        </article>
+                      </aside>
+
+                      <section class="flex min-h-[920px] flex-col justify-around gap-2">
+                        <h3 class="text-center text-[10px] font-black uppercase tracking-[0.22em] text-[#d4af37]">32 avos</h3>
+                        <component :is="JogoChaveamento"
+                          v-for="jogo in jogosPorSlugEOrdem('round_of_32', 1, 8)"
+                          :key="jogo.id"
+                          :jogo="jogo"
+                          :lados="ladosJogoChaveamento(jogo)"
+                          :invertido="false"
+                        />
+                      </section>
+
+                      <section class="flex min-h-[920px] flex-col justify-around gap-2">
+                        <h3 class="text-center text-[10px] font-black uppercase tracking-[0.22em] text-[#d4af37]">Oitavas</h3>
+                        <component :is="JogoChaveamento"
+                          v-for="jogo in jogosPorSlugEOrdem('oitavas_de_final', 1, 4)"
+                          :key="jogo.id"
+                          :jogo="jogo"
+                          :lados="ladosJogoChaveamento(jogo)"
+                          :invertido="false"
+                        />
+                      </section>
+
+                      <section class="flex min-h-[920px] flex-col justify-around gap-2">
+                        <h3 class="text-center text-[10px] font-black uppercase tracking-[0.22em] text-[#d4af37]">Quartas</h3>
+                        <component :is="JogoChaveamento"
+                          v-for="jogo in jogosPorSlugEOrdem('quartas_de_final', 1, 2)"
+                          :key="jogo.id"
+                          :jogo="jogo"
+                          :lados="ladosJogoChaveamento(jogo)"
+                          :invertido="false"
+                        />
+                      </section>
+
+                      <section class="flex min-h-[920px] flex-col justify-around gap-2">
+                        <h3 class="text-center text-[10px] font-black uppercase tracking-[0.22em] text-[#d4af37]">Semifinal</h3>
+                        <component :is="JogoChaveamento"
+                          v-for="jogo in jogosPorSlugEOrdem('semifinais', 1, 1)"
+                          :key="jogo.id"
+                          :jogo="jogo"
+                          :lados="ladosJogoChaveamento(jogo)"
+                          :invertido="false"
+                        />
+                      </section>
+
+                      <section class="flex min-h-[920px] flex-col items-center justify-center gap-4 text-center">
+                        <span class="text-[10px] font-black uppercase tracking-[0.28em] text-[#d4af37]">Final</span>
+                        <div class="flex h-24 w-24 items-center justify-center rounded-full border border-[#d4af37]/50 bg-[#d4af37]/15 shadow-2xl shadow-[#d4af37]/20">
+                          <img :src="tacaCopaAsset" alt="Taca da Copa do Mundo" class="h-32 w-auto object-contain drop-shadow-[0_0_18px_rgba(212,175,55,0.45)]" />
+                        </div>
+                        <component :is="JogoChaveamento"
+                          v-for="jogo in jogosPorSlugEOrdem('final', 1, 1)"
+                          :key="jogo.id"
+                          :jogo="jogo"
+                          :lados="ladosJogoChaveamento(jogo)"
+                          :invertido="false"
+                        />
+                      </section>
+
+                      <section class="flex min-h-[920px] flex-col justify-around gap-2">
+                        <h3 class="text-center text-[10px] font-black uppercase tracking-[0.22em] text-[#d4af37]">Semifinal</h3>
+                        <component :is="JogoChaveamento"
+                          v-for="jogo in jogosPorSlugEOrdem('semifinais', 2, 2)"
+                          :key="jogo.id"
+                          :jogo="jogo"
+                          :lados="ladosJogoChaveamento(jogo)"
+                          :invertido="true"
+                        />
+                      </section>
+
+                      <section class="flex min-h-[920px] flex-col justify-around gap-2">
+                        <h3 class="text-center text-[10px] font-black uppercase tracking-[0.22em] text-[#d4af37]">Quartas</h3>
+                        <component :is="JogoChaveamento"
+                          v-for="jogo in jogosPorSlugEOrdem('quartas_de_final', 3, 4)"
+                          :key="jogo.id"
+                          :jogo="jogo"
+                          :lados="ladosJogoChaveamento(jogo)"
+                          :invertido="true"
+                        />
+                      </section>
+
+                      <section class="flex min-h-[920px] flex-col justify-around gap-2">
+                        <h3 class="text-center text-[10px] font-black uppercase tracking-[0.22em] text-[#d4af37]">Oitavas</h3>
+                        <component :is="JogoChaveamento"
+                          v-for="jogo in jogosPorSlugEOrdem('oitavas_de_final', 5, 8)"
+                          :key="jogo.id"
+                          :jogo="jogo"
+                          :lados="ladosJogoChaveamento(jogo)"
+                          :invertido="true"
+                        />
+                      </section>
+
+                      <section class="flex min-h-[920px] flex-col justify-around gap-2">
+                        <h3 class="text-center text-[10px] font-black uppercase tracking-[0.22em] text-[#d4af37]">32 avos</h3>
+                        <component :is="JogoChaveamento"
+                          v-for="jogo in jogosPorSlugEOrdem('round_of_32', 9, 16)"
+                          :key="jogo.id"
+                          :jogo="jogo"
+                          :lados="ladosJogoChaveamento(jogo)"
+                          :invertido="true"
+                        />
+                      </section>
+
+                      <aside class="flex min-h-[920px] flex-col justify-around gap-3">
+                        <article
+                          v-for="grupo in gruposChaveamentoDireita"
+                          :key="grupo.letra"
+                          class="rounded-2xl border border-white/15 bg-white/10 p-3 text-white shadow-inner shadow-white/5 backdrop-blur"
+                        >
+                          <div class="mb-2 flex items-center justify-between">
+                            <span class="text-[9px] font-bold uppercase tracking-[0.18em] text-white/55">Grupo {{ grupo.letra }}</span>
+                            <strong class="flex h-7 w-7 items-center justify-center rounded-lg border border-[#d4af37]/60 bg-[#d4af37]/20 text-xs text-[#f8e7a1]">
+                              {{ grupo.letra }}
+                            </strong>
+                          </div>
+                          <div class="space-y-1.5">
+                            <div
+                              v-for="linha in grupo.tabela"
+                              :key="linha.selecao.id"
+                              class="grid grid-cols-[30px_1fr_24px] items-center gap-1.5 rounded-lg border px-2 py-1.5"
+                              :class="linha.posicao <= 2 ? 'border-[#d4af37]/35 bg-[#d4af37]/15' : linha.qualificadoTerceiro ? 'border-emerald-300/30 bg-emerald-300/10' : 'border-white/10 bg-black/10'"
+                            >
+                              <span class="rounded-md bg-black/20 px-1 py-0.5 text-center text-[9px] font-bold text-white/80">{{ linha.pontos }}</span>
+                              <span class="min-w-0 truncate text-right text-[11px] font-semibold">{{ linha.selecao.nome }}</span>
+                              <span class="text-right text-[10px] font-black text-[#f8e7a1]">{{ linha.posicao }}o</span>
+                            </div>
+                          </div>
+                        </article>
+                      </aside>
+                    </div>
                   </div>
-                  <div class="rounded-xl bg-bg-input p-3">
-                    <span class="block text-[10px] uppercase text-text-muted">Vice</span>
-                    <span class="mt-1 block text-sm font-medium">{{ resumoBracket.vice ?? 'A definir' }}</span>
-                  </div>
-                  <div class="rounded-xl bg-bg-input p-3">
-                    <span class="block text-[10px] uppercase text-text-muted">Terceiro</span>
-                    <span class="mt-1 block text-sm font-medium">{{ resumoBracket.terceiro ?? 'A definir' }}</span>
-                  </div>
+                </div>
+              </section>
+
+              <div class="grid gap-3 sm:grid-cols-3">
+                <div class="rounded-2xl border border-border bg-bg-card p-4">
+                  <span class="block text-[10px] uppercase text-text-muted">Campeao</span>
+                  <span class="mt-1 block text-sm font-medium">{{ resumoBracket.campeao ?? 'A definir' }}</span>
+                </div>
+                <div class="rounded-2xl border border-border bg-bg-card p-4">
+                  <span class="block text-[10px] uppercase text-text-muted">Vice</span>
+                  <span class="mt-1 block text-sm font-medium">{{ resumoBracket.vice ?? 'A definir' }}</span>
+                </div>
+                <div class="rounded-2xl border border-border bg-bg-card p-4">
+                  <span class="block text-[10px] uppercase text-text-muted">Terceiro</span>
+                  <span class="mt-1 block text-sm font-medium">{{ resumoBracket.terceiro ?? 'A definir' }}</span>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Sidebar: Ranking ao Vivo -->
-          <div class="hidden lg:block">
+          <div v-if="subTabAtiva !== 'chaveamento'" class="hidden lg:block">
             <div class="sticky top-20 overflow-hidden rounded-3xl border border-primary/20 bg-[radial-gradient(circle_at_top,#123225,transparent_40%),linear-gradient(180deg,#111513,#0b0d0c)] p-4">
               <div class="mb-4 flex items-center justify-between gap-2">
                 <h3 class="text-sm font-bold">Ranking ao Vivo</h3>
@@ -453,12 +612,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, defineComponent, h, onMounted, ref, watch, type PropType } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { usarTorneioStore } from '../stores/torneio'
 import { useToast } from '../composables/useToast'
 import type { Aposta, BracketJogoCupom, Cupom, RankingItem, ResumoBracketCupom, Selecao, Torneio } from '../tipos'
+import tacaCopaAsset from '../assets/taca-copa-transparente.png'
 
 const rota = useRoute()
 const torneioStore = usarTorneioStore()
@@ -478,7 +638,7 @@ const carregando = ref(true)
 const carregandoRanking = ref(false)
 
 const tabAtiva = ref<'palpites' | 'ranking' | 'resultados'>('palpites')
-const subTabAtiva = ref<'jogos' | 'artilheiro'>('jogos')
+const subTabAtiva = ref<'jogos' | 'chaveamento'>('jogos')
 const indiceFase = ref(0)
 const diaSelecionado = ref('')
 
@@ -490,12 +650,11 @@ const tabs = [
 
 const subTabs = [
   { id: 'jogos' as const, nome: 'Jogos' },
-  { id: 'artilheiro' as const, nome: 'Artilheiro' },
+  { id: 'chaveamento' as const, nome: 'Chaveamento' },
 ]
 
 const placaresGrupos = ref<Record<number, { placar_mandante: string; placar_visitante: string }>>({})
 const placaresEliminatorios = ref<Record<number, { placar_mandante: string; placar_visitante: string; penal_mandante: string; penal_visitante: string }>>({})
-const artilheiroId = ref('')
 
 // Auto-save
 const salvando = ref(false)
@@ -536,11 +695,135 @@ const fifaParaIso: Record<string, string> = {
 }
 
 type JogoCupom = Torneio['jogos'][number] | BracketJogoCupom
+type LinhaClassificacaoGrupo = {
+  grupo: string
+  posicao: number
+  selecao: Selecao
+  pontos: number
+  saldo: number
+  golsPro: number
+  vitorias: number
+  qualificadoTerceiro: boolean
+}
+type LadoChaveamento = {
+  chave: string
+  selecao: Selecao | null
+  bandeiraUrl: string
+  placar: string
+  vencedor: boolean
+}
+
+const JogoChaveamento = defineComponent({
+  props: {
+    jogo: { type: Object as PropType<BracketJogoCupom>, required: true },
+    lados: { type: Array as PropType<LadoChaveamento[]>, required: true },
+    invertido: { type: Boolean, required: true },
+  },
+  setup(props) {
+    return () => h('article', {
+      class: [
+        'relative rounded-xl border border-[#d4af37]/45 bg-[#171104]/70 p-2 text-white shadow-lg shadow-black/20',
+        props.invertido
+          ? 'before:absolute before:right-full before:top-1/2 before:hidden before:h-px before:w-3 before:bg-[#d4af37]/45 xl:before:block'
+          : 'before:absolute before:left-full before:top-1/2 before:hidden before:h-px before:w-3 before:bg-[#d4af37]/45 xl:before:block',
+        props.jogo.bloqueado ? 'opacity-55' : '',
+      ],
+    }, [
+      h('span', { class: ['mb-1 block text-[9px] font-bold uppercase tracking-[0.18em] text-white/45', props.invertido ? 'text-right' : ''] }, `Jogo ${props.jogo.ordem_na_fase}`),
+      h('div', { class: 'space-y-1' }, props.lados.map((lado) => h('div', {
+        key: lado.chave,
+        class: [
+          props.invertido ? 'grid-cols-[auto_1fr_22px]' : 'grid-cols-[22px_1fr_auto]',
+          'grid items-center gap-1.5 rounded-lg border px-1.5 py-1',
+          lado.vencedor ? 'border-[#d4af37]/60 bg-[#d4af37]/20' : 'border-white/10 bg-black/15',
+        ],
+      }, props.invertido ? [
+        h('span', { class: 'text-[10px] font-black text-white/70' }, lado.placar),
+        h('span', { class: 'min-w-0 truncate text-right text-[11px] font-semibold' }, lado.selecao?.nome ?? 'A definir'),
+        lado.bandeiraUrl
+          ? h('img', { src: lado.bandeiraUrl, alt: lado.selecao?.nome ?? '', class: 'h-4 w-5 rounded object-cover' })
+          : h('span', { class: 'h-4 w-5 rounded border border-dashed border-white/25' }),
+      ] : [
+        lado.bandeiraUrl
+          ? h('img', { src: lado.bandeiraUrl, alt: lado.selecao?.nome ?? '', class: 'h-4 w-5 rounded object-cover' })
+          : h('span', { class: 'h-4 w-5 rounded border border-dashed border-white/25' }),
+        h('span', { class: 'min-w-0 truncate text-[11px] font-semibold' }, lado.selecao?.nome ?? 'A definir'),
+        h('span', { class: 'text-[10px] font-black text-white/70' }, lado.placar),
+      ]))),
+    ])
+  },
+})
 
 function bandeira(sigla: string): string {
   const iso = fifaParaIso[sigla]
   if (!iso) return ''
   return `https://flagcdn.com/w80/${iso}.png`
+}
+
+function letraGrupo(nome: string): string {
+  return nome.replace(/^Grupo\s+/i, '')
+}
+
+function ordenarClassificacao(a: LinhaClassificacaoGrupo, b: LinhaClassificacaoGrupo): number {
+  return b.pontos - a.pontos
+    || b.saldo - a.saldo
+    || b.golsPro - a.golsPro
+    || b.vitorias - a.vitorias
+    || a.selecao.nome.localeCompare(b.selecao.nome)
+}
+
+function placarChaveamento(jogo: BracketJogoCupom, lado: 'mandante' | 'visitante'): string {
+  const placar = placaresGrupos.value[jogo.id]
+  const campo = lado === 'mandante' ? 'placar_mandante' : 'placar_visitante'
+  return placar?.[campo] !== '' && placar?.[campo] !== undefined ? placar[campo] : '-'
+}
+
+function vencedorChaveamentoId(jogo: BracketJogoCupom): number | null {
+  const placar = placaresGrupos.value[jogo.id]
+  if (!placar || placar.placar_mandante === '' || placar.placar_visitante === '') return null
+
+  const mandante = jogo.selecao_mandante?.id ?? null
+  const visitante = jogo.selecao_visitante?.id ?? null
+  const golsMandante = Number(placar.placar_mandante)
+  const golsVisitante = Number(placar.placar_visitante)
+
+  if (golsMandante > golsVisitante) return mandante
+  if (golsVisitante > golsMandante) return visitante
+
+  const penaltis = placaresEliminatorios.value[jogo.id]
+  if (!penaltis || penaltis.penal_mandante === '' || penaltis.penal_visitante === '') return null
+
+  const penalMandante = Number(penaltis.penal_mandante)
+  const penalVisitante = Number(penaltis.penal_visitante)
+  if (penalMandante > penalVisitante) return mandante
+  if (penalVisitante > penalMandante) return visitante
+  return null
+}
+
+function ladosJogoChaveamento(jogo: BracketJogoCupom) {
+  const vencedorId = vencedorChaveamentoId(jogo)
+  return [
+    {
+      chave: 'mandante',
+      selecao: jogo.selecao_mandante,
+      bandeiraUrl: bandeira(jogo.selecao_mandante?.sigla ?? ''),
+      placar: placarChaveamento(jogo, 'mandante'),
+      vencedor: Boolean(vencedorId && jogo.selecao_mandante?.id === vencedorId),
+    },
+    {
+      chave: 'visitante',
+      selecao: jogo.selecao_visitante,
+      bandeiraUrl: bandeira(jogo.selecao_visitante?.sigla ?? ''),
+      placar: placarChaveamento(jogo, 'visitante'),
+      vencedor: Boolean(vencedorId && jogo.selecao_visitante?.id === vencedorId),
+    },
+  ]
+}
+
+function jogosPorSlugEOrdem(slug: string, inicio: number, fim: number): BracketJogoCupom[] {
+  return jogosEliminatoriosDoCupom.value
+    .filter((jogo) => jogo.fase.slug === slug && jogo.ordem_na_fase >= inicio && jogo.ordem_na_fase <= fim)
+    .sort((a, b) => a.ordem_na_fase - b.ordem_na_fase)
 }
 
 function jogoPossuiPlacares(jogoId: number): boolean {
@@ -567,6 +850,80 @@ function jogoCompleto(jogo: JogoCupom): boolean {
 
 const jogosGruposDoTorneio = computed(() => torneio.value?.jogos.filter((jogo) => jogo.fase.tipo === 'grupos') ?? [])
 const jogosEliminatoriosDoCupom = computed(() => bracketCupom.value.filter((jogo) => jogo.fase.tipo !== 'grupos'))
+const totalJogosGrupos = computed(() => jogosGruposDoTorneio.value.length)
+const gruposPreenchidos = computed(() => jogosGruposDoTorneio.value.filter((jogo) => jogoCompleto(jogo)).length)
+
+const classificacaoGrupos = computed(() => {
+  if (!torneio.value) return []
+
+  const grupos = torneio.value.grupos.map((grupo) => {
+    const letra = letraGrupo(grupo.nome)
+    const tabela = new Map<number, LinhaClassificacaoGrupo>()
+
+    for (const selecao of grupo.selecoes) {
+      tabela.set(selecao.id, {
+        grupo: letra,
+        posicao: 0,
+        selecao,
+        pontos: 0,
+        saldo: 0,
+        golsPro: 0,
+        vitorias: 0,
+        qualificadoTerceiro: false,
+      })
+    }
+
+    for (const jogo of jogosGruposDoTorneio.value.filter((item) => item.grupo_id === grupo.id)) {
+      const palpite = placaresGrupos.value[jogo.id]
+      if (!palpite || palpite.placar_mandante === '' || palpite.placar_visitante === '' || !jogo.selecao_mandante || !jogo.selecao_visitante) continue
+
+      const mandante = tabela.get(jogo.selecao_mandante.id)
+      const visitante = tabela.get(jogo.selecao_visitante.id)
+      if (!mandante || !visitante) continue
+
+      const golsMandante = Number(palpite.placar_mandante)
+      const golsVisitante = Number(palpite.placar_visitante)
+      mandante.golsPro += golsMandante
+      visitante.golsPro += golsVisitante
+      mandante.saldo += golsMandante - golsVisitante
+      visitante.saldo += golsVisitante - golsMandante
+
+      if (golsMandante > golsVisitante) {
+        mandante.pontos += 3
+        mandante.vitorias += 1
+      } else if (golsVisitante > golsMandante) {
+        visitante.pontos += 3
+        visitante.vitorias += 1
+      } else {
+        mandante.pontos += 1
+        visitante.pontos += 1
+      }
+    }
+
+    const linhas = [...tabela.values()]
+      .sort(ordenarClassificacao)
+      .map((linha, indice) => ({ ...linha, posicao: indice + 1 }))
+
+    return { letra, tabela: linhas }
+  })
+
+  const terceiros = grupos
+    .map((grupo) => grupo.tabela[2])
+    .filter((linha): linha is LinhaClassificacaoGrupo => Boolean(linha))
+    .sort(ordenarClassificacao)
+    .slice(0, 8)
+    .map((linha) => `${linha.grupo}-${linha.selecao.id}`)
+
+  return grupos.map((grupo) => ({
+    ...grupo,
+    tabela: grupo.tabela.map((linha) => ({
+      ...linha,
+      qualificadoTerceiro: terceiros.includes(`${linha.grupo}-${linha.selecao.id}`),
+    })),
+  }))
+})
+const gruposChaveamentoEsquerda = computed(() => classificacaoGrupos.value.slice(0, Math.ceil(classificacaoGrupos.value.length / 2)))
+const gruposChaveamentoDireita = computed(() => classificacaoGrupos.value.slice(Math.ceil(classificacaoGrupos.value.length / 2)))
 
 // Fases e rodadas disponíveis
 const fasesRodadas = computed(() => {
@@ -644,7 +1001,6 @@ const textoFechamento = computed(() => {
 })
 
 const todasSelecoes = computed<Selecao[]>(() => torneio.value?.grupos.flatMap(g => g.selecoes) ?? [])
-const jogadores = computed(() => todasSelecoes.value.flatMap(s => (s.jogadores ?? []).map(j => ({ ...j, selecao_sigla: s.sigla }))))
 const resumoBracket = computed(() => {
   if (!torneio.value) return { campeao: null, vice: null, terceiro: null }
 
@@ -763,11 +1119,6 @@ function montarApostasParaEnvio() {
     }
   }
 
-  // Artilheiro
-  if (artilheiroId.value) {
-    apostasArr.push({ tipo: 'artilheiro', torneio_id: torneio.value.id, jogador_id: Number(artilheiroId.value) })
-  }
-
   return apostasArr
 }
 
@@ -824,7 +1175,6 @@ function formatarHora(dataHora: string) {
 function encontrarAposta(tipo: string, referenciaId?: number) {
   return apostas.value.find(a => {
     if (a.tipo !== tipo) return false
-    if (tipo === 'artilheiro') return true
     return a.jogo_id === referenciaId
   })
 }
@@ -850,9 +1200,6 @@ function preencherFormulario(modo: 'substituir' | 'mesclar' = 'substituir') {
         penal_visitante: String(aposta?.conteudo.penal_visitante ?? ''),
       }
     }
-  }
-  if (sobrescrever || !artilheiroId.value) {
-    artilheiroId.value = String(encontrarAposta('artilheiro')?.conteudo.jogador_id ?? '')
   }
 }
 
@@ -888,10 +1235,16 @@ async function carregarRanking() {
   } catch {} finally { carregandoRanking.value = false }
 }
 
-// Auto-select first day when fase changes
-watch([indiceFase, jogosFaseAtual], () => {
-  if (diasComJogos.value.length) diaSelecionado.value = diasComJogos.value[0].data
-  else diaSelecionado.value = ''
+watch([indiceFase, diasComJogos], () => {
+  if (!diasComJogos.value.length) {
+    diaSelecionado.value = ''
+    return
+  }
+
+  const diaAindaExiste = diasComJogos.value.some((dia) => dia.data === diaSelecionado.value)
+  if (!diaAindaExiste) {
+    diaSelecionado.value = diasComJogos.value[0].data
+  }
 }, { immediate: true })
 
 watch(fasesRodadas, (items) => {
@@ -909,3 +1262,4 @@ onMounted(async () => {
   carregarRanking()
 })
 </script>
+

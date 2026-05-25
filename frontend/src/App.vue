@@ -11,7 +11,7 @@
       @fechar="menuAberto = false"
       @abrir-modal-auth="abrirModalAuth"
     />
-    <main :class="landingAtiva ? 'w-full flex-1' : 'mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6'">
+    <main :class="classeMain">
       <RouterView v-slot="{ Component }">
         <Transition name="fade" mode="out-in">
           <component :is="Component" @abrir-modal-auth="abrirModalAuth" />
@@ -44,6 +44,11 @@ const menuAberto = ref(false)
 const modalAuthAberto = ref(false)
 const modalAuthTab = ref<'entrar' | 'cadastro'>('entrar')
 const landingAtiva = computed(() => route.name === 'inicio')
+const classeMain = computed(() => {
+  if (landingAtiva.value) return 'w-full flex-1'
+  if (route.name === 'cupom') return 'mx-auto w-full max-w-none flex-1 px-2 py-6 sm:px-3 lg:px-4'
+  return 'mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6'
+})
 
 function abrirModalAuth(tab: 'entrar' | 'cadastro') {
   modalAuthTab.value = tab

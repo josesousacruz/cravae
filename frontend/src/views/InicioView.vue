@@ -455,7 +455,7 @@ const passos = [
   {
     numero: '03',
     titulo: 'Registrar palpites',
-    descricao: 'Preencha seus palpites da fase de grupos, artilheiro e mata-mata.',
+    descricao: 'Preencha seus palpites da fase de grupos e acompanhe o chaveamento ate a final.',
     imagem: step03Asset,
   },
   {
@@ -474,7 +474,7 @@ const passos = [
 
 const beneficios = [
   'Cupons independentes para testar estrategias diferentes',
-  'Palpites completos para grupos, artilheiro e mata-mata',
+  'Palpites completos para grupos e mata-mata com chaveamento visual',
   'Regras de pontuacao visiveis e configuraveis no backend',
   'Ranking por cupom com criterios de desempate consistentes',
   'Estado do torneio vindo da API para manter o fluxo de palpites consistente',
@@ -509,7 +509,7 @@ const faq = [
   },
   {
     pergunta: 'Quais palpites entram no produto?',
-    resposta: 'O fluxo cobre fase de grupos, mata-mata progressivo por cupom, artilheiro e ranking consolidado com criterios de desempate.',
+    resposta: 'O fluxo cobre fase de grupos, mata-mata progressivo por cupom e ranking consolidado com criterios de desempate.',
   },
   {
     pergunta: 'O ranking atualiza automaticamente?',
@@ -568,7 +568,7 @@ const regrasExibidas = computed(() => {
     { id: 1, nome: 'Placar exato', descricao: 'Premia quem acerta o resultado completo do jogo.', pontos: 10, ativo: true, chave: 'placar_exato', fase_id: null },
     { id: 2, nome: 'Vencedor correto', descricao: 'Reconhece o acerto do vencedor mesmo sem o placar cheio.', pontos: 5, ativo: true, chave: 'vencedor', fase_id: null },
     { id: 3, nome: 'Classificado do mata-mata', descricao: 'Valoriza quem projeta a progressao correta do bracket.', pontos: 8, ativo: true, chave: 'classificado', fase_id: null },
-    { id: 4, nome: 'Artilheiro', descricao: 'Inclui o palpite de artilheiro no total do cupom.', pontos: 12, ativo: true, chave: 'artilheiro', fase_id: null },
+    { id: 4, nome: 'Chaveamento', descricao: 'Valoriza a progressao correta das selecoes no mata-mata.', pontos: 12, ativo: true, chave: 'chaveamento', fase_id: null },
   ] satisfies RegraPontuacao[]
 })
 
@@ -581,7 +581,7 @@ onMounted(async () => {
   try {
     const resposta = await requisicaoApi<{ torneio: Torneio }>('/torneio')
     torneio.value = resposta.torneio
-    regras.value = resposta.torneio.regras_pontuacao?.filter((regra) => regra.ativo).slice(0, 6) ?? []
+    regras.value = resposta.torneio.regras_pontuacao?.filter((regra) => regra.ativo && regra.chave !== 'artilheiro').slice(0, 6) ?? []
   } catch {
     torneio.value = null
     regras.value = []

@@ -112,7 +112,7 @@
       <h2 class="mb-4 text-lg font-bold">Regras de Pontuacao</h2>
       <div class="space-y-3">
         <div
-          v-for="regra in torneio.regras_pontuacao"
+          v-for="regra in regrasPontuacaoVisiveis"
           :key="regra.id"
           class="flex flex-col gap-3 rounded-xl bg-bg-input p-4 sm:flex-row sm:items-center"
         >
@@ -150,25 +150,13 @@
         </div>
       </div>
 
-      <div class="mt-5 rounded-xl bg-bg-input p-4">
-        <label class="block">
-          <span class="mb-1.5 block text-xs text-text-muted">Artilheiro</span>
-          <select v-model="resultadoTorneio.artilheiro_jogador_id">
-            <option value="">Selecione</option>
-            <option v-for="jogador in jogadores" :key="jogador.id" :value="String(jogador.id)">
-              {{ jogador.nome }}
-            </option>
-          </select>
-        </label>
-      </div>
-
       <button
         type="button"
         class="mt-5 w-full rounded-lg bg-primary py-2.5 text-sm font-medium text-bg transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
         :disabled="salvandoResultadoTorneio"
         @click="salvarResultadoTorneioFn"
       >
-        {{ salvandoResultadoTorneio ? 'Salvando...' : 'Salvar resultado final' }}
+        {{ salvandoResultadoTorneio ? 'Salvando...' : 'Sincronizar resultado final' }}
       </button>
     </section>
   </div>
@@ -177,7 +165,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { requisicaoApi } from '../services/api'
-import type { Jogador, Torneio } from '../tipos'
+import type { Torneio } from '../tipos'
 
 const torneio = ref<Torneio | null>(null)
 const mensagem = ref('')
@@ -186,9 +174,6 @@ const tabAtiva = ref<'jogos' | 'regras' | 'torneio'>('jogos')
 const faseSelecionadaId = ref<number | null>(null)
 const pontosRegras = ref<Record<number, string>>({})
 const resultadosJogos = ref<Record<number, { placar_mandante: string; placar_visitante: string; selecao_classificada_id: string }>>({})
-const resultadoTorneio = ref({
-  artilheiro_jogador_id: '',
-})
 const salvandoJogoId = ref<number | null>(null)
 const salvandoRegraId = ref<number | null>(null)
 const salvandoResultadoTorneio = ref(false)
@@ -200,7 +185,7 @@ const tabs = [
 ]
 
 const selecoes = computed(() => torneio.value?.grupos.flatMap((g) => g.selecoes) ?? [])
-const jogadores = computed<Jogador[]>(() => selecoes.value.flatMap((s) => s.jogadores ?? []))
+const regrasPontuacaoVisiveis = computed(() => torneio.value?.regras_pontuacao.filter((regra) => regra.chave !== 'artilheiro') ?? [])
 const fasesComJogos = computed(() => {
   if (!torneio.value) return []
   return torneio.value.fases
@@ -278,10 +263,6 @@ function preencherFormulario() {
     }
   }
 
-  resultadoTorneio.value = {
-    artilheiro_jogador_id: String(torneio.value.resultado_torneio?.artilheiro_jogador_id ?? ''),
-  }
-
   if (!faseSelecionadaId.value || !fasesComJogos.value.some((fase) => fase.id === faseSelecionadaId.value)) {
     faseSelecionadaId.value = fasesComJogos.value[0]?.id ?? null
   }
@@ -342,11 +323,7 @@ async function salvarResultadoTorneioFn() {
   await executarAcao(async () => {
     await requisicaoApi(`/admin/torneios/${torneioId}/resultado`, {
       metodo: 'PUT',
-      corpo: {
-        artilheiro_jogador_id: resultadoTorneio.value.artilheiro_jogador_id
-          ? Number(resultadoTorneio.value.artilheiro_jogador_id)
-          : null,
-      },
+      corpo: {},
     })
   }, 'Resultado final salvo. Recalculo enviado para processamento.')
   salvandoResultadoTorneio.value = false
