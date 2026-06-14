@@ -20,9 +20,37 @@
           class="rounded-full px-3 py-1 text-xs font-semibold"
           :class="cupom.status === 'ativo' ? 'bg-primary text-bg' : 'bg-warning/20 text-warning'"
         >
-          {{ cupom.status }}
+          {{ cupom.status === 'ativo' ? 'Cupom ativo' : 'Aguardando pagamento' }}
         </span>
       </div>
+
+      <!-- Banner de pendencia: pagamento em destaque -->
+      <div
+        v-if="cupom.status !== 'ativo'"
+        class="flex flex-col gap-3 rounded-2xl border border-[#32BCAD]/30 bg-[#32BCAD]/10 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div class="flex items-center gap-2.5">
+          <svg class="h-6 w-6 shrink-0 text-[#32BCAD]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+          <p class="text-sm text-text-secondary">
+            Cupom <strong class="text-text">aguardando pagamento</strong>. Pague via Pix para confirmar sua participacao.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="flex shrink-0 items-center justify-center gap-2.5 rounded-xl bg-[#32BCAD] px-5 py-3 text-sm font-bold text-black shadow-lg shadow-[#32BCAD]/25 transition-all hover:bg-[#2aa99b] hover:shadow-[#32BCAD]/40"
+          @click="modalPagamentoAberto = true"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h3c.621 0 1.125.504 1.125 1.125v3c0 .621-.504 1.125-1.125 1.125h-3A1.125 1.125 0 013.75 7.875v-3zM3.75 16.125c0-.621.504-1.125 1.125-1.125h3c.621 0 1.125.504 1.125 1.125v3c0 .621-.504 1.125-1.125 1.125h-3a1.125 1.125 0 01-1.125-1.125v-3zM15 4.875c0-.621.504-1.125 1.125-1.125h3c.621 0 1.125.504 1.125 1.125v3c0 .621-.504 1.125-1.125 1.125h-3A1.125 1.125 0 0115 7.875v-3zM13.5 13.5h3m-3 3h.008v.008H13.5V16.5zm3 3h.008v.008H16.5V19.5zm3-3h.008v.008H19.5V16.5zm0 3h.008v.008H19.5V19.5z" /></svg>
+          <span>Pagar via Pix{{ valorCupomFormatado ? ` · ${valorCupomFormatado}` : '' }}</span>
+        </button>
+      </div>
+
+      <ModalPixPagamento
+        :aberto="modalPagamentoAberto"
+        :cupom-codigo="cupom.codigo"
+        :valor="cupom.pedido_checkout?.valor"
+        @fechar="modalPagamentoAberto = false"
+      />
 
       <!-- Tabs: Palpites / Ranking / Meus Resultados -->
       <div class="hidden overflow-x-auto border-b border-border sm:flex">
@@ -548,31 +576,48 @@
               <p class="text-sm text-text-secondary">Todos os cupons em ordem de pontuacao.</p>
             </div>
             <div class="space-y-3">
-              <article
+              <div
                 v-for="(item, i) in ranking"
                 :key="item.id"
-                class="flex items-center gap-3 rounded-2xl border px-4 py-3"
+                class="overflow-hidden rounded-2xl border"
                 :class="item.cupom.id === cupom.id ? 'border-primary/40 bg-primary/10' : 'border-border bg-bg-input/60'"
               >
-                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold" :class="classePosicaoRanking(i)">
-                  {{ i + 1 }}
-                </div>
-                <div class="min-w-0 flex-1">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <strong class="truncate text-sm">{{ item.cupom.usuario.nome }}</strong>
-                    <span v-if="item.cupom.id === cupom.id" class="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-bg">Voce</span>
+                <button type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left" @click="alternar(item.cupom.id)">
+                  <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold" :class="classePosicaoRanking(i)">
+                    {{ i + 1 }}
                   </div>
-                  <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
-                    <span>Cupom {{ item.cupom.codigo }}</span>
-                    <span>{{ item.quantidade_placares_exatos }} exatos</span>
-                    <span>{{ item.quantidade_classificados_corretos }} classificados</span>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <strong class="truncate text-sm">{{ item.cupom.usuario.nome }}</strong>
+                      <span v-if="item.cupom.id === cupom.id" class="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-bg">Voce</span>
+                    </div>
+                    <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+                      <span>Cupom {{ item.cupom.codigo }}</span>
+                      <span>{{ item.quantidade_placares_exatos }} exatos</span>
+                      <span>{{ item.quantidade_classificados_corretos }} classificados</span>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <strong class="block text-2xl font-black text-primary">{{ item.pontuacao_total }}</strong>
+                    <span class="text-xs text-text-muted">pts</span>
+                  </div>
+                  <svg class="h-5 w-5 shrink-0 text-text-muted transition-transform" :class="expandidoId === item.cupom.id ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </button>
+
+                <div v-if="expandidoId === item.cupom.id" class="border-t border-border/70 px-4 py-3">
+                  <div v-if="carregandoId === item.cupom.id" class="py-2 text-center text-xs text-text-muted">Carregando pontuacoes...</div>
+                  <div v-else-if="!cache[item.cupom.id]?.length" class="py-2 text-center text-xs text-text-muted">Nenhuma pontuacao registrada ainda.</div>
+                  <div v-else class="space-y-2">
+                    <div v-for="evento in cache[item.cupom.id]" :key="evento.id" class="flex items-center justify-between gap-3 rounded-lg bg-bg-card px-3 py-2">
+                      <div class="min-w-0">
+                        <span class="block text-sm">{{ evento.descricao }}</span>
+                        <span v-if="descricaoJogo(evento)" class="mt-0.5 block truncate text-xs text-text-muted">{{ descricaoJogo(evento) }}</span>
+                      </div>
+                      <span class="shrink-0 text-sm font-bold text-primary">+{{ evento.pontos }} pts</span>
+                    </div>
                   </div>
                 </div>
-                <div class="text-right">
-                  <strong class="block text-2xl font-black text-primary">{{ item.pontuacao_total }}</strong>
-                  <span class="text-xs text-text-muted">pts</span>
-                </div>
-              </article>
+              </div>
             </div>
           </section>
         </div>
@@ -586,7 +631,7 @@
             <div v-for="evento in cupom.eventos_pontuacao" :key="evento.id" class="flex items-center justify-between gap-3 rounded-lg bg-bg-input px-3.5 py-2.5">
               <div class="min-w-0">
                 <span class="block text-sm">{{ evento.descricao }}</span>
-                <span v-if="jogoDoEvento(evento)" class="mt-0.5 block truncate text-xs text-text-muted">{{ jogoDoEvento(evento) }}</span>
+                <span v-if="descricaoJogo(evento)" class="mt-0.5 block truncate text-xs text-text-muted">{{ descricaoJogo(evento) }}</span>
               </div>
               <span class="shrink-0 text-sm font-bold text-primary">+{{ evento.pontos }} pts</span>
             </div>
@@ -624,12 +669,15 @@ import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { usarTorneioStore } from '../stores/torneio'
 import { useToast } from '../composables/useToast'
-import type { Aposta, BracketJogoCupom, Cupom, EventoPontuacao, RankingItem, ResumoBracketCupom, Selecao, Torneio } from '../tipos'
+import type { Aposta, BracketJogoCupom, Cupom, RankingItem, ResumoBracketCupom, Selecao, Torneio } from '../tipos'
 import tacaCopaAsset from '../assets/taca-copa-transparente.png'
+import ModalPixPagamento from '../components/ModalPixPagamento.vue'
+import { useEventosCupom } from '../composables/useEventosCupom'
 
 const rota = useRoute()
 const torneioStore = usarTorneioStore()
 const { mostrar } = useToast()
+const { expandidoId, cache, carregandoId, alternar, descricaoJogo } = useEventosCupom()
 
 const torneio = ref<Torneio | null>(null)
 const cupom = ref<Cupom | null>(null)
@@ -643,6 +691,13 @@ const resumoBracketIds = ref<ResumoBracketCupom>({
 const ranking = ref<RankingItem[]>([])
 const carregando = ref(true)
 const carregandoRanking = ref(false)
+const modalPagamentoAberto = ref(false)
+const valorCupomFormatado = computed(() => {
+  const numero = Number(cupom.value?.pedido_checkout?.valor)
+  return Number.isFinite(numero) && numero > 0
+    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numero)
+    : ''
+})
 
 const tabAtiva = ref<'palpites' | 'ranking' | 'resultados'>('palpites')
 const subTabAtiva = ref<'jogos' | 'chaveamento'>('jogos')
@@ -1211,18 +1266,6 @@ function formatarHora(dataHora: string) {
 }
 
 // Jogo que originou um evento de pontuacao (vazio para artilheiro/podio).
-function jogoDoEvento(evento: EventoPontuacao): string {
-  const jogo = evento.jogo
-  if (!jogo) return ''
-  const mandante = jogo.selecao_mandante?.nome ?? 'A definir'
-  const visitante = jogo.selecao_visitante?.nome ?? 'A definir'
-  const resultado = jogo.resultado
-  if (resultado && resultado.placar_mandante !== null && resultado.placar_visitante !== null) {
-    return `${mandante} ${resultado.placar_mandante} x ${resultado.placar_visitante} ${visitante}`
-  }
-  return `${mandante} x ${visitante}`
-}
-
 function encontrarAposta(tipo: string, referenciaId?: number) {
   return apostas.value.find(a => {
     if (a.tipo !== tipo) return false

@@ -25,6 +25,7 @@ Route::get('/status', function () {
 
 Route::get('/torneio', [TorneioController::class, 'publico']);
 Route::get('/torneios/{torneio}/ranking', [TorneioController::class, 'ranking']);
+Route::get('/ranking/cupons/{cupom}/eventos', [TorneioController::class, 'eventosCupom']);
 Route::get('/jogos/{jogo}/palpiteiros', [TorneioController::class, 'palpiteiros']);
 
 Route::post('/cadastro', [AutenticacaoController::class, 'cadastrar']);
@@ -48,6 +49,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('can:acessar-area-admin')->group(function () {
         Route::get('/admin/resumo', [PainelAdministradorController::class, 'resumo']);
         Route::get('/admin/dados', [PainelAdministradorController::class, 'dados']);
+        Route::get('/admin/cupons-pendentes', [PainelAdministradorController::class, 'cuponsPendentes']);
+        Route::post('/admin/cupons/{cupom}/marcar-pago', [PainelAdministradorController::class, 'marcarCupomPago']);
         Route::put('/admin/jogos/{jogo}/resultado', [PainelAdministradorController::class, 'salvarResultadoJogo']);
         Route::put('/admin/torneios/{torneio}/resultado', [PainelAdministradorController::class, 'salvarResultadoTorneio']);
         Route::put('/admin/regras-pontuacao/{regraPontuacao}', [PainelAdministradorController::class, 'atualizarRegraPontuacao']);

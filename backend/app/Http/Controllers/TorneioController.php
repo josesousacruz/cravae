@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Aposta;
+use App\Models\Cupom;
+use App\Models\EventoPontuacao;
 use App\Models\Jogo;
 use App\Models\PontuacaoCupom;
 use App\Models\Torneio;
@@ -33,6 +35,27 @@ class TorneioController extends Controller
 
         return response()->json([
             'ranking' => $ranking,
+        ]);
+    }
+
+    public function eventosCupom(Cupom $cupom): JsonResponse
+    {
+        $eventos = EventoPontuacao::query()
+            ->where('cupom_id', $cupom->id)
+            ->with([
+                'jogo.selecaoMandante',
+                'jogo.selecaoVisitante',
+                'jogo.resultado',
+            ])
+            ->latest('id')
+            ->get();
+
+        return response()->json([
+            'cupom' => [
+                'id' => $cupom->id,
+                'codigo' => $cupom->codigo,
+            ],
+            'eventos_pontuacao' => $eventos,
         ]);
     }
 

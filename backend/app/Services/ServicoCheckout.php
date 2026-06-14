@@ -116,6 +116,24 @@ class ServicoCheckout
         });
     }
 
+    public function marcarCupomComoPago(Cupom $cupom): Cupom
+    {
+        return DB::transaction(function () use ($cupom) {
+            $cupom = Cupom::query()->lockForUpdate()->findOrFail($cupom->id);
+            $cupom->forceFill(['status' => 'ativo'])->save();
+
+            if ($cupom->pedido_checkout_id) {
+                $pedido = PedidoCheckout::query()->lockForUpdate()->find($cupom->pedido_checkout_id);
+                $pedido?->forceFill([
+                    'status' => 'pago',
+                    'pago_at' => $pedido->pago_at ?? now(),
+                ])->save();
+            }
+
+            return $cupom->fresh();
+        });
+    }
+
     public function atualizarStatusAsaas(PedidoCheckout $pedido, string $statusPedido, ?string $asaasStatus = null): void
     {
         $pedido->forceFill([

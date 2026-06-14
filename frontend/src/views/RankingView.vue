@@ -60,31 +60,48 @@
       </div>
 
       <div class="space-y-3">
-        <article
+        <div
           v-for="(item, i) in ranking"
           :key="item.id"
-          class="flex items-center gap-3 rounded-2xl border border-border bg-bg-input/60 px-4 py-3 transition"
-          :class="item.cupom.id === cupomDestaque ? 'border-primary/40 bg-primary/10' : 'hover:border-primary/20'"
+          class="overflow-hidden rounded-2xl border transition"
+          :class="item.cupom.id === cupomDestaque ? 'border-primary/40 bg-primary/10' : 'border-border bg-bg-input/60 hover:border-primary/20'"
         >
-          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold" :class="classePosicao(i)">
-            {{ i + 1 }}
-          </div>
-          <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-2">
-              <strong class="truncate text-sm">{{ item.cupom.usuario.nome }}</strong>
-              <span v-if="item.cupom.id === cupomDestaque" class="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-bg">Voce</span>
+          <button type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left" @click="alternar(item.cupom.id)">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold" :class="classePosicao(i)">
+              {{ i + 1 }}
             </div>
-            <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
-              <span>Cupom {{ item.cupom.codigo }}</span>
-              <span>{{ item.quantidade_placares_exatos }} exatos</span>
-              <span>{{ item.quantidade_classificados_corretos }} classificados</span>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <strong class="truncate text-sm">{{ item.cupom.usuario.nome }}</strong>
+                <span v-if="item.cupom.id === cupomDestaque" class="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-bg">Voce</span>
+              </div>
+              <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+                <span>Cupom {{ item.cupom.codigo }}</span>
+                <span>{{ item.quantidade_placares_exatos }} exatos</span>
+                <span>{{ item.quantidade_classificados_corretos }} classificados</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <strong class="block text-2xl font-black text-primary">{{ item.pontuacao_total }}</strong>
+              <span class="text-xs text-text-muted">pts</span>
+            </div>
+            <svg class="h-5 w-5 shrink-0 text-text-muted transition-transform" :class="expandidoId === item.cupom.id ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+          </button>
+
+          <div v-if="expandidoId === item.cupom.id" class="border-t border-border/70 px-4 py-3">
+            <div v-if="carregandoId === item.cupom.id" class="py-2 text-center text-xs text-text-muted">Carregando pontuacoes...</div>
+            <div v-else-if="!cache[item.cupom.id]?.length" class="py-2 text-center text-xs text-text-muted">Nenhuma pontuacao registrada ainda.</div>
+            <div v-else class="space-y-2">
+              <div v-for="evento in cache[item.cupom.id]" :key="evento.id" class="flex items-center justify-between gap-3 rounded-lg bg-bg-card px-3 py-2">
+                <div class="min-w-0">
+                  <span class="block text-sm">{{ evento.descricao }}</span>
+                  <span v-if="descricaoJogo(evento)" class="mt-0.5 block truncate text-xs text-text-muted">{{ descricaoJogo(evento) }}</span>
+                </div>
+                <span class="shrink-0 text-sm font-bold text-primary">+{{ evento.pontos }} pts</span>
+              </div>
             </div>
           </div>
-          <div class="text-right">
-            <strong class="block text-2xl font-black text-primary">{{ item.pontuacao_total }}</strong>
-            <span class="text-xs text-text-muted">pts</span>
-          </div>
-        </article>
+        </div>
       </div>
     </section>
   </div>
@@ -95,10 +112,12 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { usarTorneioStore } from '../stores/torneio'
+import { useEventosCupom } from '../composables/useEventosCupom'
 import type { RankingItem } from '../tipos'
 
 const rota = useRoute()
 const torneioStore = usarTorneioStore()
+const { expandidoId, cache, carregandoId, alternar, descricaoJogo } = useEventosCupom()
 
 const ranking = ref<RankingItem[]>([])
 const carregando = ref(true)

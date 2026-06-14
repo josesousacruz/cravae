@@ -159,18 +159,68 @@
         {{ salvandoResultadoTorneio ? 'Salvando...' : 'Sincronizar resultado final' }}
       </button>
     </section>
+
+    <section v-if="tabAtiva === 'pagamentos'" class="space-y-4">
+      <div class="rounded-2xl border border-border bg-bg-card p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold">Pagamentos pendentes</h2>
+            <p class="mt-1 text-sm text-text-secondary">Confirme o Pix recebido e marque o cupom do usuario como pago.</p>
+          </div>
+          <span class="rounded-full border border-warning/30 bg-warning/10 px-3 py-1 text-xs text-warning">
+            {{ cuponsPendentes.length }} pendente{{ cuponsPendentes.length === 1 ? '' : 's' }}
+          </span>
+        </div>
+        <input
+          v-model="buscaPagamento"
+          type="text"
+          placeholder="Buscar por nome, email, telefone ou codigo do cupom"
+          class="mt-4 w-full"
+        />
+      </div>
+
+      <div v-if="carregandoPendentes" class="rounded-2xl border border-border bg-bg-card py-10 text-center text-sm text-text-muted">
+        Carregando...
+      </div>
+      <div v-else-if="!cuponsPendentesFiltrados.length" class="rounded-2xl border border-dashed border-border bg-bg-card py-10 text-center text-sm text-text-muted">
+        Nenhum cupom pendente.
+      </div>
+      <div v-else class="grid gap-3">
+        <div
+          v-for="cupom in cuponsPendentesFiltrados"
+          :key="cupom.id"
+          class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-bg-card p-4"
+        >
+          <div class="min-w-0">
+            <p class="font-bold text-text">{{ cupom.usuario?.nome ?? 'Usuario' }}</p>
+            <p class="text-xs text-text-muted">{{ cupom.usuario?.email }} · {{ cupom.usuario?.telefone ?? 'sem telefone' }}</p>
+            <p class="mt-0.5 text-xs text-text-muted">
+              Cupom <span class="font-mono text-text-secondary">{{ cupom.codigo }}</span> · {{ formatarValorCupom(cupom.pedido_checkout?.valor) }}
+            </p>
+          </div>
+          <button
+            type="button"
+            class="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-bg transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="marcandoId === cupom.id"
+            @click="marcarCupomPago(cupom.id)"
+          >
+            {{ marcandoId === cupom.id ? 'Marcando...' : 'Marcar como pago' }}
+          </button>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { requisicaoApi } from '../services/api'
 import type { Torneio } from '../tipos'
 
 const torneio = ref<Torneio | null>(null)
 const mensagem = ref('')
 const erro = ref('')
-const tabAtiva = ref<'jogos' | 'regras' | 'torneio'>('jogos')
+const tabAtiva = ref<'jogos' | 'regras' | 'torneio' | 'pagamentos'>('jogos')
 const faseSelecionadaId = ref<number | null>(null)
 const pontosRegras = ref<Record<number, string>>({})
 const resultadosJogos = ref<Record<number, { placar_mandante: string; placar_visitante: string; selecao_classificada_id: string }>>({})
@@ -182,7 +232,68 @@ const tabs = [
   { id: 'jogos' as const, nome: 'Resultados dos Jogos' },
   { id: 'regras' as const, nome: 'Regras' },
   { id: 'torneio' as const, nome: 'Resultado Final' },
+  { id: 'pagamentos' as const, nome: 'Pagamentos' },
 ]
+
+type CupomPendente = {
+  id: number
+  codigo: string
+  status: string
+  usuario: { id: number; nome: string; email: string; telefone: string | null } | null
+  pedido_checkout: { id: number; valor: string; status: string } | null
+}
+
+const cuponsPendentes = ref<CupomPendente[]>([])
+const carregandoPendentes = ref(false)
+const buscaPagamento = ref('')
+const marcandoId = ref<number | null>(null)
+
+const cuponsPendentesFiltrados = computed(() => {
+  const termo = buscaPagamento.value.trim().toLowerCase()
+  if (!termo) return cuponsPendentes.value
+  return cuponsPendentes.value.filter((cupom) =>
+    [cupom.codigo, cupom.usuario?.nome, cupom.usuario?.email, cupom.usuario?.telefone]
+      .some((valor) => (valor ?? '').toLowerCase().includes(termo)),
+  )
+})
+
+function formatarValorCupom(valor?: string | null) {
+  const numero = Number(valor)
+  return Number.isFinite(numero) && numero > 0
+    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numero)
+    : 'R$ --'
+}
+
+async function carregarPendentes() {
+  carregandoPendentes.value = true
+  try {
+    const resposta = await requisicaoApi<{ cupons: CupomPendente[] }>('/admin/cupons-pendentes')
+    cuponsPendentes.value = resposta.cupons
+  } catch (error) {
+    erro.value = error instanceof Error ? error.message : 'Falha ao carregar pendentes.'
+  } finally {
+    carregandoPendentes.value = false
+  }
+}
+
+async function marcarCupomPago(cupomId: number) {
+  marcandoId.value = cupomId
+  mensagem.value = ''
+  erro.value = ''
+  try {
+    await requisicaoApi(`/admin/cupons/${cupomId}/marcar-pago`, { metodo: 'POST', corpo: {} })
+    cuponsPendentes.value = cuponsPendentes.value.filter((cupom) => cupom.id !== cupomId)
+    mensagem.value = 'Cupom marcado como pago.'
+  } catch (error) {
+    erro.value = error instanceof Error ? error.message : 'Falha ao marcar como pago.'
+  } finally {
+    marcandoId.value = null
+  }
+}
+
+watch(tabAtiva, (tab) => {
+  if (tab === 'pagamentos') void carregarPendentes()
+})
 
 const selecoes = computed(() => torneio.value?.grupos.flatMap((g) => g.selecoes) ?? [])
 const regrasPontuacaoVisiveis = computed(() => torneio.value?.regras_pontuacao.filter((regra) => regra.chave !== 'artilheiro') ?? [])

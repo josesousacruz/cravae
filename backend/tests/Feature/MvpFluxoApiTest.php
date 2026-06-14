@@ -125,6 +125,14 @@ class MvpFluxoApiTest extends TestCase
         $this->assertArrayHasKey('selecao_mandante', $eventoComJogo['jogo']);
         $this->assertArrayHasKey('selecao_visitante', $eventoComJogo['jogo']);
 
+        // No ranking, qualquer um pode abrir a linha de um cupom e ver os mesmos eventos.
+        $eventosRanking = $this->getJson("/api/ranking/cupons/{$cupomResposta['id']}/eventos")
+            ->assertOk()
+            ->assertJsonPath('cupom.id', $cupomResposta['id'])
+            ->json('eventos_pontuacao');
+        $this->assertNotEmpty($eventosRanking);
+        $this->assertNotNull(collect($eventosRanking)->firstWhere(fn ($evento) => ! empty($evento['jogo_id']))['jogo'] ?? null);
+
         $cupom = Cupom::query()->with('pontuacao')->findOrFail($cupomResposta['id']);
 
         $this->assertSame('ativo', $cupom->status);

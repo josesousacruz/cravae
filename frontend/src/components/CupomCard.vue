@@ -16,10 +16,16 @@
             <p class="text-sm text-text-secondary">Copa do mundo <span class="text-xs text-text-muted">2026</span></p>
             <p class="mt-0.5 text-xs text-text-muted">Pontuacao padrao</p>
           </div>
-          <span
-            class="shrink-0 rounded-full px-3 py-1 text-xs font-semibold"
-            :class="cupom.status === 'ativo' ? 'bg-primary text-bg' : 'bg-warning/20 text-warning'"
+          <button
+            v-if="cupom.status !== 'ativo'"
+            type="button"
+            class="shrink-0 rounded-full bg-warning/20 px-3 py-1 text-xs font-semibold text-warning transition hover:bg-warning/30"
+            title="Pagar via Pix"
+            @click="modalAberto = true"
           >
+            {{ rotuloStatus }}
+          </button>
+          <span v-else class="shrink-0 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-bg">
             {{ rotuloStatus }}
           </span>
         </div>
@@ -58,24 +64,59 @@
       <span class="text-xs font-mono text-text-muted">{{ cupom.codigo }}</span>
     </div>
 
-    <!-- CTA Button — cupom pendente de pagamento tambem ja pode palpitar -->
+    <!-- CTA — cupom pendente: pagamento em destaque; palpites como acao secundaria -->
+    <template v-if="cupom.status !== 'ativo'">
+      <button
+        type="button"
+        class="group/pix mt-4 flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#32BCAD] py-3.5 text-sm font-bold text-black shadow-lg shadow-[#32BCAD]/25 transition-all hover:bg-[#2aa99b] hover:shadow-[#32BCAD]/40"
+        @click="modalAberto = true"
+      >
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h3c.621 0 1.125.504 1.125 1.125v3c0 .621-.504 1.125-1.125 1.125h-3A1.125 1.125 0 013.75 7.875v-3zM3.75 16.125c0-.621.504-1.125 1.125-1.125h3c.621 0 1.125.504 1.125 1.125v3c0 .621-.504 1.125-1.125 1.125h-3a1.125 1.125 0 01-1.125-1.125v-3zM15 4.875c0-.621.504-1.125 1.125-1.125h3c.621 0 1.125.504 1.125 1.125v3c0 .621-.504 1.125-1.125 1.125h-3A1.125 1.125 0 0115 7.875v-3zM13.5 13.5h3m-3 3h.008v.008H13.5V16.5zm3 3h.008v.008H16.5V19.5zm3-3h.008v.008H19.5V16.5zm0 3h.008v.008H19.5V19.5z" /></svg>
+        <span>Pagar via Pix{{ valorFormatado ? ` · ${valorFormatado}` : '' }}</span>
+      </button>
+      <RouterLink
+        :to="`/cupons/${cupom.id}`"
+        class="mt-2 flex w-full items-center justify-center rounded-xl border border-border bg-bg-input py-2.5 text-sm font-semibold text-text-secondary transition hover:border-primary/40 hover:text-text"
+      >
+        Ver Palpites
+      </RouterLink>
+    </template>
+
     <RouterLink
+      v-else
       :to="`/cupons/${cupom.id}`"
       class="mt-4 flex w-full items-center justify-center rounded-xl bg-primary py-3 text-sm font-bold text-bg transition-all hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/20"
     >
-      Fazer Palpites
+      Ver Palpites
     </RouterLink>
+
+    <ModalPixPagamento
+      :aberto="modalAberto"
+      :cupom-codigo="cupom.codigo"
+      :valor="cupom.pedido_checkout?.valor"
+      @fechar="modalAberto = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { Cupom } from '../tipos'
+import ModalPixPagamento from './ModalPixPagamento.vue'
 
 const props = defineProps<{
   cupom: Cupom
 }>()
+
+const modalAberto = ref(false)
+
+const valorFormatado = computed(() => {
+  const numero = Number(props.cupom.pedido_checkout?.valor)
+  return Number.isFinite(numero) && numero > 0
+    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numero)
+    : ''
+})
 
 const rotuloStatus = computed(() => {
   if (props.cupom.status === 'ativo') return 'Cupom ativo'

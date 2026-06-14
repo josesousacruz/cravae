@@ -6,6 +6,7 @@ use App\Http\Requests\AtualizarRegraPontuacaoRequest;
 use App\Http\Requests\SalvarResultadoJogoRequest;
 use App\Http\Requests\SalvarResultadoTorneioRequest;
 use App\Jobs\RecalcularPontuacaoTorneioJob;
+use App\Models\Cupom;
 use App\Models\Fase;
 use App\Models\Grupo;
 use App\Models\Jogo;
@@ -15,15 +16,52 @@ use App\Models\ResultadoTorneio;
 use App\Models\Selecao;
 use App\Models\Torneio;
 use App\Models\Usuario;
+use App\Services\ServicoCheckout;
 use App\Services\ServicoResultadosTorneio;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class PainelAdministradorController extends Controller
 {
     public function __construct(
         private readonly ServicoResultadosTorneio $servicoResultadosTorneio,
+        private readonly ServicoCheckout $servicoCheckout,
     ) {
+    }
+
+    public function cuponsPendentes(Request $request): JsonResponse
+    {
+        $busca = trim((string) $request->query('busca', ''));
+
+        $cupons = Cupom::query()
+            ->where('status', 'aguardando_pagamento')
+            ->with(['usuario:id,nome,email,telefone', 'pedidoCheckout:id,valor,status'])
+            ->when($busca !== '', function ($query) use ($busca) {
+                $query->where(function ($q) use ($busca) {
+                    $q->where('codigo', 'like', "%{$busca}%")
+                        ->orWhereHas('usuario', fn ($u) => $u
+                            ->where('nome', 'like', "%{$busca}%")
+                            ->orWhere('email', 'like', "%{$busca}%")
+                            ->orWhere('telefone', 'like', "%{$busca}%"));
+                });
+            })
+            ->latest('id')
+            ->limit(100)
+            ->get();
+
+        return response()->json([
+            'cupons' => $cupons,
+        ]);
+    }
+
+    public function marcarCupomPago(Cupom $cupom): JsonResponse
+    {
+        $cupom = $this->servicoCheckout->marcarCupomComoPago($cupom);
+
+        return response()->json([
+            'cupom' => $cupom->load(['usuario:id,nome,email,telefone', 'pedidoCheckout:id,valor,status']),
+        ]);
     }
 
     public function resumo(): JsonResponse
