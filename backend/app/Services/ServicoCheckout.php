@@ -6,46 +6,173 @@ use App\Models\Cupom;
 use App\Models\PedidoCheckout;
 use App\Models\Torneio;
 use App\Models\Usuario;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ServicoCheckout
 {
-    public function criarPedido(Usuario $usuario, ?float $valor = null): PedidoCheckout
+    public function __construct(
+        private readonly ServicoAsaas $servicoAsaas,
+    ) {}
+
+    public function criarPedido(Usuario $usuario, ?Cupom $cupom = null): PedidoCheckout
     {
-        return PedidoCheckout::query()->create([
-            'usuario_id' => $usuario->id,
-            'valor' => $valor ?? Torneio::where('status', 'publicado')->latest('id')->value('valor_cupom') ?? 10,
-            'status' => 'pendente',
-            'referencia_checkout' => (string) Str::uuid(),
-        ]);
+        $pedido = DB::transaction(function () use ($usuario, $cupom) {
+            if ($cupom?->pedido_checkout_id) {
+                return $cupom->pedidoCheckout()->lockForUpdate()->firstOrFail();
+            }
+
+            $pedido = PedidoCheckout::query()->create([
+                'usuario_id' => $usuario->id,
+                'valor' => Torneio::where('status', 'publicado')->latest('id')->value('valor_cupom') ?? 10,
+                'status' => 'pendente',
+                'forma_pagamento' => 'pix',
+                'referencia_checkout' => (string) Str::uuid(),
+            ]);
+
+            if ($cupom) {
+                $cupom->forceFill([
+                    'pedido_checkout_id' => $pedido->id,
+                    'status' => 'aguardando_pagamento',
+                ])->save();
+            }
+
+            return $pedido;
+        });
+
+        return $this->prepararPagamentoPix($pedido);
     }
 
-    public function simularPagamento(PedidoCheckout $pedido): Cupom
+    public function prepararPagamentoPix(PedidoCheckout $pedido): PedidoCheckout
     {
-        return DB::transaction(function () use ($pedido) {
-            if ($pedido->status === 'pago') {
-                return Cupom::query()->firstOrCreate(
-                    ['pedido_checkout_id' => $pedido->id],
-                    [
-                        'usuario_id' => $pedido->usuario_id,
-                        'codigo' => strtoupper(Str::random(10)),
-                        'status' => 'ativo',
-                    ],
-                );
-            }
+        $pedido->loadMissing('usuario');
+
+        if ($pedido->asaas_pagamento_id && $pedido->pix_copia_cola && $pedido->pix_qr_code_base64) {
+            return $pedido;
+        }
+
+        if (! $pedido->usuario->cpf_cnpj) {
+            throw ValidationException::withMessages([
+                'cpf_cnpj' => 'Informe o CPF/CNPJ para gerar o pagamento Pix.',
+            ]);
+        }
+
+        if (! $pedido->usuario->asaas_cliente_id) {
+            $cliente = $this->servicoAsaas->criarCliente($pedido->usuario);
+
+            $pedido->usuario->forceFill([
+                'asaas_cliente_id' => $cliente['id'] ?? null,
+            ])->save();
+        }
+
+        $pedido->refresh()->loadMissing('usuario');
+
+        $cobranca = $this->servicoAsaas->criarCobrancaPix($pedido);
+        $qrCode = $this->servicoAsaas->obterQrCodePix($cobranca['id']);
+
+        $pedido->forceFill([
+            'status' => 'pendente',
+            'forma_pagamento' => 'pix',
+            'asaas_pagamento_id' => $cobranca['id'],
+            'asaas_status' => $cobranca['status'] ?? null,
+            'invoice_url' => $cobranca['invoiceUrl'] ?? null,
+            'pix_copia_cola' => $qrCode['payload'] ?? null,
+            'pix_qr_code_base64' => $qrCode['encodedImage'] ?? null,
+            'pix_expira_at' => isset($qrCode['expirationDate']) ? Carbon::parse($qrCode['expirationDate']) : null,
+            'erro_pagamento' => null,
+        ])->save();
+
+        return $pedido->fresh('cupons');
+    }
+
+    public function marcarComoPago(PedidoCheckout $pedido, ?string $asaasStatus = null): Cupom
+    {
+        return DB::transaction(function () use ($pedido, $asaasStatus) {
+            $pedido = PedidoCheckout::query()->lockForUpdate()->findOrFail($pedido->id);
 
             $pedido->forceFill([
                 'status' => 'pago',
-                'pago_at' => now(),
+                'asaas_status' => $asaasStatus ?? $pedido->asaas_status,
+                'pago_at' => $pedido->pago_at ?? now(),
+                'erro_pagamento' => null,
             ])->save();
+
+            $cupom = Cupom::query()->where('pedido_checkout_id', $pedido->id)->lockForUpdate()->first();
+
+            if ($cupom) {
+                $cupom->forceFill(['status' => 'ativo'])->save();
+
+                return $cupom;
+            }
 
             return Cupom::query()->create([
                 'usuario_id' => $pedido->usuario_id,
                 'pedido_checkout_id' => $pedido->id,
-                'codigo' => strtoupper(Str::random(10)),
+                'codigo' => $this->gerarCodigoCupom(),
                 'status' => 'ativo',
             ]);
         });
+    }
+
+    public function atualizarStatusAsaas(PedidoCheckout $pedido, string $statusPedido, ?string $asaasStatus = null): void
+    {
+        $pedido->forceFill([
+            'status' => $statusPedido,
+            'asaas_status' => $asaasStatus ?? $pedido->asaas_status,
+        ])->save();
+    }
+
+    public function sincronizarPagamentoAsaas(PedidoCheckout $pedido): PedidoCheckout
+    {
+        if ($pedido->status === 'pago' || ! $pedido->asaas_pagamento_id) {
+            return $pedido->fresh('cupons');
+        }
+
+        $pagamento = $this->servicoAsaas->consultarPagamento($pedido->asaas_pagamento_id);
+        $asaasStatus = (string) ($pagamento['status'] ?? $pedido->asaas_status ?? '');
+        $removido = (bool) ($pagamento['deleted'] ?? false) || $asaasStatus === 'DELETED';
+
+        if ($asaasStatus === 'RECEIVED') {
+            $this->marcarComoPago($pedido, $asaasStatus);
+
+            return $pedido->fresh('cupons');
+        }
+
+        if ($asaasStatus === 'OVERDUE') {
+            $this->atualizarStatusAsaas($pedido, 'expirado', $asaasStatus);
+
+            return $pedido->fresh('cupons');
+        }
+
+        if ($asaasStatus === 'REFUNDED') {
+            $this->atualizarStatusAsaas($pedido, 'estornado', $asaasStatus);
+
+            return $pedido->fresh('cupons');
+        }
+
+        if ($removido) {
+            $this->atualizarStatusAsaas($pedido, 'cancelado', $asaasStatus ?: 'DELETED');
+
+            return $pedido->fresh('cupons');
+        }
+
+        $pedido->forceFill([
+            'status' => 'pendente',
+            'asaas_status' => $asaasStatus ?: $pedido->asaas_status,
+            'erro_pagamento' => null,
+        ])->save();
+
+        return $pedido->fresh('cupons');
+    }
+
+    private function gerarCodigoCupom(): string
+    {
+        do {
+            $codigo = strtoupper(Str::random(10));
+        } while (Cupom::query()->where('codigo', $codigo)->exists());
+
+        return $codigo;
     }
 }

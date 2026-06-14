@@ -25,6 +25,11 @@
         </label>
 
         <label class="block">
+          <span class="mb-1.5 block text-sm font-medium text-text-secondary">CPF/CNPJ</span>
+          <input v-model="cpfCnpj" type="text" inputmode="numeric" placeholder="Somente numeros" />
+        </label>
+
+        <label class="block">
           <span class="mb-1.5 block text-sm font-medium text-text-secondary">Senha</span>
           <input v-model="senha" type="password" placeholder="Minimo de 8 caracteres" />
         </label>
@@ -63,6 +68,7 @@ import { usarAutenticacaoStore } from '../stores/autenticacao'
 const nome = ref('')
 const email = ref('')
 const telefone = ref('')
+const cpfCnpj = ref('')
 const senha = ref('')
 const confirmacao = ref('')
 const roteador = useRouter()
@@ -70,7 +76,7 @@ const autenticacao = usarAutenticacaoStore()
 
 async function cadastrar() {
   try {
-    await autenticacao.cadastrar(nome.value, email.value, telefone.value, senha.value, confirmacao.value)
+    await autenticacao.cadastrar(nome.value, email.value, telefone.value, cpfCnpj.value, senha.value, confirmacao.value)
     roteador.push('/painel')
   } catch {
     // erro tratado na store

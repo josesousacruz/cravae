@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'asaas' => [
+        'base_url' => env('ASAAS_BASE_URL', 'https://api-sandbox.asaas.com'),
+        'access_token' => env('ASAAS_ACCESS_TOKEN'),
+        'webhook_token' => env('ASAAS_WEBHOOK_TOKEN'),
+        'user_agent' => env('ASAAS_USER_AGENT', env('APP_NAME', 'Inter World Cup').'/1.0'),
+    ],
+
 ];

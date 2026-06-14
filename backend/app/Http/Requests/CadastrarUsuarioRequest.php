@@ -27,6 +27,7 @@ class CadastrarUsuarioRequest extends FormRequest
             'nome' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:usuarios,email'],
             'telefone' => ['required', 'string', 'max:20'],
+            'cpf_cnpj' => ['required', 'string', 'min:11', 'max:20'],
             'password' => ['required', 'confirmed', Password::min(8)],
         ];
     }

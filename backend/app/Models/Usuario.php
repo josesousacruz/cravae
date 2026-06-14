@@ -20,6 +20,8 @@ class Usuario extends Authenticatable
         'nome',
         'email',
         'telefone',
+        'cpf_cnpj',
+        'asaas_cliente_id',
         'password',
         'perfil',
     ];

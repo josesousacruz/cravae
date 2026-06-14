@@ -29,6 +29,7 @@ class MvpFluxoApiTest extends TestCase
         $usuario = Usuario::query()->create([
             'nome' => 'Jogador Teste',
             'email' => 'jogador@teste.local',
+            'cpf_cnpj' => '12345678901',
             'password' => '12345678',
             'perfil' => 'usuario',
         ]);
@@ -39,7 +40,7 @@ class MvpFluxoApiTest extends TestCase
             ->assertCreated()
             ->json('pedido');
 
-        $cupomResposta = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/simular-pagamento", [])
+        $cupomResposta = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])
             ->assertOk()
             ->json('cupom');
 
@@ -48,6 +49,10 @@ class MvpFluxoApiTest extends TestCase
         $jogoGrupoA = Jogo::query()->where('grupo_id', $grupoA->id)->firstOrFail();
         $jogoEliminatoria = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'round_of_32'))->firstOrFail();
         $artilheiro = Jogador::query()->whereHas('selecao', fn ($query) => $query->where('sigla', 'BRA'))->firstOrFail();
+
+        // Mantem o fluxo deterministico mesmo apos o inicio real da Copa.
+        Rodada::query()->update(['data_fechamento' => now()->addDay()]);
+        Torneio::query()->whereKey($torneio->id)->update(['data_inicio' => now()->addDay()]);
 
         foreach (Jogo::query()->whereHas('fase', fn ($query) => $query->where('tipo', 'grupos'))->get() as $jogo) {
             $this->postJson("/api/cupons/{$cupomResposta['id']}/apostas/lote", [
@@ -108,6 +113,18 @@ class MvpFluxoApiTest extends TestCase
             ->assertOk()
             ->json('ranking');
 
+        // Meus Resultados deve identificar o jogo que originou cada pontuacao.
+        Sanctum::actingAs($usuario);
+        $eventos = $this->getJson("/api/cupons/{$cupomResposta['id']}")
+            ->assertOk()
+            ->json('cupom.eventos_pontuacao');
+
+        $eventoComJogo = collect($eventos)->firstWhere(fn ($evento) => ! empty($evento['jogo_id']));
+        $this->assertNotNull($eventoComJogo, 'Esperava ao menos um evento vinculado a um jogo.');
+        $this->assertNotNull($eventoComJogo['jogo'] ?? null);
+        $this->assertArrayHasKey('selecao_mandante', $eventoComJogo['jogo']);
+        $this->assertArrayHasKey('selecao_visitante', $eventoComJogo['jogo']);
+
         $cupom = Cupom::query()->with('pontuacao')->findOrFail($cupomResposta['id']);
 
         $this->assertSame('ativo', $cupom->status);
@@ -115,6 +132,11 @@ class MvpFluxoApiTest extends TestCase
         $this->assertGreaterThan(0, (float) $cupom->pontuacao->pontuacao_total);
         $this->assertSame($cupom->codigo, $ranking[0]['cupom']['codigo']);
         $this->assertSame($cupom->pontuacao->pontuacao_total, $ranking[0]['pontuacao_total']);
+        $this->assertSame('Jogador Teste', $ranking[0]['cupom']['usuario']['nome']);
+        $this->assertArrayNotHasKey('email', $ranking[0]['cupom']['usuario']);
+        $this->assertArrayNotHasKey('telefone', $ranking[0]['cupom']['usuario']);
+        $this->assertArrayNotHasKey('cpf_cnpj', $ranking[0]['cupom']['usuario']);
+        $this->assertArrayNotHasKey('asaas_cliente_id', $ranking[0]['cupom']['usuario']);
     }
 
     public function test_admin_despacha_job_ao_salvar_resultados_e_regras(): void
@@ -155,6 +177,7 @@ class MvpFluxoApiTest extends TestCase
         $usuario = Usuario::query()->create([
             'nome' => 'Jogador Sem Worker',
             'email' => 'sem-worker@teste.local',
+            'cpf_cnpj' => '12345678901',
             'password' => '12345678',
             'perfil' => 'usuario',
         ]);
@@ -165,11 +188,12 @@ class MvpFluxoApiTest extends TestCase
             ->assertCreated()
             ->json('pedido');
 
-        $cupomResposta = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/simular-pagamento", [])
+        $cupomResposta = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])
             ->assertOk()
             ->json('cupom');
 
         $jogoGrupo = Jogo::query()->whereHas('fase', fn ($query) => $query->where('tipo', 'grupos'))->firstOrFail();
+        Rodada::query()->whereKey($jogoGrupo->rodada_id)->update(['data_fechamento' => now()->addDay()]);
 
         $this->postJson("/api/cupons/{$cupomResposta['id']}/apostas/lote", [
             'apostas' => [[
@@ -248,6 +272,7 @@ class MvpFluxoApiTest extends TestCase
         $usuario = Usuario::query()->create([
             'nome' => 'Jogador Bloqueado',
             'email' => 'bloqueado@teste.local',
+            'cpf_cnpj' => '12345678901',
             'password' => '12345678',
             'perfil' => 'usuario',
         ]);
@@ -255,7 +280,7 @@ class MvpFluxoApiTest extends TestCase
         Sanctum::actingAs($usuario);
 
         $pedido = $this->postJson('/api/pedidos-checkout', [])->json('pedido');
-        $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/simular-pagamento", [])->json('cupom');
+        $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])->json('cupom');
 
         $jogo = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))->firstOrFail();
 

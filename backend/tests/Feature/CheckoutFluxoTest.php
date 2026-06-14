@@ -36,7 +36,62 @@ class CheckoutFluxoTest extends TestCase
             ->assertJsonPath('pedido.valor', '15.00');
     }
 
-    public function test_simular_pagamento_ativa_cupom(): void
+    public function test_compra_encerrada_bloqueia_criacao_de_pedido(): void
+    {
+        $this->seed();
+        config(['checkout.compras_abertas' => false]);
+
+        $usuario = Usuario::factory()->create([
+            'nome' => 'Compra Fechada',
+            'email' => 'compra-fechada@example.com',
+            'telefone' => '11999990009',
+            'perfil' => 'usuario',
+        ]);
+
+        Sanctum::actingAs($usuario);
+
+        $this->postJson('/api/pedidos-checkout')->assertForbidden();
+    }
+
+    public function test_checkout_rejeita_valor_enviado_pelo_cliente(): void
+    {
+        $this->seed();
+
+        $usuario = Usuario::factory()->create([
+            'nome' => 'Valor Cliente',
+            'email' => 'valor-cliente@example.com',
+            'telefone' => '11999990004',
+            'perfil' => 'usuario',
+        ]);
+
+        Sanctum::actingAs($usuario);
+
+        $this->postJson('/api/pedidos-checkout', [
+            'valor' => 1,
+        ])->assertStatus(422)
+            ->assertJsonValidationErrors(['valor']);
+    }
+
+    public function test_rota_de_simulacao_de_pagamento_nao_fica_disponivel_para_usuario(): void
+    {
+        $this->seed();
+
+        $usuario = Usuario::factory()->create([
+            'nome' => 'Sem Simulacao',
+            'email' => 'sem-simulacao@example.com',
+            'telefone' => '11999990005',
+            'perfil' => 'usuario',
+        ]);
+
+        Sanctum::actingAs($usuario);
+
+        $pedido = $this->postJson('/api/pedidos-checkout')->assertCreated()->json('pedido');
+
+        $this->postJson("/api/pedidos-checkout/{$pedido['id']}/simular-pagamento")
+            ->assertNotFound();
+    }
+
+    public function test_confirmar_pagamento_sandbox_ativa_cupom(): void
     {
         $this->seed();
 
@@ -52,7 +107,7 @@ class CheckoutFluxoTest extends TestCase
         $pedidoResponse = $this->postJson('/api/pedidos-checkout');
         $pedidoId = $pedidoResponse->json('pedido.id');
 
-        $response = $this->postJson("/api/pedidos-checkout/{$pedidoId}/simular-pagamento");
+        $response = $this->postJson("/api/pedidos-checkout/{$pedidoId}/confirmar-sandbox");
 
         $response
             ->assertOk()
@@ -73,13 +128,11 @@ class CheckoutFluxoTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        // Primeiro pedido + pagamento
         $pedido1 = $this->postJson('/api/pedidos-checkout');
-        $this->postJson("/api/pedidos-checkout/{$pedido1->json('pedido.id')}/simular-pagamento");
+        $this->postJson("/api/pedidos-checkout/{$pedido1->json('pedido.id')}/confirmar-sandbox");
 
-        // Segundo pedido + pagamento
         $pedido2 = $this->postJson('/api/pedidos-checkout');
-        $this->postJson("/api/pedidos-checkout/{$pedido2->json('pedido.id')}/simular-pagamento");
+        $this->postJson("/api/pedidos-checkout/{$pedido2->json('pedido.id')}/confirmar-sandbox");
 
         $cuponsResponse = $this->getJson('/api/cupons');
         $cuponsResponse->assertOk();
@@ -105,10 +158,10 @@ class CheckoutFluxoTest extends TestCase
         $pedido = $this->postJson('/api/pedidos-checkout');
         $pedidoId = $pedido->json('pedido.id');
 
-        $primeiro = $this->postJson("/api/pedidos-checkout/{$pedidoId}/simular-pagamento");
+        $primeiro = $this->postJson("/api/pedidos-checkout/{$pedidoId}/confirmar-sandbox");
         $cupomId1 = $primeiro->json('cupom.id');
 
-        $segundo = $this->postJson("/api/pedidos-checkout/{$pedidoId}/simular-pagamento");
+        $segundo = $this->postJson("/api/pedidos-checkout/{$pedidoId}/confirmar-sandbox");
         $cupomId2 = $segundo->json('cupom.id');
 
         $this->assertEquals($cupomId1, $cupomId2);

@@ -68,7 +68,17 @@
                   <p class="text-sm font-medium text-text">{{ autenticacao.nome }}</p>
                   <p class="text-xs text-text-muted">{{ autenticacao.email }}</p>
                   <p class="mt-1 text-xs text-text-muted">{{ autenticacao.telefone || 'Nao informado' }}</p>
+                  <p class="mt-1 text-xs" :class="autenticacao.cpfCnpj ? 'text-text-muted' : 'text-warning'">
+                    {{ autenticacao.cpfCnpj ? 'CPF/CNPJ informado' : 'CPF/CNPJ pendente' }}
+                  </p>
                 </div>
+                <RouterLink
+                  to="/perfil"
+                  class="mb-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-bg-card-hover hover:text-text"
+                  @click="dropdownAberto = false"
+                >
+                  Editar perfil
+                </RouterLink>
                 <button
                   type="button"
                   class="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-text-muted transition-colors hover:bg-bg-card-hover hover:text-danger"

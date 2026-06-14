@@ -5,6 +5,7 @@ import AdminPainelView from '../views/AdminPainelView.vue'
 import CupomView from '../views/CupomView.vue'
 import InicioView from '../views/InicioView.vue'
 import PainelView from '../views/PainelView.vue'
+import PerfilView from '../views/PerfilView.vue'
 import RankingView from '../views/RankingView.vue'
 
 export const roteador = createRouter({
@@ -35,6 +36,12 @@ export const roteador = createRouter({
       path: '/painel',
       name: 'painel',
       component: PainelView,
+      meta: { requerAutenticacao: true },
+    },
+    {
+      path: '/perfil',
+      name: 'perfil',
+      component: PerfilView,
       meta: { requerAutenticacao: true },
     },
     {

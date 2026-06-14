@@ -18,7 +18,8 @@ class CriarPedidoCheckoutRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'valor' => ['nullable', 'numeric', 'min:0'],
+            'valor' => ['prohibited'],
+            'cupom_id' => ['nullable', 'integer', 'exists:cupons,id'],
         ];
     }
 }

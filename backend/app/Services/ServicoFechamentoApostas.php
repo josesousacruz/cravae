@@ -13,21 +13,22 @@ class ServicoFechamentoApostas
 {
     public function validar(Cupom $cupom, array $dados): void
     {
-        if ($cupom->status !== 'ativo') {
+        // O cupom pode receber apostas mesmo aguardando pagamento: a cobranca e
+        // recebida por fora do sistema, entao o pagamento nao bloqueia palpites.
+        if (! in_array($cupom->status, ['ativo', 'aguardando_pagamento'], true)) {
             throw ValidationException::withMessages([
-                'cupom' => 'O cupom precisa estar ativo para receber apostas.',
-            ]);
-        }
-
-        $dataFechamento = $this->resolverDataFechamento($dados);
-
-        if ($dataFechamento && now()->greaterThanOrEqualTo($dataFechamento)) {
-            throw ValidationException::withMessages([
-                'apostas' => 'O prazo desta aposta ja foi encerrado.',
+                'cupom' => 'Este cupom nao pode receber apostas.',
             ]);
         }
 
         $this->validarDesbloqueioProgressivo($cupom, $dados);
+    }
+
+    public function prazoEncerrado(array $dados): bool
+    {
+        $dataFechamento = $this->resolverDataFechamento($dados);
+
+        return $dataFechamento !== null && now()->greaterThanOrEqualTo($dataFechamento);
     }
 
     private function resolverDataFechamento(array $dados): ?Carbon

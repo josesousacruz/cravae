@@ -20,7 +20,10 @@ class TorneioController extends Controller
     public function ranking(Torneio $torneio): JsonResponse
     {
         $ranking = PontuacaoCupom::query()
-            ->with(['cupom.usuario'])
+            ->with([
+                'cupom:id,usuario_id,codigo',
+                'cupom.usuario:id,nome',
+            ])
             ->whereHas('cupom.apostas', fn ($query) => $query->where('torneio_id', $torneio->id))
             ->orderByDesc('pontuacao_total')
             ->orderByDesc('quantidade_placares_exatos')

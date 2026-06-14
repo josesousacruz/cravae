@@ -5,6 +5,7 @@ export type UsuarioAutenticado = {
   nome: string
   email: string
   telefone: string | null
+  cpf_cnpj: string | null
   perfil: PerfilUsuario
 }
 
@@ -12,8 +13,17 @@ export type PedidoCheckout = {
   id: number
   valor: string
   status: string
+  forma_pagamento: string | null
   referencia_checkout: string | null
+  asaas_pagamento_id: string | null
+  asaas_status: string | null
+  invoice_url: string | null
+  pix_copia_cola: string | null
+  pix_qr_code_base64: string | null
+  pix_expira_at: string | null
+  erro_pagamento: string | null
   pago_at: string | null
+  cupons?: Cupom[]
 }
 
 export type PontuacaoCupom = {
@@ -169,6 +179,13 @@ export type EventoPontuacao = {
   id: number
   descricao: string
   pontos: number
+  jogo_id?: number | null
+  jogo?: {
+    id: number
+    selecao_mandante: Selecao | null
+    selecao_visitante: Selecao | null
+    resultado?: ResultadoJogo | null
+  } | null
 }
 
 export type RankingItem = {

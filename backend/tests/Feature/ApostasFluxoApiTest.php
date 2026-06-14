@@ -7,6 +7,7 @@ use App\Models\Cupom;
 use App\Models\Jogo;
 use App\Models\Jogador;
 use App\Models\LogAposta;
+use App\Models\Rodada;
 use App\Models\Torneio;
 use App\Models\Usuario;
 use App\Services\ServicoBracketCupom;
@@ -24,6 +25,7 @@ class ApostasFluxoApiTest extends TestCase
 
         [$usuario, $cupom] = $this->criarUsuarioComCupom('dono@teste.local');
         $jogo = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))->firstOrFail();
+        Rodada::query()->whereKey($jogo->rodada_id)->update(['data_fechamento' => now()->addDay()]);
 
         Sanctum::actingAs($usuario);
 
@@ -91,6 +93,11 @@ class ApostasFluxoApiTest extends TestCase
         $jogador = Jogador::query()->firstOrFail();
         $jogoGrupos = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))->firstOrFail();
         $jogoEliminatoria = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'round_of_32'))->firstOrFail();
+
+        // Mantem o teste deterministico mesmo apos o inicio real da Copa: garante
+        // que o jogo de grupos e o artilheiro ainda estejam dentro do prazo.
+        Rodada::query()->whereKey($jogoGrupos->rodada_id)->update(['data_fechamento' => now()->addDay()]);
+        Torneio::query()->whereKey($torneio->id)->update(['data_inicio' => now()->addDay()]);
 
         foreach (Jogo::query()->whereHas('fase', fn ($query) => $query->where('tipo', 'grupos'))->get() as $jogo) {
             Aposta::query()->create([
@@ -189,13 +196,14 @@ class ApostasFluxoApiTest extends TestCase
             'nome' => 'Usuario '.strtok($email, '@'),
             'email' => $email,
             'telefone' => '71999999999',
+            'cpf_cnpj' => '12345678901',
             'password' => '12345678',
             'perfil' => 'usuario',
         ]);
 
         Sanctum::actingAs($usuario);
         $pedido = $this->postJson('/api/pedidos-checkout', [])->assertCreated()->json('pedido');
-        $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/simular-pagamento", [])->assertOk()->json('cupom');
+        $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])->assertOk()->json('cupom');
 
         return [$usuario, Cupom::query()->findOrFail($cupom['id'])];
     }

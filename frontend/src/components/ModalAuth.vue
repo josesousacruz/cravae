@@ -130,6 +130,17 @@
             />
           </div>
           <div>
+            <label for="cadastro-cpf-cnpj" class="mb-1.5 block text-sm font-medium text-text">CPF/CNPJ</label>
+            <input
+              id="cadastro-cpf-cnpj"
+              v-model="formCadastro.cpfCnpj"
+              type="text"
+              inputmode="numeric"
+              placeholder="Somente numeros"
+              required
+            />
+          </div>
+          <div>
             <label for="cadastro-senha" class="mb-1.5 block text-sm font-medium text-text">Senha</label>
             <input
               id="cadastro-senha"
@@ -196,6 +207,7 @@ const formCadastro = reactive({
   nome: '',
   email: '',
   telefone: '',
+  cpfCnpj: '',
   senha: '',
   confirmarSenha: '',
 })
@@ -226,6 +238,7 @@ async function submeterCadastro() {
       formCadastro.nome,
       formCadastro.email,
       formCadastro.telefone,
+      formCadastro.cpfCnpj,
       formCadastro.senha,
       formCadastro.confirmarSenha,
     )

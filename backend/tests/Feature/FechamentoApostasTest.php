@@ -41,6 +41,129 @@ class FechamentoApostasTest extends TestCase
             ->assertJsonValidationErrors(['apostas']);
     }
 
+    public function test_lote_com_jogo_fechado_inalterado_salva_os_jogos_ainda_abertos(): void
+    {
+        $this->seed();
+
+        [$usuario, $cupom] = $this->criarUsuarioComCupom('lote-misto@teste.local');
+
+        $jogoFechado = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))->firstOrFail();
+        $jogoAberto = Jogo::query()
+            ->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))
+            ->where('rodada_id', '!=', $jogoFechado->rodada_id)
+            ->firstOrFail();
+
+        // Palpite ja existente para o jogo cuja rodada vai fechar.
+        $cupom->apostas()->create([
+            'tipo' => 'placar_jogo_grupos',
+            'torneio_id' => $jogoFechado->torneio_id,
+            'fase_id' => $jogoFechado->fase_id,
+            'rodada_id' => $jogoFechado->rodada_id,
+            'grupo_id' => $jogoFechado->grupo_id,
+            'jogo_id' => $jogoFechado->id,
+            'selecao_id' => null,
+            'jogador_id' => null,
+            'conteudo' => [
+                'placar_mandante' => 2,
+                'placar_visitante' => 1,
+                'penal_mandante' => null,
+                'penal_visitante' => null,
+                'selecao_classificada_id' => null,
+            ],
+        ]);
+
+        Rodada::query()->whereKey($jogoFechado->rodada_id)->update(['data_fechamento' => now()->subMinute()]);
+        Rodada::query()->whereKey($jogoAberto->rodada_id)->update(['data_fechamento' => now()->addDay()]);
+
+        Sanctum::actingAs($usuario);
+
+        // O lote reenvia o jogo fechado (mesmo placar) e altera um jogo ainda aberto.
+        $this->postJson("/api/cupons/{$cupom->id}/apostas/lote", [
+            'apostas' => [
+                [
+                    'tipo' => 'placar_jogo_grupos',
+                    'jogo_id' => $jogoFechado->id,
+                    'placar_mandante' => 2,
+                    'placar_visitante' => 1,
+                ],
+                [
+                    'tipo' => 'placar_jogo_grupos',
+                    'jogo_id' => $jogoAberto->id,
+                    'placar_mandante' => 3,
+                    'placar_visitante' => 0,
+                ],
+            ],
+        ])->assertOk();
+
+        $apostaAberta = $cupom->apostas()->where('jogo_id', $jogoAberto->id)->firstOrFail();
+        $this->assertSame(3, $apostaAberta->conteudo['placar_mandante']);
+
+        // Jogo fechado permanece com o palpite original.
+        $apostaFechada = $cupom->apostas()->where('jogo_id', $jogoFechado->id)->firstOrFail();
+        $this->assertSame(2, $apostaFechada->conteudo['placar_mandante']);
+    }
+
+    public function test_lote_recusa_alteracao_de_jogo_ja_fechado(): void
+    {
+        $this->seed();
+
+        [$usuario, $cupom] = $this->criarUsuarioComCupom('altera-fechado@teste.local');
+        $jogo = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))->firstOrFail();
+
+        Rodada::query()->whereKey($jogo->rodada_id)->update(['data_fechamento' => now()->subMinute()]);
+
+        Sanctum::actingAs($usuario);
+
+        $this->postJson("/api/cupons/{$cupom->id}/apostas/lote", [
+            'apostas' => [[
+                'tipo' => 'placar_jogo_grupos',
+                'jogo_id' => $jogo->id,
+                'placar_mandante' => 4,
+                'placar_visitante' => 2,
+            ]],
+        ])->assertStatus(422)
+            ->assertJsonValidationErrors(['apostas']);
+    }
+
+    public function test_cupom_aguardando_pagamento_consegue_apostar(): void
+    {
+        $this->seed();
+
+        $usuario = Usuario::query()->create([
+            'nome' => 'Pendente Pagamento',
+            'email' => 'pendente@teste.local',
+            'telefone' => '71999999999',
+            'cpf_cnpj' => '12345678901',
+            'password' => '12345678',
+            'perfil' => 'usuario',
+        ]);
+
+        $cupom = Cupom::query()->create([
+            'usuario_id' => $usuario->id,
+            'codigo' => 'PENDENTE01',
+            'status' => 'aguardando_pagamento',
+        ]);
+
+        $jogo = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))->firstOrFail();
+        Rodada::query()->whereKey($jogo->rodada_id)->update(['data_fechamento' => now()->addDay()]);
+
+        Sanctum::actingAs($usuario);
+
+        $this->postJson("/api/cupons/{$cupom->id}/apostas/lote", [
+            'apostas' => [[
+                'tipo' => 'placar_jogo_grupos',
+                'jogo_id' => $jogo->id,
+                'placar_mandante' => 1,
+                'placar_visitante' => 0,
+            ]],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('apostas', [
+            'cupom_id' => $cupom->id,
+            'jogo_id' => $jogo->id,
+        ]);
+    }
+
     public function test_backend_bloqueia_aposta_de_mata_mata_no_inicio_do_proprio_jogo(): void
     {
         $this->seed();
@@ -191,13 +314,14 @@ class FechamentoApostasTest extends TestCase
             'nome' => 'Usuario '.strtok($email, '@'),
             'email' => $email,
             'telefone' => '71999999999',
+            'cpf_cnpj' => '12345678901',
             'password' => '12345678',
             'perfil' => 'usuario',
         ]);
 
         Sanctum::actingAs($usuario);
         $pedido = $this->postJson('/api/pedidos-checkout', [])->assertCreated()->json('pedido');
-        $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/simular-pagamento", [])->assertOk()->json('cupom');
+        $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])->assertOk()->json('cupom');
 
         return [$usuario, Cupom::query()->findOrFail($cupom['id'])];
     }

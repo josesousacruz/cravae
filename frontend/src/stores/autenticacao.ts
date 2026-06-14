@@ -13,6 +13,7 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
   const nome = ref('Visitante')
   const email = ref('')
   const telefone = ref<string | null>(null)
+  const cpfCnpj = ref<string | null>(null)
   const perfil = ref<PerfilUsuario>('visitante')
   const carregando = ref(false)
   const erro = ref<string | null>(null)
@@ -24,6 +25,7 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
     nome.value = usuario.nome
     email.value = usuario.email
     telefone.value = usuario.telefone ?? null
+    cpfCnpj.value = usuario.cpf_cnpj ?? null
     perfil.value = usuario.perfil
   }
 
@@ -61,7 +63,7 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
     }
   }
 
-  async function cadastrar(nomeUsuario: string, emailUsuario: string, telefoneUsuario: string, senha: string, confirmarSenha: string) {
+  async function cadastrar(nomeUsuario: string, emailUsuario: string, telefoneUsuario: string, cpfCnpjUsuario: string, senha: string, confirmarSenha: string) {
     carregando.value = true
     erro.value = null
 
@@ -72,6 +74,7 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
           nome: nomeUsuario,
           email: emailUsuario,
           telefone: telefoneUsuario,
+          cpf_cnpj: cpfCnpjUsuario,
           password: senha,
           password_confirmation: confirmarSenha,
         },
@@ -103,6 +106,26 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
     }
   }
 
+  async function atualizarPerfil(dados: { nome: string; telefone: string; cpf_cnpj: string }) {
+    carregando.value = true
+    erro.value = null
+
+    try {
+      const resposta = await requisicaoApi<{ usuario: UsuarioAutenticado }>('/usuario', {
+        metodo: 'PUT',
+        corpo: dados,
+        token: token.value,
+      })
+
+      aplicarUsuario(resposta.usuario)
+    } catch (error) {
+      erro.value = error instanceof Error ? error.message : 'Nao foi possivel atualizar o perfil.'
+      throw error
+    } finally {
+      carregando.value = false
+    }
+  }
+
   async function sair() {
     if (token.value) {
       try {
@@ -121,6 +144,7 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
     nome.value = 'Visitante'
     email.value = ''
     telefone.value = null
+    cpfCnpj.value = null
   }
 
   return {
@@ -128,12 +152,14 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
     nome,
     email,
     telefone,
+    cpfCnpj,
     perfil,
     estaAutenticado,
     eAdministrador,
     carregando,
     erro,
     carregarUsuario,
+    atualizarPerfil,
     cadastrar,
     entrar,
     sair,

@@ -68,6 +68,14 @@
               Ranking
             </RouterLink>
             <RouterLink
+              to="/perfil"
+              class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-card-hover hover:text-text"
+              active-class="!bg-primary-dim !text-primary"
+              @click="$emit('fechar')"
+            >
+              Perfil
+            </RouterLink>
+            <RouterLink
               v-if="autenticacao.eAdministrador"
               to="/admin"
               class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-card-hover hover:text-text"

@@ -127,6 +127,10 @@
                       Sem palpite
                     </span>
                     <span class="text-xs text-text-muted">{{ formatarHora(jogo.data_hora_inicio) }}</span>
+                    <span v-if="jogoFechado(jogo)" class="inline-flex items-center gap-1 rounded-full bg-text-muted/15 px-2 py-0.5 text-[10px] font-medium text-text-muted">
+                      <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                      Fechado
+                    </span>
                   </div>
                   <div class="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
                     <span v-if="jogo.grupo" class="text-xs font-medium text-primary">{{ jogo.grupo.nome }}</span>
@@ -191,21 +195,21 @@
                   <!-- Score inputs with +/- buttons -->
                   <div class="flex items-center justify-center gap-1 sm:gap-2">
                     <div class="flex items-center gap-0.5">
-                      <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="decrementarPlacar(jogo.id, 'mandante')">-</button>
+                      <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPlacar(jogo.id, 'mandante')">-</button>
                       <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresGrupos[jogo.id]?.placar_mandante !== '' ? 'text-text' : 'text-text-muted'">
                         {{ placaresGrupos[jogo.id]?.placar_mandante !== '' ? placaresGrupos[jogo.id]?.placar_mandante : '-' }}
                       </div>
-                      <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="incrementarPlacar(jogo.id, 'mandante')">+</button>
+                      <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="incrementarPlacar(jogo.id, 'mandante')">+</button>
                     </div>
 
                     <span class="text-xs text-text-muted font-medium">x</span>
 
                     <div class="flex items-center gap-0.5">
-                      <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="decrementarPlacar(jogo.id, 'visitante')">-</button>
+                      <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPlacar(jogo.id, 'visitante')">-</button>
                       <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresGrupos[jogo.id]?.placar_visitante !== '' ? 'text-text' : 'text-text-muted'">
                         {{ placaresGrupos[jogo.id]?.placar_visitante !== '' ? placaresGrupos[jogo.id]?.placar_visitante : '-' }}
                       </div>
-                      <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="incrementarPlacar(jogo.id, 'visitante')">+</button>
+                      <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="incrementarPlacar(jogo.id, 'visitante')">+</button>
                     </div>
                   </div>
 
@@ -227,19 +231,19 @@
                     <span class="mb-2 block text-xs font-medium text-primary">Empate: informe os penaltis</span>
                     <div class="flex items-center justify-center gap-2">
                       <div class="flex items-center gap-0.5">
-                        <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="decrementarPenal(jogo.id, 'mandante')">-</button>
+                        <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPenal(jogo.id, 'mandante')">-</button>
                         <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresEliminatorios[jogo.id].penal_mandante !== '' ? 'text-text' : 'text-text-muted'">
                           {{ placaresEliminatorios[jogo.id].penal_mandante !== '' ? placaresEliminatorios[jogo.id].penal_mandante : '-' }}
                         </div>
-                        <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="incrementarPenal(jogo.id, 'mandante')">+</button>
+                        <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="incrementarPenal(jogo.id, 'mandante')">+</button>
                       </div>
                       <span class="text-xs text-text-muted font-medium">x</span>
                       <div class="flex items-center gap-0.5">
-                        <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="decrementarPenal(jogo.id, 'visitante')">-</button>
+                        <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPenal(jogo.id, 'visitante')">-</button>
                         <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresEliminatorios[jogo.id].penal_visitante !== '' ? 'text-text' : 'text-text-muted'">
                           {{ placaresEliminatorios[jogo.id].penal_visitante !== '' ? placaresEliminatorios[jogo.id].penal_visitante : '-' }}
                         </div>
-                        <button type="button" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary" @click="incrementarPenal(jogo.id, 'visitante')">+</button>
+                        <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="incrementarPenal(jogo.id, 'visitante')">+</button>
                       </div>
                     </div>
                   </div>
@@ -579,9 +583,12 @@
         <div v-if="cupom.eventos_pontuacao?.length" class="rounded-2xl border border-border bg-bg-card p-5">
           <h2 class="mb-4 text-lg font-bold">Eventos de Pontuacao</h2>
           <div class="space-y-2">
-            <div v-for="evento in cupom.eventos_pontuacao" :key="evento.id" class="flex items-center justify-between rounded-lg bg-bg-input px-3.5 py-2.5">
-              <span class="text-sm">{{ evento.descricao }}</span>
-              <span class="text-sm font-bold text-primary">+{{ evento.pontos }} pts</span>
+            <div v-for="evento in cupom.eventos_pontuacao" :key="evento.id" class="flex items-center justify-between gap-3 rounded-lg bg-bg-input px-3.5 py-2.5">
+              <div class="min-w-0">
+                <span class="block text-sm">{{ evento.descricao }}</span>
+                <span v-if="jogoDoEvento(evento)" class="mt-0.5 block truncate text-xs text-text-muted">{{ jogoDoEvento(evento) }}</span>
+              </div>
+              <span class="shrink-0 text-sm font-bold text-primary">+{{ evento.pontos }} pts</span>
             </div>
           </div>
         </div>
@@ -617,7 +624,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { usarTorneioStore } from '../stores/torneio'
 import { useToast } from '../composables/useToast'
-import type { Aposta, BracketJogoCupom, Cupom, RankingItem, ResumoBracketCupom, Selecao, Torneio } from '../tipos'
+import type { Aposta, BracketJogoCupom, Cupom, EventoPontuacao, RankingItem, ResumoBracketCupom, Selecao, Torneio } from '../tipos'
 import tacaCopaAsset from '../assets/taca-copa-transparente.png'
 
 const rota = useRoute()
@@ -848,8 +855,32 @@ function jogoCompleto(jogo: JogoCupom): boolean {
   )
 }
 
+// Espelha a regra de fechamento do backend (ServicoFechamentoApostas):
+// grupos fecham na data_fechamento da rodada (ou 1h antes do jogo); mata-mata
+// fecha no inicio do proprio jogo. Jogo fechado nao pode ter o palpite alterado.
+function jogoFechado(jogo: JogoCupom): boolean {
+  const referencia = jogo.fase.tipo === 'grupos'
+    ? (jogo.rodada?.data_fechamento ?? new Date(new Date(jogo.data_hora_inicio).getTime() - 3600000).toISOString())
+    : jogo.data_hora_inicio
+  if (!referencia) return false
+  return Date.now() >= new Date(referencia).getTime()
+}
+
 const jogosGruposDoTorneio = computed(() => torneio.value?.jogos.filter((jogo) => jogo.fase.tipo === 'grupos') ?? [])
 const jogosEliminatoriosDoCupom = computed(() => bracketCupom.value.filter((jogo) => jogo.fase.tipo !== 'grupos'))
+
+const jogosPorId = computed(() => {
+  const mapa = new Map<number, JogoCupom>()
+  for (const jogo of jogosGruposDoTorneio.value) mapa.set(jogo.id, jogo)
+  for (const jogo of jogosEliminatoriosDoCupom.value) mapa.set(jogo.id, jogo)
+  return mapa
+})
+
+function jogoFechadoPorId(jogoId: number): boolean {
+  const jogo = jogosPorId.value.get(jogoId)
+  return jogo ? jogoFechado(jogo) : false
+}
+
 const totalJogosGrupos = computed(() => jogosGruposDoTorneio.value.length)
 const gruposPreenchidos = computed(() => jogosGruposDoTorneio.value.filter((jogo) => jogoCompleto(jogo)).length)
 
@@ -1040,6 +1071,7 @@ function faseProxima() { if (indiceFase.value < fasesRodadas.value.length - 1) i
 
 // Score starts at '-' (empty). First click on + sets to 0, then 1, 2...
 function incrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
+  if (jogoFechadoPorId(jogoId)) return
   const campo = lado === 'mandante' ? 'placar_mandante' : 'placar_visitante'
   const current = placaresGrupos.value[jogoId][campo]
   if (current === '') {
@@ -1051,6 +1083,7 @@ function incrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
 }
 
 function decrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
+  if (jogoFechadoPorId(jogoId)) return
   const campo = lado === 'mandante' ? 'placar_mandante' : 'placar_visitante'
   const current = placaresGrupos.value[jogoId][campo]
   if (current === '' || current === '0') {
@@ -1062,6 +1095,7 @@ function decrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
 }
 
 function incrementarPenal(jogoId: number, lado: 'mandante' | 'visitante') {
+  if (jogoFechadoPorId(jogoId)) return
   const campo = lado === 'mandante' ? 'penal_mandante' : 'penal_visitante'
   const current = placaresEliminatorios.value[jogoId][campo]
   placaresEliminatorios.value[jogoId][campo] = current === '' ? '0' : String(Number(current) + 1)
@@ -1069,6 +1103,7 @@ function incrementarPenal(jogoId: number, lado: 'mandante' | 'visitante') {
 }
 
 function decrementarPenal(jogoId: number, lado: 'mandante' | 'visitante') {
+  if (jogoFechadoPorId(jogoId)) return
   const campo = lado === 'mandante' ? 'penal_mandante' : 'penal_visitante'
   const current = placaresEliminatorios.value[jogoId][campo]
   if (current === '' || current === '0') {
@@ -1097,6 +1132,9 @@ function montarApostasParaEnvio() {
 
   // All games with both scores filled
   for (const jogo of jogosDoCupom) {
+    // Jogos ja fechados nao entram no lote: o palpite deles e imutavel e reenvia-los
+    // faria o backend recusar o lote inteiro, derrubando os jogos ainda abertos.
+    if (jogoFechado(jogo)) continue
     const p = placaresGrupos.value[jogo.id]
     if (!p || p.placar_mandante === '' || p.placar_visitante === '') continue
     if (jogo.fase.tipo === 'grupos') {
@@ -1170,6 +1208,19 @@ async function autoSalvar() {
 
 function formatarHora(dataHora: string) {
   return new Date(dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
+
+// Jogo que originou um evento de pontuacao (vazio para artilheiro/podio).
+function jogoDoEvento(evento: EventoPontuacao): string {
+  const jogo = evento.jogo
+  if (!jogo) return ''
+  const mandante = jogo.selecao_mandante?.nome ?? 'A definir'
+  const visitante = jogo.selecao_visitante?.nome ?? 'A definir'
+  const resultado = jogo.resultado
+  if (resultado && resultado.placar_mandante !== null && resultado.placar_visitante !== null) {
+    return `${mandante} ${resultado.placar_mandante} x ${resultado.placar_visitante} ${visitante}`
+  }
+  return `${mandante} x ${visitante}`
 }
 
 function encontrarAposta(tipo: string, referenciaId?: number) {

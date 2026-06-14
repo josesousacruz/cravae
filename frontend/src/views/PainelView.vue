@@ -9,12 +9,13 @@
             Cada cupom representa um conjunto independente de apostas.
           </p>
         </div>
-        <RouterLink
-          to="/checkout"
-          class="inline-block rounded-xl bg-primary px-6 py-2.5 text-center font-semibold text-bg transition hover:bg-primary-hover"
+        <span
+          class="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border bg-bg-input px-6 py-2.5 text-center text-sm font-semibold text-text-muted"
+          title="A compra de cupons esta encerrada ate o fim do campeonato"
         >
-          Comprar novo cupom
-        </RouterLink>
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+          Compra de cupons encerrada
+        </span>
       </div>
     </section>
 
@@ -60,14 +61,8 @@
           </div>
           <h3 class="mt-4 text-lg font-bold">Nenhum cupom ainda</h3>
           <p class="mx-auto mt-2 max-w-md text-sm text-text-secondary">
-            Compre seu primeiro cupom e comece a fazer seus palpites para o bolao.
+            A compra de cupons esta encerrada ate o fim do campeonato.
           </p>
-          <RouterLink
-            to="/checkout"
-            class="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-base font-bold text-bg transition hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/20"
-          >
-            Comprar primeiro cupom
-          </RouterLink>
         </div>
 
         <!-- Cards carousel -->
@@ -117,7 +112,6 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
-import { RouterLink } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
 import { usarTorneioStore } from '../stores/torneio'

@@ -27,4 +27,9 @@ class EventoPontuacao extends Model
     {
         return $this->belongsTo(RegraPontuacao::class, 'regra_pontuacao_id');
     }
+
+    public function jogo(): BelongsTo
+    {
+        return $this->belongsTo(Jogo::class, 'jogo_id');
+    }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\CupomController;
 use App\Http\Controllers\PainelAdministradorController;
 use App\Http\Controllers\PedidoCheckoutController;
 use App\Http\Controllers\TorneioController;
+use App\Http\Controllers\WebhookAsaasController;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -28,9 +29,11 @@ Route::get('/jogos/{jogo}/palpiteiros', [TorneioController::class, 'palpiteiros'
 
 Route::post('/cadastro', [AutenticacaoController::class, 'cadastrar']);
 Route::post('/entrar', [AutenticacaoController::class, 'entrar'])->middleware('throttle:entrar');
+Route::post('/webhooks/asaas/pagamentos', [WebhookAsaasController::class, 'pagamentos']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/usuario', [AutenticacaoController::class, 'usuarioAutenticado']);
+    Route::put('/usuario', [AutenticacaoController::class, 'atualizarPerfil']);
     Route::post('/sair', [AutenticacaoController::class, 'sair']);
     Route::get('/cupons', [CupomController::class, 'index']);
     Route::get('/cupons/{cupom}', [CupomController::class, 'show']);
@@ -38,7 +41,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cupons/{cupom}/apostas', [ApostaController::class, 'index']);
     Route::post('/cupons/{cupom}/apostas/lote', [ApostaController::class, 'salvarLote']);
     Route::post('/pedidos-checkout', [PedidoCheckoutController::class, 'store']);
-    Route::post('/pedidos-checkout/{pedidoCheckout}/simular-pagamento', [PedidoCheckoutController::class, 'simularPagamento']);
+    Route::get('/pedidos-checkout/{pedidoCheckout}', [PedidoCheckoutController::class, 'show']);
+    Route::post('/pedidos-checkout/{pedidoCheckout}/confirmar-sandbox', [PedidoCheckoutController::class, 'confirmarSandbox']);
+    Route::post('/cupons/{cupom}/pagamento', [PedidoCheckoutController::class, 'pagamentoCupom']);
 
     Route::middleware('can:acessar-area-admin')->group(function () {
         Route::get('/admin/resumo', [PainelAdministradorController::class, 'resumo']);

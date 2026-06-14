@@ -34,7 +34,11 @@ class CupomController extends Controller
         $cupom->load([
             'pedidoCheckout',
             'pontuacao',
-            'eventosPontuacao' => fn ($query) => $query->latest('id'),
+            'eventosPontuacao' => fn ($query) => $query->latest('id')->with([
+                'jogo.selecaoMandante',
+                'jogo.selecaoVisitante',
+                'jogo.resultado',
+            ]),
         ]);
 
         return response()->json([

@@ -20,7 +20,7 @@
             class="shrink-0 rounded-full px-3 py-1 text-xs font-semibold"
             :class="cupom.status === 'ativo' ? 'bg-primary text-bg' : 'bg-warning/20 text-warning'"
           >
-            {{ cupom.status === 'ativo' ? 'Cupom ativo' : cupom.status }}
+            {{ rotuloStatus }}
           </span>
         </div>
       </div>
@@ -58,7 +58,7 @@
       <span class="text-xs font-mono text-text-muted">{{ cupom.codigo }}</span>
     </div>
 
-    <!-- CTA Button -->
+    <!-- CTA Button — cupom pendente de pagamento tambem ja pode palpitar -->
     <RouterLink
       :to="`/cupons/${cupom.id}`"
       class="mt-4 flex w-full items-center justify-center rounded-xl bg-primary py-3 text-sm font-bold text-bg transition-all hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/20"
@@ -69,10 +69,17 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { Cupom } from '../tipos'
 
-defineProps<{
+const props = defineProps<{
   cupom: Cupom
 }>()
+
+const rotuloStatus = computed(() => {
+  if (props.cupom.status === 'ativo') return 'Cupom ativo'
+  if (props.cupom.status === 'aguardando_pagamento') return 'Aguardando pagamento'
+  return props.cupom.status
+})
 </script>

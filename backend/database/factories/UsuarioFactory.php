@@ -19,6 +19,7 @@ class UsuarioFactory extends Factory
             'nome' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'telefone' => fake()->numerify('###########'),
+            'cpf_cnpj' => fake()->numerify('###########'),
             'password' => Hash::make('password'),
             'perfil' => 'usuario',
         ];

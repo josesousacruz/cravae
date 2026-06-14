@@ -134,13 +134,14 @@ class BracketCupomApiTest extends TestCase
             'nome' => 'Usuario '.strtok($email, '@'),
             'email' => $email,
             'telefone' => '71999999999',
+            'cpf_cnpj' => '12345678901',
             'password' => '12345678',
             'perfil' => 'usuario',
         ]);
 
         Sanctum::actingAs($usuario);
         $pedido = $this->postJson('/api/pedidos-checkout', [])->assertCreated()->json('pedido');
-        $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/simular-pagamento", [])->assertOk()->json('cupom');
+        $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])->assertOk()->json('cupom');
 
         return [$usuario, Cupom::query()->findOrFail($cupom['id'])];
     }

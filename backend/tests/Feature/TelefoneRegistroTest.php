@@ -19,6 +19,7 @@ class TelefoneRegistroTest extends TestCase
             'nome' => 'Teste Usuario',
             'email' => 'teste@example.com',
             'telefone' => '11999998888',
+            'cpf_cnpj' => '12345678901',
             'password' => 'senhaforte123',
             'password_confirmation' => 'senhaforte123',
         ]);
@@ -62,5 +63,32 @@ class TelefoneRegistroTest extends TestCase
         $response
             ->assertOk()
             ->assertJsonPath('usuario.telefone', '21888887777');
+    }
+
+    public function test_usuario_autenticado_atualiza_perfil_com_cpf(): void
+    {
+        $this->seed();
+
+        $usuario = Usuario::factory()->create([
+            'nome' => 'Perfil Antigo',
+            'email' => 'perfil@example.com',
+            'telefone' => '21888887777',
+            'cpf_cnpj' => null,
+            'perfil' => 'usuario',
+        ]);
+
+        Sanctum::actingAs($usuario);
+
+        $response = $this->putJson('/api/usuario', [
+            'nome' => 'Perfil Novo',
+            'telefone' => '21999998888',
+            'cpf_cnpj' => '123.456.789-01',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('usuario.nome', 'Perfil Novo')
+            ->assertJsonPath('usuario.telefone', '21999998888')
+            ->assertJsonPath('usuario.cpf_cnpj', '12345678901');
     }
 }

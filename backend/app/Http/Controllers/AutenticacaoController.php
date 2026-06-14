@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AtualizarPerfilRequest;
 use App\Http\Requests\CadastrarUsuarioRequest;
 use App\Http\Requests\EntrarRequest;
 use App\Models\Usuario;
@@ -17,6 +18,7 @@ class AutenticacaoController extends Controller
             'nome' => $request->string('nome')->toString(),
             'email' => $request->string('email')->toString(),
             'telefone' => $request->string('telefone')->toString(),
+            'cpf_cnpj' => preg_replace('/\D+/', '', $request->string('cpf_cnpj')->toString()),
             'password' => $request->string('password')->toString(),
             'perfil' => 'usuario',
         ]);
@@ -51,6 +53,21 @@ class AutenticacaoController extends Controller
     {
         return response()->json([
             'usuario' => $request->user(),
+        ]);
+    }
+
+    public function atualizarPerfil(AtualizarPerfilRequest $request): JsonResponse
+    {
+        $usuario = $request->user();
+
+        $usuario->forceFill([
+            'nome' => $request->string('nome')->toString(),
+            'telefone' => $request->string('telefone')->toString(),
+            'cpf_cnpj' => preg_replace('/\D+/', '', $request->string('cpf_cnpj')->toString()),
+        ])->save();
+
+        return response()->json([
+            'usuario' => $usuario->fresh(),
         ]);
     }
 
