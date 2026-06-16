@@ -51,9 +51,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/admin/resumo', [PainelAdministradorController::class, 'resumo']);
         Route::get('/admin/dados', [PainelAdministradorController::class, 'dados']);
         Route::get('/admin/cupons-pendentes', [PainelAdministradorController::class, 'cuponsPendentes']);
+        Route::get('/admin/pagamentos', [PainelAdministradorController::class, 'pagamentos']);
         Route::post('/admin/cupons/{cupom}/marcar-pago', [PainelAdministradorController::class, 'marcarCupomPago']);
+        Route::post('/admin/cupons/{cupom}/marcar-nao-pago', [PainelAdministradorController::class, 'marcarCupomNaoPago']);
         Route::put('/admin/jogos/{jogo}/resultado', [PainelAdministradorController::class, 'salvarResultadoJogo']);
         Route::put('/admin/torneios/{torneio}/resultado', [PainelAdministradorController::class, 'salvarResultadoTorneio']);
+        Route::post('/admin/regras-pontuacao', [PainelAdministradorController::class, 'criarRegraPontuacao']);
         Route::put('/admin/regras-pontuacao/{regraPontuacao}', [PainelAdministradorController::class, 'atualizarRegraPontuacao']);
+        Route::delete('/admin/regras-pontuacao/{regraPontuacao}', [PainelAdministradorController::class, 'excluirRegraPontuacao']);
     });
 });

@@ -11,7 +11,7 @@ export function urlAsset(caminho: string | null | undefined): string | null {
   return `${ASSET_BASE_URL}${caminho.startsWith('/') ? '' : '/'}${caminho}`
 }
 
-type MetodoHttp = 'GET' | 'POST' | 'PUT'
+type MetodoHttp = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
 type OpcoesRequisicao = {
   metodo?: MetodoHttp

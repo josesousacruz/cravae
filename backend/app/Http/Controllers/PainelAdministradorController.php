@@ -20,10 +20,29 @@ use App\Services\ServicoCheckout;
 use App\Services\ServicoResultadosTorneio;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class PainelAdministradorController extends Controller
 {
+    /**
+     * Chaves de pontuacao reconhecidas pelo motor (ServicoPontuacao). Apenas regras
+     * com uma destas chaves efetivamente pontuam. Mantém os dois sincronizados.
+     */
+    private const CHAVES_PONTUACAO = [
+        'placar_exato_fase_grupos' => 'Placar exato (fase de grupos)',
+        'vencedor_e_acertou_gols' => 'Vencedor + acertou gols (grupos)',
+        'apenas_vencedor' => 'Apenas o vencedor (grupos)',
+        'empate_sem_placar' => 'Empate sem placar exato (grupos)',
+        'acertou_1_placar' => 'Acertou 1 placar (grupos)',
+        'classificado_mata_mata' => 'Classificado (mata-mata)',
+        'classificado_e_placar_mata_mata' => 'Classificado + placar (mata-mata)',
+        'artilheiro' => 'Artilheiro do torneio',
+        'campeao' => 'Campeao',
+        'vice_campeao' => 'Vice-campeao',
+        'terceiro_colocado' => 'Terceiro colocado',
+    ];
+
     public function __construct(
         private readonly ServicoResultadosTorneio $servicoResultadosTorneio,
         private readonly ServicoCheckout $servicoCheckout,
@@ -94,7 +113,7 @@ class PainelAdministradorController extends Controller
                 'jogos.selecaoMandante',
                 'jogos.selecaoVisitante',
                 'jogos.resultado',
-                'regrasPontuacao' => fn ($query) => $query->orderBy('chave'),
+                'regrasPontuacao' => fn ($query) => $query->withCount('eventosPontuacao')->orderBy('chave'),
             ])
             ->latest('id')
             ->firstOrFail();
@@ -115,6 +134,9 @@ class PainelAdministradorController extends Controller
 
         return response()->json([
             'torneio' => $torneio,
+            'chaves_disponiveis' => collect(self::CHAVES_PONTUACAO)
+                ->map(fn (string $label, string $chave) => ['chave' => $chave, 'label' => $label])
+                ->values(),
         ]);
     }
 
@@ -170,6 +192,100 @@ class PainelAdministradorController extends Controller
 
         return response()->json([
             'regra_pontuacao' => $regraPontuacao,
+        ]);
+    }
+
+    public function criarRegraPontuacao(Request $request): JsonResponse
+    {
+        $torneio = Torneio::query()->latest('id')->firstOrFail();
+
+        $dados = $request->validate([
+            'chave' => ['required', 'string', Rule::in(array_keys(self::CHAVES_PONTUACAO))],
+            'fase_id' => ['nullable', 'integer', Rule::exists('fases', 'id')->where('torneio_id', $torneio->id)],
+            'nome' => ['required', 'string', 'max:120'],
+            'descricao' => ['nullable', 'string', 'max:255'],
+            'pontos' => ['required', 'integer', 'min:0', 'max:1000'],
+        ]);
+
+        $faseId = $dados['fase_id'] ?? null;
+
+        $jaExiste = RegraPontuacao::query()
+            ->where('torneio_id', $torneio->id)
+            ->where('chave', $dados['chave'])
+            ->when($faseId !== null, fn ($q) => $q->where('fase_id', $faseId), fn ($q) => $q->whereNull('fase_id'))
+            ->exists();
+
+        if ($jaExiste) {
+            throw ValidationException::withMessages([
+                'chave' => 'Ja existe uma regra com essa chave para esta fase.',
+            ]);
+        }
+
+        $regra = RegraPontuacao::query()->create([
+            'torneio_id' => $torneio->id,
+            'fase_id' => $faseId,
+            'chave' => $dados['chave'],
+            'nome' => $dados['nome'],
+            'descricao' => $dados['descricao'] ?? null,
+            'pontos' => $dados['pontos'],
+            'ativo' => true,
+        ]);
+
+        RecalcularPontuacaoTorneioJob::dispatchAfterResponse($torneio->id);
+
+        return response()->json([
+            'regra_pontuacao' => $regra,
+        ], 201);
+    }
+
+    public function excluirRegraPontuacao(RegraPontuacao $regraPontuacao): JsonResponse
+    {
+        if ($regraPontuacao->eventosPontuacao()->exists()) {
+            throw ValidationException::withMessages([
+                'regra' => 'Esta regra ja foi aplicada (gerou pontos) e nao pode ser excluida.',
+            ]);
+        }
+
+        $torneioId = $regraPontuacao->torneio_id;
+        $regraPontuacao->delete();
+
+        RecalcularPontuacaoTorneioJob::dispatchAfterResponse($torneioId);
+
+        return response()->json([
+            'mensagem' => 'Regra excluida.',
+        ]);
+    }
+
+    public function pagamentos(Request $request): JsonResponse
+    {
+        $busca = trim((string) $request->query('busca', ''));
+
+        $cupons = Cupom::query()
+            ->with(['usuario:id,nome,email,telefone', 'pedidoCheckout:id,valor,status'])
+            ->when($busca !== '', function ($query) use ($busca) {
+                $query->where(function ($q) use ($busca) {
+                    $q->where('codigo', 'like', "%{$busca}%")
+                        ->orWhereHas('usuario', fn ($u) => $u
+                            ->where('nome', 'like', "%{$busca}%")
+                            ->orWhere('email', 'like', "%{$busca}%")
+                            ->orWhere('telefone', 'like', "%{$busca}%"));
+                });
+            })
+            ->latest('id')
+            ->limit(300)
+            ->get();
+
+        return response()->json([
+            'cupons' => $cupons,
+        ]);
+    }
+
+    public function marcarCupomNaoPago(Cupom $cupom): JsonResponse
+    {
+        $cupom = $this->servicoCheckout->marcarCupomComoNaoPago($cupom);
+
+        return response()->json([
+            'cupom' => $cupom->load(['usuario:id,nome,email,telefone', 'pedidoCheckout:id,valor,status']),
         ]);
     }
 

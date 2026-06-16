@@ -134,6 +134,24 @@ class ServicoCheckout
         });
     }
 
+    public function marcarCupomComoNaoPago(Cupom $cupom): Cupom
+    {
+        return DB::transaction(function () use ($cupom) {
+            $cupom = Cupom::query()->lockForUpdate()->findOrFail($cupom->id);
+            $cupom->forceFill(['status' => 'aguardando_pagamento'])->save();
+
+            if ($cupom->pedido_checkout_id) {
+                $pedido = PedidoCheckout::query()->lockForUpdate()->find($cupom->pedido_checkout_id);
+                $pedido?->forceFill([
+                    'status' => 'pendente',
+                    'pago_at' => null,
+                ])->save();
+            }
+
+            return $cupom->fresh();
+        });
+    }
+
     public function atualizarStatusAsaas(PedidoCheckout $pedido, string $statusPedido, ?string $asaasStatus = null): void
     {
         $pedido->forceFill([

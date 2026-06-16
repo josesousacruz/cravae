@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RegraPontuacao extends Model
 {
@@ -34,5 +35,10 @@ class RegraPontuacao extends Model
     public function fase(): BelongsTo
     {
         return $this->belongsTo(Fase::class, 'fase_id');
+    }
+
+    public function eventosPontuacao(): HasMany
+    {
+        return $this->hasMany(EventoPontuacao::class, 'regra_pontuacao_id');
     }
 }

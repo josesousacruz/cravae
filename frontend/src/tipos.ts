@@ -142,6 +142,7 @@ export type RegraPontuacao = {
   descricao: string | null
   pontos: number
   ativo: boolean
+  eventos_pontuacao_count?: number
 }
 
 export type ResultadoTorneio = {

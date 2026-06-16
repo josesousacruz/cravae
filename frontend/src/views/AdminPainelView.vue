@@ -108,27 +108,83 @@
       </div>
     </section>
 
-    <section v-if="tabAtiva === 'regras'" class="rounded-2xl border border-border bg-bg-card p-6">
-      <h2 class="mb-4 text-lg font-bold">Regras de Pontuacao</h2>
-      <div class="space-y-3">
-        <div
-          v-for="regra in regrasPontuacaoVisiveis"
-          :key="regra.id"
-          class="flex flex-col gap-3 rounded-xl bg-bg-input p-4 sm:flex-row sm:items-center"
+    <section v-if="tabAtiva === 'regras'" class="space-y-4">
+      <div class="rounded-2xl border border-border bg-bg-card p-6">
+        <h2 class="mb-1 text-lg font-bold">Adicionar regra</h2>
+        <p class="mb-4 text-sm text-text-secondary">Escolha uma categoria de pontuacao reconhecida e a fase (ou global). So pontua quem usa uma categoria conhecida.</p>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <label class="block">
+            <span class="mb-1.5 block text-xs text-text-muted">Categoria</span>
+            <select v-model="novaRegra.chave">
+              <option value="">Selecione...</option>
+              <option v-for="c in chavesDisponiveis" :key="c.chave" :value="c.chave">{{ c.label }}</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="mb-1.5 block text-xs text-text-muted">Fase</span>
+            <select v-model="novaRegra.fase_id">
+              <option value="">Global (todas as fases)</option>
+              <option v-for="fase in torneio.fases" :key="fase.id" :value="String(fase.id)">{{ fase.nome }}</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="mb-1.5 block text-xs text-text-muted">Nome</span>
+            <input v-model="novaRegra.nome" type="text" placeholder="Ex: Placar exato" />
+          </label>
+          <label class="block">
+            <span class="mb-1.5 block text-xs text-text-muted">Pontos</span>
+            <input v-model="novaRegra.pontos" type="number" min="0" />
+          </label>
+          <label class="block sm:col-span-2">
+            <span class="mb-1.5 block text-xs text-text-muted">Descricao (opcional)</span>
+            <input v-model="novaRegra.descricao" type="text" placeholder="Breve descricao" />
+          </label>
+        </div>
+        <button
+          type="button"
+          class="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-bg transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="adicionandoRegra || !novaRegra.chave || !novaRegra.nome"
+          @click="adicionarRegra"
         >
-          <div class="min-w-0 flex-1">
-            <p class="text-sm font-medium">{{ regra.nome }}</p>
-            <p v-if="regra.descricao" class="text-xs text-text-muted">{{ regra.descricao }}</p>
-          </div>
-          <input v-model="pontosRegras[regra.id]" type="number" min="0" class="!w-24" />
-          <button
-            type="button"
-            class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-bg transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="salvandoRegraId === regra.id"
-            @click="salvarRegra(regra.id)"
+          {{ adicionandoRegra ? 'Adicionando...' : 'Adicionar regra' }}
+        </button>
+      </div>
+
+      <div class="rounded-2xl border border-border bg-bg-card p-6">
+        <h2 class="mb-4 text-lg font-bold">Regras de Pontuacao</h2>
+        <div class="space-y-3">
+          <div
+            v-for="regra in regrasOrdenadas"
+            :key="regra.id"
+            class="flex flex-col gap-3 rounded-xl bg-bg-input p-4 sm:flex-row sm:items-center"
           >
-            {{ salvandoRegraId === regra.id ? 'Salvando...' : 'Salvar regra' }}
-          </button>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="text-sm font-medium">{{ regra.nome }}</p>
+                <span class="rounded-full bg-bg-card px-2 py-0.5 text-[10px] text-text-muted">{{ nomeFase(regra.fase_id) }}</span>
+                <span v-if="(regra.eventos_pontuacao_count ?? 0) > 0" class="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">aplicada</span>
+              </div>
+              <p v-if="regra.descricao" class="mt-0.5 text-xs text-text-muted">{{ regra.descricao }}</p>
+            </div>
+            <input v-model="pontosRegras[regra.id]" type="number" min="0" class="!w-24" />
+            <button
+              type="button"
+              class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-bg transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="salvandoRegraId === regra.id"
+              @click="salvarRegra(regra.id)"
+            >
+              {{ salvandoRegraId === regra.id ? 'Salvando...' : 'Salvar' }}
+            </button>
+            <button
+              v-if="(regra.eventos_pontuacao_count ?? 0) === 0"
+              type="button"
+              class="rounded-lg border border-danger/40 px-3 py-2 text-sm font-medium text-danger transition hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="excluindoRegraId === regra.id"
+              @click="excluirRegra(regra.id)"
+            >
+              {{ excluindoRegraId === regra.id ? 'Excluindo...' : 'Excluir' }}
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -164,11 +220,11 @@
       <div class="rounded-2xl border border-border bg-bg-card p-5">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 class="text-lg font-bold">Pagamentos pendentes</h2>
-            <p class="mt-1 text-sm text-text-secondary">Confirme o Pix recebido e marque o cupom do usuario como pago.</p>
+            <h2 class="text-lg font-bold">Pagamentos</h2>
+            <p class="mt-1 text-sm text-text-secondary">Todos os cupons. Marque como pago ou reverta para aguardando.</p>
           </div>
-          <span class="rounded-full border border-warning/30 bg-warning/10 px-3 py-1 text-xs text-warning">
-            {{ cuponsPendentes.length }} pendente{{ cuponsPendentes.length === 1 ? '' : 's' }}
+          <span class="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
+            {{ cuponsPagamento.length }} cupom{{ cuponsPagamento.length === 1 ? '' : 's' }}
           </span>
         </div>
         <input
@@ -182,17 +238,20 @@
       <div v-if="carregandoPendentes" class="rounded-2xl border border-border bg-bg-card py-10 text-center text-sm text-text-muted">
         Carregando...
       </div>
-      <div v-else-if="!cuponsPendentesFiltrados.length" class="rounded-2xl border border-dashed border-border bg-bg-card py-10 text-center text-sm text-text-muted">
-        Nenhum cupom pendente.
+      <div v-else-if="!cuponsPagamentoFiltrados.length" class="rounded-2xl border border-dashed border-border bg-bg-card py-10 text-center text-sm text-text-muted">
+        Nenhum cupom encontrado.
       </div>
       <div v-else class="grid gap-3">
         <div
-          v-for="cupom in cuponsPendentesFiltrados"
+          v-for="cupom in cuponsPagamentoFiltrados"
           :key="cupom.id"
           class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-bg-card p-4"
         >
           <div class="min-w-0">
-            <p class="font-bold text-text">{{ cupom.usuario?.nome ?? 'Usuario' }}</p>
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="font-bold text-text">{{ cupom.usuario?.nome ?? 'Usuario' }}</p>
+              <span class="rounded-full px-2 py-0.5 text-[10px] font-medium" :class="classeStatus(cupom.status)">{{ rotuloStatus(cupom.status) }}</span>
+            </div>
             <p class="text-xs text-text-muted">{{ cupom.usuario?.email }} · {{ cupom.usuario?.telefone ?? 'sem telefone' }}</p>
             <p class="mt-0.5 text-xs text-text-muted">
               Cupom <span class="font-mono text-text-secondary">{{ cupom.codigo }}</span> · {{ formatarValorCupom(cupom.pedido_checkout?.valor) }}
@@ -200,11 +259,12 @@
           </div>
           <button
             type="button"
-            class="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-bg transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+            class="shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+            :class="cupom.status === 'ativo' ? 'border border-danger/40 text-danger hover:bg-danger/10' : 'bg-primary text-bg hover:bg-primary-hover'"
             :disabled="marcandoId === cupom.id"
-            @click="marcarCupomPago(cupom.id)"
+            @click="alternarPagamento(cupom)"
           >
-            {{ marcandoId === cupom.id ? 'Marcando...' : 'Marcar como pago' }}
+            {{ marcandoId === cupom.id ? 'Salvando...' : (cupom.status === 'ativo' ? 'Marcar como nao pago' : 'Marcar como pago') }}
           </button>
         </div>
       </div>
@@ -226,7 +286,11 @@ const pontosRegras = ref<Record<number, string>>({})
 const resultadosJogos = ref<Record<number, { placar_mandante: string; placar_visitante: string; selecao_classificada_id: string }>>({})
 const salvandoJogoId = ref<number | null>(null)
 const salvandoRegraId = ref<number | null>(null)
+const excluindoRegraId = ref<number | null>(null)
+const adicionandoRegra = ref(false)
 const salvandoResultadoTorneio = ref(false)
+const chavesDisponiveis = ref<{ chave: string; label: string }[]>([])
+const novaRegra = ref({ chave: '', fase_id: '', nome: '', descricao: '', pontos: '0' })
 
 const tabs = [
   { id: 'jogos' as const, nome: 'Resultados dos Jogos' },
@@ -235,7 +299,7 @@ const tabs = [
   { id: 'pagamentos' as const, nome: 'Pagamentos' },
 ]
 
-type CupomPendente = {
+type CupomPagamento = {
   id: number
   codigo: string
   status: string
@@ -243,19 +307,31 @@ type CupomPendente = {
   pedido_checkout: { id: number; valor: string; status: string } | null
 }
 
-const cuponsPendentes = ref<CupomPendente[]>([])
+const cuponsPagamento = ref<CupomPagamento[]>([])
 const carregandoPendentes = ref(false)
 const buscaPagamento = ref('')
 const marcandoId = ref<number | null>(null)
 
-const cuponsPendentesFiltrados = computed(() => {
+const cuponsPagamentoFiltrados = computed(() => {
   const termo = buscaPagamento.value.trim().toLowerCase()
-  if (!termo) return cuponsPendentes.value
-  return cuponsPendentes.value.filter((cupom) =>
+  if (!termo) return cuponsPagamento.value
+  return cuponsPagamento.value.filter((cupom) =>
     [cupom.codigo, cupom.usuario?.nome, cupom.usuario?.email, cupom.usuario?.telefone]
       .some((valor) => (valor ?? '').toLowerCase().includes(termo)),
   )
 })
+
+function rotuloStatus(status: string) {
+  if (status === 'ativo') return 'Pago'
+  if (status === 'aguardando_pagamento') return 'Aguardando'
+  return status
+}
+
+function classeStatus(status: string) {
+  if (status === 'ativo') return 'bg-primary/15 text-primary'
+  if (status === 'aguardando_pagamento') return 'bg-warning/15 text-warning'
+  return 'bg-bg-input text-text-muted'
+}
 
 function formatarValorCupom(valor?: string | null) {
   const numero = Number(valor)
@@ -264,39 +340,51 @@ function formatarValorCupom(valor?: string | null) {
     : 'R$ --'
 }
 
-async function carregarPendentes() {
+async function carregarPagamentos() {
   carregandoPendentes.value = true
   try {
-    const resposta = await requisicaoApi<{ cupons: CupomPendente[] }>('/admin/cupons-pendentes')
-    cuponsPendentes.value = resposta.cupons
+    const resposta = await requisicaoApi<{ cupons: CupomPagamento[] }>('/admin/pagamentos')
+    cuponsPagamento.value = resposta.cupons
   } catch (error) {
-    erro.value = error instanceof Error ? error.message : 'Falha ao carregar pendentes.'
+    erro.value = error instanceof Error ? error.message : 'Falha ao carregar pagamentos.'
   } finally {
     carregandoPendentes.value = false
   }
 }
 
-async function marcarCupomPago(cupomId: number) {
-  marcandoId.value = cupomId
+async function alternarPagamento(cupom: CupomPagamento) {
+  marcandoId.value = cupom.id
   mensagem.value = ''
   erro.value = ''
+  const marcarPago = cupom.status !== 'ativo'
+  const rota = marcarPago ? 'marcar-pago' : 'marcar-nao-pago'
   try {
-    await requisicaoApi(`/admin/cupons/${cupomId}/marcar-pago`, { metodo: 'POST', corpo: {} })
-    cuponsPendentes.value = cuponsPendentes.value.filter((cupom) => cupom.id !== cupomId)
-    mensagem.value = 'Cupom marcado como pago.'
+    const resposta = await requisicaoApi<{ cupom: CupomPagamento }>(`/admin/cupons/${cupom.id}/${rota}`, { metodo: 'POST', corpo: {} })
+    const indice = cuponsPagamento.value.findIndex((item) => item.id === cupom.id)
+    if (indice !== -1) cuponsPagamento.value[indice] = resposta.cupom
+    mensagem.value = marcarPago ? 'Cupom marcado como pago.' : 'Cupom revertido para aguardando.'
   } catch (error) {
-    erro.value = error instanceof Error ? error.message : 'Falha ao marcar como pago.'
+    erro.value = error instanceof Error ? error.message : 'Falha ao atualizar pagamento.'
   } finally {
     marcandoId.value = null
   }
 }
 
 watch(tabAtiva, (tab) => {
-  if (tab === 'pagamentos') void carregarPendentes()
+  if (tab === 'pagamentos') void carregarPagamentos()
 })
 
 const selecoes = computed(() => torneio.value?.grupos.flatMap((g) => g.selecoes) ?? [])
-const regrasPontuacaoVisiveis = computed(() => torneio.value?.regras_pontuacao.filter((regra) => regra.chave !== 'artilheiro') ?? [])
+const regrasOrdenadas = computed(() =>
+  [...(torneio.value?.regras_pontuacao ?? [])].sort((a, b) =>
+    a.chave === b.chave ? (a.fase_id ?? 0) - (b.fase_id ?? 0) : a.chave.localeCompare(b.chave),
+  ),
+)
+
+function nomeFase(faseId: number | null) {
+  if (faseId === null) return 'Global'
+  return torneio.value?.fases.find((f) => f.id === faseId)?.nome ?? 'Fase'
+}
 const fasesComJogos = computed(() => {
   if (!torneio.value) return []
   return torneio.value.fases
@@ -380,8 +468,9 @@ function preencherFormulario() {
 }
 
 async function carregarDados() {
-  const resposta = await requisicaoApi<{ torneio: Torneio }>('/admin/dados')
+  const resposta = await requisicaoApi<{ torneio: Torneio; chaves_disponiveis: { chave: string; label: string }[] }>('/admin/dados')
   torneio.value = resposta.torneio
+  chavesDisponiveis.value = resposta.chaves_disponiveis ?? []
   preencherFormulario()
 }
 
@@ -407,6 +496,32 @@ async function salvarRegra(regraId: number) {
     })
   }, 'Regra salva. Recalculo enviado para processamento.')
   salvandoRegraId.value = null
+}
+
+async function adicionarRegra() {
+  adicionandoRegra.value = true
+  await executarAcao(async () => {
+    await requisicaoApi('/admin/regras-pontuacao', {
+      metodo: 'POST',
+      corpo: {
+        chave: novaRegra.value.chave,
+        fase_id: novaRegra.value.fase_id ? Number(novaRegra.value.fase_id) : null,
+        nome: novaRegra.value.nome,
+        descricao: novaRegra.value.descricao || null,
+        pontos: Number(novaRegra.value.pontos || 0),
+      },
+    })
+    novaRegra.value = { chave: '', fase_id: '', nome: '', descricao: '', pontos: '0' }
+  }, 'Regra adicionada. Recalculo enviado para processamento.')
+  adicionandoRegra.value = false
+}
+
+async function excluirRegra(regraId: number) {
+  excluindoRegraId.value = regraId
+  await executarAcao(async () => {
+    await requisicaoApi(`/admin/regras-pontuacao/${regraId}`, { metodo: 'DELETE' })
+  }, 'Regra excluida. Recalculo enviado para processamento.')
+  excluindoRegraId.value = null
 }
 
 async function salvarResultadoJogo(jogoId: number) {
