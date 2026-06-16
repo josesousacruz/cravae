@@ -40,7 +40,7 @@
         <!-- User info -->
         <div v-if="autenticacao.estaAutenticado" class="border-b border-border px-4 py-4">
           <div class="flex items-center gap-3">
-            <AvatarIniciais :nome="autenticacao.nome" />
+            <AvatarIniciais :nome="autenticacao.nome" :foto="autenticacao.fotoUrl" />
             <div class="min-w-0">
               <p class="truncate text-sm font-medium text-text">{{ autenticacao.nome }}</p>
               <p class="truncate text-xs text-text-muted">{{ autenticacao.email }}</p>

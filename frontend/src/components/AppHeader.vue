@@ -3,9 +3,7 @@
     <div class="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
       <!-- Logo -->
       <RouterLink to="/" class="flex items-center gap-2.5">
-        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-bold text-bg">
-          IW
-        </span>
+        <img src="/favicon.svg" alt="Inter World Cup" class="h-9 w-9" />
         <div>
           <p class="text-xs font-semibold uppercase tracking-widest text-primary">Inter World Cup</p>
           <p class="text-[11px] text-text-muted">Copa 2026</p>
@@ -45,7 +43,7 @@
               class="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-bg-card-hover"
               @click="dropdownAberto = !dropdownAberto"
             >
-              <AvatarIniciais :nome="autenticacao.nome" tamanho="sm" />
+              <AvatarIniciais :nome="autenticacao.nome" :foto="autenticacao.fotoUrl" tamanho="sm" />
               <span class="text-sm font-medium text-text">{{ autenticacao.nome }}</span>
               <svg class="h-4 w-4 text-text-muted transition-transform" :class="{ 'rotate-180': dropdownAberto }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
@@ -111,7 +109,7 @@
 
       <!-- Mobile right -->
       <div class="flex sm:hidden items-center gap-2">
-        <AvatarIniciais v-if="autenticacao.estaAutenticado" :nome="autenticacao.nome" tamanho="sm" />
+        <AvatarIniciais v-if="autenticacao.estaAutenticado" :nome="autenticacao.nome" :foto="autenticacao.fotoUrl" tamanho="sm" />
         <button
           type="button"
           class="rounded-lg p-2 text-text-secondary transition-colors hover:bg-bg-card-hover hover:text-text"
