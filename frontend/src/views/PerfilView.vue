@@ -8,6 +8,28 @@
       </p>
     </div>
 
+    <div class="mb-6 flex items-center gap-4 rounded-2xl border border-border bg-bg-card p-6">
+      <div class="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-primary/40">
+        <img v-if="autenticacao.fotoUrl" :src="autenticacao.fotoUrl" alt="Foto de perfil" class="h-full w-full object-cover" />
+        <div v-else class="flex h-full w-full items-center justify-center bg-bg-input text-2xl font-bold text-primary">
+          {{ iniciais }}
+        </div>
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-semibold text-text">Foto de perfil</p>
+        <p class="mt-0.5 text-xs text-text-muted">JPG, PNG ou WEBP, ate 4MB. Aparece no ranking.</p>
+        <button
+          type="button"
+          :disabled="enviandoFoto"
+          class="mt-2 inline-flex items-center justify-center rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-text-secondary transition-colors hover:bg-bg-card-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
+          @click="inputFoto?.click()"
+        >
+          {{ enviandoFoto ? 'Enviando...' : 'Trocar foto' }}
+        </button>
+        <input ref="inputFoto" type="file" accept="image/png,image/jpeg,image/webp" class="hidden" @change="aoSelecionarFoto" />
+      </div>
+    </div>
+
     <form class="rounded-2xl border border-border bg-bg-card p-6 sm:p-8" @submit.prevent="salvar">
       <div class="grid gap-4 sm:grid-cols-2">
         <label class="block sm:col-span-2">
@@ -59,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
 import { useToast } from '../composables/useToast'
@@ -72,6 +94,33 @@ const form = reactive({
   telefone: '',
   cpf_cnpj: '',
 })
+
+const inputFoto = ref<HTMLInputElement | null>(null)
+const enviandoFoto = ref(false)
+
+const iniciais = computed(() => {
+  const partes = (autenticacao.nome === 'Visitante' ? '' : autenticacao.nome).trim().split(/\s+/).filter(Boolean)
+  if (!partes.length) return '?'
+  if (partes.length === 1) return partes[0].substring(0, 2).toUpperCase()
+  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+})
+
+async function aoSelecionarFoto(evento: Event) {
+  const alvo = evento.target as HTMLInputElement
+  const arquivo = alvo.files?.[0]
+  if (!arquivo) return
+
+  enviandoFoto.value = true
+  try {
+    await autenticacao.atualizarFoto(arquivo)
+    mostrar('sucesso', 'Foto atualizada com sucesso.')
+  } catch (error) {
+    mostrar('erro', error instanceof Error ? error.message : 'Nao foi possivel atualizar a foto.')
+  } finally {
+    enviandoFoto.value = false
+    alvo.value = ''
+  }
+}
 
 function preencherFormulario() {
   form.nome = autenticacao.nome === 'Visitante' ? '' : autenticacao.nome

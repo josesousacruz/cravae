@@ -225,7 +225,7 @@ async function submeterEntrar() {
     emit('fechar')
     router.push({ name: 'painel' })
   } catch {
-    mostrar('erro', 'Email ou senha incorretos. Verifique seus dados e tente novamente.')
+    mostrar('erro', autenticacao.erro || 'Email ou senha incorretos. Verifique seus dados e tente novamente.')
   } finally {
     processando.value = false
   }

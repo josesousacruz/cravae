@@ -1,11 +1,12 @@
 <template>
   <div
     :class="[
-      'flex items-center justify-center rounded-full bg-primary text-bg font-bold',
+      'flex items-center justify-center overflow-hidden rounded-full bg-primary text-bg font-bold',
       tamanho === 'sm' ? 'h-8 w-8 text-xs' : 'h-9 w-9 text-sm',
     ]"
   >
-    {{ iniciais }}
+    <img v-if="foto" :src="foto" :alt="nome" class="h-full w-full object-cover" />
+    <span v-else>{{ iniciais }}</span>
   </div>
 </template>
 
@@ -15,8 +16,10 @@ import { computed } from 'vue'
 const props = withDefaults(defineProps<{
   nome: string
   tamanho?: 'sm' | 'md'
+  foto?: string | null
 }>(), {
   tamanho: 'md',
+  foto: null,
 })
 
 const iniciais = computed(() => {

@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { requisicaoApi } from '../services/api'
+import { requisicaoApi, uploadArquivo, urlAsset } from '../services/api'
 import type { PerfilUsuario, UsuarioAutenticado } from '../tipos'
 
 type RespostaAutenticacao = {
@@ -10,10 +10,12 @@ type RespostaAutenticacao = {
 
 export const usarAutenticacaoStore = defineStore('autenticacao', () => {
   const token = ref<string | null>(localStorage.getItem('token_acesso'))
+  const id = ref<number | null>(null)
   const nome = ref('Visitante')
   const email = ref('')
   const telefone = ref<string | null>(null)
   const cpfCnpj = ref<string | null>(null)
+  const fotoUrl = ref<string | null>(null)
   const perfil = ref<PerfilUsuario>('visitante')
   const carregando = ref(false)
   const erro = ref<string | null>(null)
@@ -22,10 +24,12 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
   const eAdministrador = computed(() => perfil.value === 'administrador')
 
   function aplicarUsuario(usuario: UsuarioAutenticado) {
+    id.value = usuario.id
     nome.value = usuario.nome
     email.value = usuario.email
     telefone.value = usuario.telefone ?? null
     cpfCnpj.value = usuario.cpf_cnpj ?? null
+    fotoUrl.value = urlAsset(usuario.foto_url)
     perfil.value = usuario.perfil
   }
 
@@ -126,6 +130,24 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
     }
   }
 
+  async function atualizarFoto(arquivo: File) {
+    carregando.value = true
+    erro.value = null
+
+    try {
+      const resposta = await uploadArquivo<{ usuario: UsuarioAutenticado }>('/usuario/foto', 'foto', arquivo, {
+        token: token.value,
+      })
+
+      aplicarUsuario(resposta.usuario)
+    } catch (error) {
+      erro.value = error instanceof Error ? error.message : 'Nao foi possivel atualizar a foto.'
+      throw error
+    } finally {
+      carregando.value = false
+    }
+  }
+
   async function sair() {
     if (token.value) {
       try {
@@ -141,18 +163,22 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
 
     definirToken(null)
     perfil.value = 'visitante'
+    id.value = null
     nome.value = 'Visitante'
     email.value = ''
     telefone.value = null
     cpfCnpj.value = null
+    fotoUrl.value = null
   }
 
   return {
     token,
+    id,
     nome,
     email,
     telefone,
     cpfCnpj,
+    fotoUrl,
     perfil,
     estaAutenticado,
     eAdministrador,
@@ -160,6 +186,7 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
     erro,
     carregarUsuario,
     atualizarPerfil,
+    atualizarFoto,
     cadastrar,
     entrar,
     sair,

@@ -35,6 +35,7 @@ Route::post('/webhooks/asaas/pagamentos', [WebhookAsaasController::class, 'pagam
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/usuario', [AutenticacaoController::class, 'usuarioAutenticado']);
     Route::put('/usuario', [AutenticacaoController::class, 'atualizarPerfil']);
+    Route::post('/usuario/foto', [AutenticacaoController::class, 'atualizarFoto'])->middleware('throttle:10,1');
     Route::post('/sair', [AutenticacaoController::class, 'sair']);
     Route::get('/cupons', [CupomController::class, 'index']);
     Route::get('/cupons/{cupom}', [CupomController::class, 'show']);

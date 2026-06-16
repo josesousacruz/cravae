@@ -6,6 +6,7 @@ export type UsuarioAutenticado = {
   email: string
   telefone: string | null
   cpf_cnpj: string | null
+  foto_url: string | null
   perfil: PerfilUsuario
 }
 
@@ -199,6 +200,21 @@ export type RankingItem = {
     codigo: string
     usuario: {
       nome: string
+      foto_url: string | null
     }
+  }
+}
+
+export type MinhaPosicao = {
+  posicao: number
+  item: RankingItem
+}
+
+export type RespostaRanking = {
+  ranking: RankingItem[]
+  minha_posicao: MinhaPosicao | null
+  partidas: {
+    finalizadas: number
+    total: number
   }
 }

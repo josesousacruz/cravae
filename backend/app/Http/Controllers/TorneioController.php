@@ -9,6 +9,7 @@ use App\Models\Jogo;
 use App\Models\PontuacaoCupom;
 use App\Models\Torneio;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class TorneioController extends Controller
 {
@@ -24,7 +25,7 @@ class TorneioController extends Controller
         $ranking = PontuacaoCupom::query()
             ->with([
                 'cupom:id,usuario_id,codigo',
-                'cupom.usuario:id,nome',
+                'cupom.usuario:id,nome,foto',
             ])
             ->whereHas('cupom.apostas', fn ($query) => $query->where('torneio_id', $torneio->id))
             ->orderByDesc('pontuacao_total')
@@ -33,8 +34,34 @@ class TorneioController extends Controller
             ->orderByDesc('quantidade_palpites_finais_corretos')
             ->get();
 
+        $usuarioId = Auth::guard('sanctum')->id();
+
+        $minhaPosicao = null;
+
+        if ($usuarioId) {
+            $indice = $ranking->search(fn ($item) => $item->cupom?->usuario_id === $usuarioId);
+
+            if ($indice !== false) {
+                $minhaPosicao = [
+                    'posicao' => $indice + 1,
+                    'item' => $ranking[$indice],
+                ];
+            }
+        }
+
+        $totalPartidas = Jogo::query()->where('torneio_id', $torneio->id)->count();
+        $partidasFinalizadas = Jogo::query()
+            ->where('torneio_id', $torneio->id)
+            ->whereHas('resultado', fn ($query) => $query->whereNotNull('placar_mandante')->whereNotNull('placar_visitante'))
+            ->count();
+
         return response()->json([
             'ranking' => $ranking,
+            'minha_posicao' => $minhaPosicao,
+            'partidas' => [
+                'finalizadas' => $partidasFinalizadas,
+                'total' => $totalPartidas,
+            ],
         ]);
     }
 
