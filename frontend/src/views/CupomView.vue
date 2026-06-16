@@ -527,100 +527,7 @@
 
       <!-- ═══════ Tab Ranking ═══════ -->
       <section v-if="tabAtiva === 'ranking'">
-        <div v-if="carregandoRanking" class="space-y-4">
-          <div class="h-48 animate-pulse rounded-3xl border border-border bg-bg-card" />
-          <div class="rounded-3xl border border-border bg-bg-card p-4">
-            <div v-for="n in 4" :key="n" class="mb-3 h-16 animate-pulse rounded-2xl bg-bg-input last:mb-0" />
-          </div>
-        </div>
-        <div v-else-if="!ranking.length" class="rounded-2xl border border-border bg-bg-card py-8 text-center">
-          <p class="text-text-muted">Nenhum resultado disponivel ainda.</p>
-        </div>
-        <div v-else class="space-y-4">
-          <section class="overflow-hidden rounded-[28px] border border-primary/20 bg-[radial-gradient(circle_at_top,#123225,transparent_45%),linear-gradient(180deg,#111513,#0a0c0b)] p-5 sm:p-6">
-            <div class="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <span class="inline-flex rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Podio</span>
-                <h2 class="mt-3 text-xl font-bold">Top 3 do bolao</h2>
-                <p class="mt-1 text-sm text-text-secondary">Seu cupom continua destacado na classificacao geral logo abaixo.</p>
-              </div>
-              <span class="rounded-full border border-border bg-bg-card/60 px-3 py-1 text-xs text-text-muted">
-                {{ ranking.length }} participante{{ ranking.length === 1 ? '' : 's' }}
-              </span>
-            </div>
-
-            <div class="mt-6 grid gap-4 lg:grid-cols-[1fr_1.15fr_1fr] lg:items-end">
-              <article
-                v-for="item in podioRankingExibicao"
-                :key="item.ranking.id"
-                class="rounded-3xl border p-5 text-center"
-                :class="item.posicao === 1 ? 'border-primary/40 bg-primary/10 lg:-translate-y-3' : item.posicao === 2 ? 'border-silver/40 bg-silver/10' : 'border-bronze/40 bg-bronze/10'"
-              >
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold" :class="item.posicao === 1 ? 'border-primary/40 text-primary' : item.posicao === 2 ? 'border-silver/40 text-silver' : 'border-bronze/40 text-bronze'">
-                  {{ item.posicao }}
-                </span>
-                <div class="mx-auto mt-4 flex h-20 w-20 items-center justify-center rounded-full border border-current/40 text-2xl font-bold" :class="item.posicao === 1 ? 'text-primary' : item.posicao === 2 ? 'text-silver' : 'text-bronze'">
-                  {{ iniciaisRanking(item.ranking.cupom.usuario.nome) }}
-                </div>
-                <p class="mt-4 text-lg font-bold">{{ item.ranking.cupom.usuario.nome }}</p>
-                <p class="mt-1 text-xs uppercase tracking-[0.18em] text-text-muted">{{ item.rotulo }}</p>
-                <p class="mt-4 text-4xl font-black text-primary">{{ item.ranking.pontuacao_total }}</p>
-                <p class="text-xs text-text-muted">pontos</p>
-              </article>
-            </div>
-          </section>
-
-          <section class="rounded-3xl border border-border bg-bg-card p-4 sm:p-5">
-            <div class="mb-4">
-              <h3 class="text-lg font-bold">Classificacao geral</h3>
-              <p class="text-sm text-text-secondary">Todos os cupons em ordem de pontuacao.</p>
-            </div>
-            <div class="space-y-3">
-              <div
-                v-for="(item, i) in ranking"
-                :key="item.id"
-                class="overflow-hidden rounded-2xl border"
-                :class="item.cupom.id === cupom.id ? 'border-primary/40 bg-primary/10' : 'border-border bg-bg-input/60'"
-              >
-                <button type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left" @click="alternar(item.cupom.id)">
-                  <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold" :class="classePosicaoRanking(i)">
-                    {{ i + 1 }}
-                  </div>
-                  <div class="min-w-0 flex-1">
-                    <div class="flex flex-wrap items-center gap-2">
-                      <strong class="truncate text-sm">{{ item.cupom.usuario.nome }}</strong>
-                      <span v-if="item.cupom.id === cupom.id" class="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-bg">Voce</span>
-                    </div>
-                    <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
-                      <span>Cupom {{ item.cupom.codigo }}</span>
-                      <span>{{ item.quantidade_placares_exatos }} exatos</span>
-                      <span>{{ item.quantidade_classificados_corretos }} classificados</span>
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <strong class="block text-2xl font-black text-primary">{{ item.pontuacao_total }}</strong>
-                    <span class="text-xs text-text-muted">pts</span>
-                  </div>
-                  <svg class="h-5 w-5 shrink-0 text-text-muted transition-transform" :class="expandidoId === item.cupom.id ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
-                </button>
-
-                <div v-if="expandidoId === item.cupom.id" class="border-t border-border/70 px-4 py-3">
-                  <div v-if="carregandoId === item.cupom.id" class="py-2 text-center text-xs text-text-muted">Carregando pontuacoes...</div>
-                  <div v-else-if="!cache[item.cupom.id]?.length" class="py-2 text-center text-xs text-text-muted">Nenhuma pontuacao registrada ainda.</div>
-                  <div v-else class="space-y-2">
-                    <div v-for="evento in cache[item.cupom.id]" :key="evento.id" class="flex items-center justify-between gap-3 rounded-lg bg-bg-card px-3 py-2">
-                      <div class="min-w-0">
-                        <span class="block text-sm">{{ evento.descricao }}</span>
-                        <span v-if="descricaoJogo(evento)" class="mt-0.5 block truncate text-xs text-text-muted">{{ descricaoJogo(evento) }}</span>
-                      </div>
-                      <span class="shrink-0 text-sm font-bold text-primary">+{{ evento.pontos }} pts</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
+        <RankingConteudo :cupom-destaque="cupom.id" />
       </section>
 
       <!-- ═══════ Tab Meus Resultados ═══════ -->
@@ -672,12 +579,13 @@ import { useToast } from '../composables/useToast'
 import type { Aposta, BracketJogoCupom, Cupom, RankingItem, ResumoBracketCupom, Selecao, Torneio } from '../tipos'
 import tacaCopaAsset from '../assets/taca-copa-transparente.png'
 import ModalPixPagamento from '../components/ModalPixPagamento.vue'
+import RankingConteudo from '../components/RankingConteudo.vue'
 import { useEventosCupom } from '../composables/useEventosCupom'
 
 const rota = useRoute()
 const torneioStore = usarTorneioStore()
 const { mostrar } = useToast()
-const { expandidoId, cache, carregandoId, alternar, descricaoJogo } = useEventosCupom()
+const { descricaoJogo } = useEventosCupom()
 
 const torneio = ref<Torneio | null>(null)
 const cupom = ref<Cupom | null>(null)
@@ -1099,11 +1007,6 @@ const resumoBracket = computed(() => {
   }
 })
 const podioRanking = computed(() => ranking.value.slice(0, 3))
-const podioRankingExibicao = computed(() => [
-  podioRanking.value[1] ? { ranking: podioRanking.value[1], posicao: 2, rotulo: 'Segundo lugar' } : null,
-  podioRanking.value[0] ? { ranking: podioRanking.value[0], posicao: 1, rotulo: 'Primeiro lugar' } : null,
-  podioRanking.value[2] ? { ranking: podioRanking.value[2], posicao: 3, rotulo: 'Terceiro lugar' } : null,
-].filter((item): item is { ranking: RankingItem; posicao: number; rotulo: string } => Boolean(item)))
 
 function classePosicaoRanking(indice: number) {
   if (indice === 0) return 'border-primary/40 bg-primary/10 text-primary'
