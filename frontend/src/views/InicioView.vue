@@ -1,14 +1,14 @@
 <template>
   <div class="min-h-screen bg-[#070909] text-white">
-    <header class="sticky top-0 z-50 border-b border-emerald-400/15 bg-[#070909]/90 backdrop-blur-xl">
+    <header class="sticky top-0 z-50 border-b border-primary/15 bg-[#070909]/90 backdrop-blur-xl">
       <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:h-20 sm:px-6 lg:px-8">
         <RouterLink to="/" class="flex items-center gap-3">
-          <div class="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-400/30 bg-emerald-400/10 text-sm font-black tracking-[0.2em] text-emerald-300">
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-sm font-black tracking-[0.2em] text-primary">
             IW
           </div>
           <div>
             <p class="text-sm font-bold tracking-[0.18em] text-white">INTER WORLD CUP</p>
-            <p class="text-[11px] uppercase tracking-[0.3em] text-emerald-300/80">Bolão 2026</p>
+            <p class="text-[11px] uppercase tracking-[0.3em] text-primary/80">Bolão 2026</p>
           </div>
         </RouterLink>
 
@@ -23,7 +23,7 @@
           <RouterLink
             v-if="autenticacao.estaAutenticado"
             to="/painel"
-            class="hidden rounded-full border border-emerald-400/30 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:border-emerald-300 hover:text-white sm:inline-flex"
+            class="hidden rounded-full border border-primary/30 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:text-white sm:inline-flex"
           >
             Meus Cupons
           </RouterLink>
@@ -37,7 +37,7 @@
             </button>
             <button
               type="button"
-              class="rounded-full bg-emerald-400 px-4 py-2 text-sm font-bold text-[#04110c] shadow-[0_0_24px_rgba(52,211,153,0.28)] transition hover:scale-[1.02] hover:bg-emerald-300"
+              class="rounded-full bg-primary px-4 py-2 text-sm font-bold text-[#04110c] shadow-[0_0_24px_rgba(16,185,129,0.28)] transition hover:scale-[1.02] hover:bg-primary"
               @click="$emit('abrirModalAuth', autenticacao.estaAutenticado ? 'entrar' : 'cadastro')"
             >
               {{ autenticacao.estaAutenticado ? 'Abrir painel' : 'Criar conta' }}
@@ -48,17 +48,18 @@
     </header>
 
     <section class="relative overflow-hidden border-b border-white/5">
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(52,211,153,0.08),transparent_28%),radial-gradient(circle_at_65%_25%,rgba(16,185,129,0.18),transparent_30%),radial-gradient(circle_at_50%_100%,rgba(16,185,129,0.08),transparent_40%)]" />
-      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-0 right-4 hidden w-40 opacity-60 drop-shadow-[0_0_55px_rgba(52,211,153,0.4)] xl:block">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(16,185,129,0.08),transparent_28%),radial-gradient(circle_at_65%_25%,rgba(16,185,129,0.18),transparent_30%),radial-gradient(circle_at_50%_100%,rgba(16,185,129,0.08),transparent_40%)]" />
+      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-0 right-4 hidden w-40 opacity-70 drop-shadow-[0_0_60px_rgba(251,191,36,0.45)] xl:block">
 
       <div class="relative mx-auto grid max-w-7xl gap-16 px-4 py-14 sm:px-6 lg:grid-cols-[1.02fr_1.1fr] lg:px-8 lg:py-24">
         <div class="max-w-xl">
-          <div class="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-emerald-300">
+          <div class="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-gold">
+            <span class="h-1.5 w-1.5 rounded-full bg-gold" />
             Copa do Mundo 2026
           </div>
           <h1 class="mt-8 text-5xl font-black leading-[0.95] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
             Compre seu cupom,
-            <span class="block text-emerald-400">faça seus palpites</span>
+            <span class="block text-primary">faça seus palpites</span>
             <span class="block">e dispute o prêmio</span>
           </h1>
           <p class="mt-6 max-w-lg text-base leading-8 text-zinc-300 sm:text-xl">
@@ -69,7 +70,7 @@
             <RouterLink
               v-if="autenticacao.estaAutenticado"
               to="/painel"
-              class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-7 py-4 text-sm font-black text-[#04110c] shadow-[0_0_32px_rgba(52,211,153,0.32)] transition hover:scale-[1.02] hover:bg-emerald-300"
+              class="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-7 py-4 text-sm font-black text-[#04110c] shadow-[0_0_32px_rgba(16,185,129,0.32)] transition hover:scale-[1.02] hover:bg-primary"
             >
               Abrir meus cupons
               <span aria-hidden="true">-></span>
@@ -77,7 +78,7 @@
             <template v-else>
               <button
                 type="button"
-                class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-7 py-4 text-sm font-black text-[#04110c] shadow-[0_0_32px_rgba(52,211,153,0.32)] transition hover:scale-[1.02] hover:bg-emerald-300"
+                class="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-7 py-4 text-sm font-black text-[#04110c] shadow-[0_0_32px_rgba(16,185,129,0.32)] transition hover:scale-[1.02] hover:bg-primary"
                 @click="$emit('abrirModalAuth', 'cadastro')"
               >
                 Criar conta e entrar
@@ -85,7 +86,7 @@
               </button>
               <button
                 type="button"
-                class="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-400/40 bg-white/[0.02] px-7 py-4 text-sm font-bold text-white transition hover:border-emerald-300 hover:bg-emerald-400/10"
+                class="inline-flex items-center justify-center gap-2 rounded-full border border-primary/40 bg-white/[0.02] px-7 py-4 text-sm font-bold text-white transition hover:border-primary hover:bg-primary/10"
                 @click="$emit('abrirModalAuth', 'entrar')"
               >
                 Já tenho conta
@@ -94,7 +95,7 @@
           </div>
 
           <p class="mt-8 flex items-center gap-2 text-sm text-zinc-400">
-            <span class="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.8)]" />
+            <span class="h-2 w-2 rounded-full bg-primary shadow-[0_0_16px_rgba(16,185,129,0.8)]" />
             {{ provaSocial }}
           </p>
 
@@ -104,15 +105,15 @@
               :key="item.label"
               class="rounded-[1.75rem] border border-white/8 bg-white/[0.03] px-4 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
             >
-              <p class="text-[11px] uppercase tracking-[0.24em] text-emerald-300">{{ item.label }}</p>
-              <p class="mt-3 text-3xl font-black tracking-[-0.04em] text-white">{{ item.value }}</p>
+              <p class="text-[11px] uppercase tracking-[0.24em] text-primary">{{ item.label }}</p>
+              <p class="mt-3 text-3xl font-black tracking-[-0.04em] text-gold">{{ item.value }}</p>
               <p class="mt-1 text-xs text-zinc-500">{{ item.caption }}</p>
             </article>
           </div>
         </div>
 
         <div class="relative min-h-[24rem] lg:min-h-[40rem]">
-          <div class="absolute inset-x-10 top-16 h-72 rounded-full bg-emerald-400/20 blur-[110px] sm:h-96" />
+          <div class="absolute inset-x-10 top-16 h-72 rounded-full bg-primary/20 blur-[110px] sm:h-96" />
           <img :src="heroLeftAsset" alt="Tela lateral esquerda do app" class="absolute left-[2%] top-[18%] hidden w-[28%] rotate-[-16deg] opacity-70 drop-shadow-[0_24px_60px_rgba(7,12,10,0.6)] md:block">
           <img :src="heroCenterAsset" alt="Tela principal do app" class="relative z-10 mx-auto w-[54%] min-w-[18rem] drop-shadow-[0_32px_80px_rgba(0,0,0,0.65)] sm:w-[49%]">
           <img :src="heroRightAsset" alt="Tela lateral direita do app" class="absolute right-[1%] top-[26%] hidden w-[29%] rotate-[17deg] opacity-85 drop-shadow-[0_24px_60px_rgba(7,12,10,0.6)] md:block">
@@ -123,7 +124,7 @@
     <section id="como-funciona" class="relative overflow-hidden border-b border-white/5 py-20 sm:py-24">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Passo a passo</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Passo a passo</p>
           <h2 class="mt-4 text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">
             Como funciona o bolão
           </h2>
@@ -136,13 +137,13 @@
           <article
             v-for="passo in passos"
             :key="passo.titulo"
-            class="group rounded-[2rem] border border-white/7 bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30"
+            class="group rounded-[2rem] border border-white/7 bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition duration-300 hover:-translate-y-1 hover:border-primary/30"
           >
-            <div class="rounded-[1.6rem] border border-emerald-400/10 bg-[#0d1311] p-3">
+            <div class="rounded-[1.6rem] border border-primary/10 bg-[#0d1311] p-3">
               <img :src="passo.imagem" :alt="passo.titulo" class="mx-auto w-full rounded-[1.2rem]">
             </div>
             <div class="mt-5 flex items-center gap-3">
-              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-400/15 text-xs font-black text-emerald-300">
+              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gold/15 text-xs font-black text-gold">
                 {{ passo.numero }}
               </div>
               <h3 class="text-base font-bold text-white">{{ passo.titulo }}</h3>
@@ -154,11 +155,11 @@
     </section>
 
     <section id="vantagens" class="relative overflow-hidden border-b border-white/5 py-20 sm:py-24">
-      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-6 right-2 hidden w-44 opacity-45 drop-shadow-[0_0_50px_rgba(52,211,153,0.32)] xl:block">
-      <div class="absolute left-[18%] top-16 h-64 w-64 rounded-full bg-emerald-400/8 blur-[120px]" />
+      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-6 right-2 hidden w-44 opacity-55 drop-shadow-[0_0_55px_rgba(251,191,36,0.38)] xl:block">
+      <div class="absolute left-[18%] top-16 h-64 w-64 rounded-full bg-primary/8 blur-[120px]" />
       <div class="relative mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
         <div class="max-w-2xl">
-          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Vantagens</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Vantagens</p>
           <h2 class="mt-4 text-4xl font-black leading-tight tracking-[-0.04em] text-white sm:text-6xl">
             O jeito mais claro de fazer bolão
           </h2>
@@ -168,7 +169,7 @@
 
           <ul class="mt-8 space-y-4">
             <li v-for="item in beneficios" :key="item" class="flex items-start gap-3 text-base leading-7 text-zinc-200">
-              <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-400/10 text-xs font-black text-emerald-300">
+              <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-black text-primary">
                 ✓
               </span>
               <span>{{ item }}</span>
@@ -181,7 +182,7 @@
         </div>
 
         <div class="relative flex justify-center lg:justify-end">
-          <div class="absolute h-72 w-72 rounded-full bg-emerald-400/15 blur-[120px]" />
+          <div class="absolute h-72 w-72 rounded-full bg-primary/15 blur-[120px]" />
           <img :src="featurePhoneAsset" alt="Tela inclinada do produto" class="relative z-10 w-[20rem] max-w-full drop-shadow-[0_32px_90px_rgba(0,0,0,0.7)] sm:w-[24rem]">
         </div>
       </div>
@@ -191,7 +192,7 @@
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div class="max-w-2xl">
-            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Pontuação</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Pontuação</p>
             <h2 class="mt-4 text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">
             Defina o nível da disputa
             </h2>
@@ -201,19 +202,19 @@
 
             <ul class="mt-8 space-y-4">
               <li class="flex items-start gap-3 text-base leading-7 text-zinc-200">
-                <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/25 bg-emerald-400/10 text-[11px] font-black text-emerald-300">✓</span>
+                <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-[11px] font-black text-primary">✓</span>
                 <span>Regras configuráveis por torneio para refletir o modelo de disputa desejado.</span>
               </li>
               <li class="flex items-start gap-3 text-base leading-7 text-zinc-200">
-                <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/25 bg-emerald-400/10 text-[11px] font-black text-emerald-300">✓</span>
+                <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-[11px] font-black text-primary">✓</span>
                 <span>Eventos de pontuação por cupom para auditar de onde veio cada acerto.</span>
               </li>
               <li class="flex items-start gap-3 text-base leading-7 text-zinc-200">
-                <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/25 bg-emerald-400/10 text-[11px] font-black text-emerald-300">✓</span>
+                <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-[11px] font-black text-primary">✓</span>
                 <span>Ranking consolidado com desempate por desempenho, sem depender de leitura manual.</span>
               </li>
               <li class="flex items-start gap-3 text-base leading-7 text-zinc-200">
-                <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/25 bg-emerald-400/10 text-[11px] font-black text-emerald-300">✓</span>
+                <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-[11px] font-black text-primary">✓</span>
                 <span>Recálculo automático a cada resultado oficial lançado no painel.</span>
               </li>
             </ul>
@@ -225,10 +226,10 @@
               :key="regra.id"
               class="rounded-[1.8rem] border border-white/8 bg-white/[0.03] p-6"
             >
-              <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">Regra ativa</p>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">Regra ativa</p>
               <h3 class="mt-4 text-lg font-bold text-white">{{ regra.nome }}</h3>
               <p class="mt-3 text-sm leading-6 text-zinc-400">{{ regra.descricao || 'Pontuação configurada para o torneio atual.' }}</p>
-              <p class="mt-5 text-3xl font-black tracking-[-0.04em] text-white">+{{ regra.pontos }}</p>
+              <p class="mt-5 text-3xl font-black tracking-[-0.04em] text-gold">+{{ regra.pontos }}</p>
             </article>
           </div>
         </div>
@@ -238,7 +239,7 @@
     <section class="border-b border-white/5 py-20 sm:py-24">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Perfis de uso</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Perfis de uso</p>
           <h2 class="mt-4 text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">
             O sistema atende quem joga e quem administra
           </h2>
@@ -250,12 +251,12 @@
             :key="perfil.nome"
             class="rounded-[2rem] border border-white/7 bg-white/[0.03] p-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
           >
-            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">{{ perfil.badge }}</p>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">{{ perfil.badge }}</p>
             <h3 class="mt-4 text-2xl font-black text-white">{{ perfil.nome }}</h3>
             <p class="mt-4 text-sm leading-7 text-zinc-400">{{ perfil.descricao }}</p>
             <ul class="mt-6 space-y-3">
               <li v-for="item in perfil.itens" :key="item" class="flex items-start gap-3 text-sm leading-6 text-zinc-200">
-                <span class="mt-1 text-emerald-300">•</span>
+                <span class="mt-1 text-primary">•</span>
                 <span>{{ item }}</span>
               </li>
             </ul>
@@ -267,7 +268,7 @@
     <section class="border-b border-white/5 py-20 sm:py-24">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Cobertura</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Cobertura</p>
           <h2 class="mt-4 text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">
             Base pronta da Copa 2026
           </h2>
@@ -282,7 +283,7 @@
             :key="selecao.id"
             class="rounded-[1.6rem] border border-white/8 bg-white/[0.03] px-4 py-5 text-center"
           >
-            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-400/10 text-base font-black text-emerald-300">
+            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-base font-black text-primary">
               {{ selecao.sigla }}
             </div>
             <p class="mt-4 text-sm font-bold text-white">{{ selecao.nome }}</p>
@@ -294,10 +295,10 @@
     <section id="faq" class="border-b border-white/5 py-20 sm:py-24">
       <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">FAQ</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-primary">FAQ</p>
           <h2 class="mt-4 text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">
             Perguntas frequentes sobre o
-            <span class="block text-emerald-400">Inter World Cup</span>
+            <span class="block text-primary">Inter World Cup</span>
           </h2>
         </div>
 
@@ -327,21 +328,21 @@
           <RouterLink
             v-if="autenticacao.estaAutenticado"
             to="/painel"
-            class="inline-flex items-center justify-center rounded-full bg-emerald-400 px-7 py-3 text-sm font-black text-[#04110c] transition hover:bg-emerald-300"
+            class="inline-flex items-center justify-center rounded-full bg-primary px-7 py-3 text-sm font-black text-[#04110c] transition hover:bg-primary"
           >
             Ir para meu painel
           </RouterLink>
           <template v-else>
             <button
               type="button"
-              class="inline-flex items-center justify-center rounded-full bg-emerald-400 px-7 py-3 text-sm font-black text-[#04110c] transition hover:bg-emerald-300"
+              class="inline-flex items-center justify-center rounded-full bg-primary px-7 py-3 text-sm font-black text-[#04110c] transition hover:bg-primary"
               @click="$emit('abrirModalAuth', 'cadastro')"
             >
               Criar minha conta
             </button>
             <button
               type="button"
-              class="inline-flex items-center justify-center rounded-full border border-white/10 px-7 py-3 text-sm font-semibold text-zinc-200 transition hover:border-emerald-400/30 hover:text-white"
+              class="inline-flex items-center justify-center rounded-full border border-white/10 px-7 py-3 text-sm font-semibold text-zinc-200 transition hover:border-primary/30 hover:text-white"
               @click="$emit('abrirModalAuth', 'entrar')"
             >
               Ja tenho conta
@@ -356,12 +357,11 @@
       <div class="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] lg:px-8">
         <div>
           <div class="flex items-center gap-3">
-            <div class="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-400/30 bg-emerald-400/10 text-sm font-black tracking-[0.2em] text-emerald-300">
-              IW
-            </div>
+            <img src="/favicon.svg" alt="Inter World Cup" class="h-11 w-11 rounded-2xl shadow-[0_0_24px_rgba(16,185,129,0.18)]">
+
             <div>
               <p class="text-sm font-bold tracking-[0.18em] text-white">INTER WORLD CUP</p>
-              <p class="text-[11px] uppercase tracking-[0.3em] text-emerald-300/80">Bolão 2026</p>
+              <p class="text-[11px] uppercase tracking-[0.3em] text-primary/80">Bolão 2026</p>
             </div>
           </div>
           <p class="mt-6 max-w-sm text-sm leading-7 text-zinc-500">
@@ -395,14 +395,14 @@
             <RouterLink
               v-if="autenticacao.estaAutenticado"
               to="/painel"
-              class="inline-flex rounded-full border border-emerald-400/25 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:border-emerald-300 hover:text-white"
+              class="inline-flex rounded-full border border-primary/25 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:text-white"
             >
               Abrir painel
             </RouterLink>
             <template v-else>
               <button
                 type="button"
-                class="inline-flex rounded-full bg-emerald-400 px-4 py-2 text-sm font-black text-[#04110c] transition hover:bg-emerald-300"
+                class="inline-flex rounded-full bg-primary px-4 py-2 text-sm font-black text-[#04110c] transition hover:bg-primary"
                 @click="$emit('abrirModalAuth', 'cadastro')"
               >
                 Criar conta
