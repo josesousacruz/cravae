@@ -17,6 +17,7 @@ class Torneio extends Model
         'data_inicio',
         'data_fim',
         'valor_cupom',
+        'compras_abertas',
     ];
 
     protected function casts(): array
@@ -25,6 +26,7 @@ class Torneio extends Model
             'data_inicio' => 'datetime',
             'data_fim' => 'datetime',
             'valor_cupom' => 'decimal:2',
+            'compras_abertas' => 'boolean',
         ];
     }
 
