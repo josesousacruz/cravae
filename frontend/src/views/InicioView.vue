@@ -8,14 +8,14 @@
           </div>
           <div>
             <p class="text-sm font-bold tracking-[0.18em] text-white">INTER WORLD CUP</p>
-            <p class="text-[11px] uppercase tracking-[0.3em] text-emerald-300/80">Bolao 2026</p>
+            <p class="text-[11px] uppercase tracking-[0.3em] text-emerald-300/80">Bolão 2026</p>
           </div>
         </RouterLink>
 
         <nav class="hidden items-center gap-7 text-sm text-zinc-300 lg:flex">
           <a href="#como-funciona" class="transition hover:text-white">Como funciona</a>
           <a href="#vantagens" class="transition hover:text-white">Vantagens</a>
-          <a href="#pontuacao" class="transition hover:text-white">Pontuacao</a>
+          <a href="#pontuacao" class="transition hover:text-white">Pontuação</a>
           <a href="#faq" class="transition hover:text-white">FAQ</a>
         </nav>
 
@@ -49,7 +49,7 @@
 
     <section class="relative overflow-hidden border-b border-white/5">
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(52,211,153,0.08),transparent_28%),radial-gradient(circle_at_65%_25%,rgba(16,185,129,0.18),transparent_30%),radial-gradient(circle_at_50%_100%,rgba(16,185,129,0.08),transparent_40%)]" />
-      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-8 right-[-6rem] hidden w-60 opacity-30 xl:block">
+      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-0 right-4 hidden w-40 opacity-60 drop-shadow-[0_0_55px_rgba(52,211,153,0.4)] xl:block">
 
       <div class="relative mx-auto grid max-w-7xl gap-16 px-4 py-14 sm:px-6 lg:grid-cols-[1.02fr_1.1fr] lg:px-8 lg:py-24">
         <div class="max-w-xl">
@@ -58,11 +58,11 @@
           </div>
           <h1 class="mt-8 text-5xl font-black leading-[0.95] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
             Compre seu cupom,
-            <span class="block text-emerald-400">faca seus palpites</span>
-            <span class="block">e dispute o premio</span>
+            <span class="block text-emerald-400">faça seus palpites</span>
+            <span class="block">e dispute o prêmio</span>
           </h1>
           <p class="mt-6 max-w-lg text-base leading-8 text-zinc-300 sm:text-xl">
-            Cada cupom e uma entrada independente no bolao da Copa 2026. Acompanhe sua pontuacao, suba no ranking e veja quem leva o premio no fim da competicao.
+            Cada cupom é uma entrada independente no bolão da Copa 2026. Acompanhe sua pontuação, suba no ranking e veja quem leva o prêmio no fim da competição.
           </p>
 
           <div class="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -88,7 +88,7 @@
                 class="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-400/40 bg-white/[0.02] px-7 py-4 text-sm font-bold text-white transition hover:border-emerald-300 hover:bg-emerald-400/10"
                 @click="$emit('abrirModalAuth', 'entrar')"
               >
-                Ja tenho conta
+                Já tenho conta
               </button>
             </template>
           </div>
@@ -125,10 +125,10 @@
         <div class="text-center">
           <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Passo a passo</p>
           <h2 class="mt-4 text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">
-            Como funciona o bolao
+            Como funciona o bolão
           </h2>
           <p class="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-400">
-            Um fluxo simples para comprar o cupom, registrar os palpites, somar pontos e disputar o premio ate o fim da competicao.
+            Um fluxo simples para comprar o cupom, registrar os palpites, somar pontos e disputar o prêmio até o fim da competição.
           </p>
         </div>
 
@@ -154,16 +154,16 @@
     </section>
 
     <section id="vantagens" class="relative overflow-hidden border-b border-white/5 py-20 sm:py-24">
-      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-10 right-[-7rem] hidden w-72 opacity-25 xl:block">
+      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-6 right-2 hidden w-44 opacity-45 drop-shadow-[0_0_50px_rgba(52,211,153,0.32)] xl:block">
       <div class="absolute left-[18%] top-16 h-64 w-64 rounded-full bg-emerald-400/8 blur-[120px]" />
       <div class="relative mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
         <div class="max-w-2xl">
           <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Vantagens</p>
           <h2 class="mt-4 text-4xl font-black leading-tight tracking-[-0.04em] text-white sm:text-6xl">
-            O jeito mais claro de fazer bolao
+            O jeito mais claro de fazer bolão
           </h2>
           <p class="mt-6 max-w-xl text-lg leading-8 text-zinc-400">
-            O produto concentra o essencial da Copa 2026 em um unico fluxo: cupons independentes, palpites completos, calculo auditavel e ranking atualizado conforme os resultados sao lancados.
+            O Inter World Cup concentra o essencial da Copa 2026 em um único fluxo: cupons independentes, palpites completos, cálculo auditável e ranking atualizado conforme os resultados são lançados.
           </p>
 
           <ul class="mt-8 space-y-4">
@@ -176,7 +176,7 @@
           </ul>
 
           <p class="mt-10 text-sm text-zinc-500">
-            Tudo pensado para reduzir confusao no palpite, na pontuacao e na operacao do torneio.
+            Tudo pensado para reduzir confusão no palpite, na pontuação e na operação do torneio.
           </p>
         </div>
 
@@ -191,26 +191,30 @@
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div class="max-w-2xl">
-            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Pontuacao</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Pontuação</p>
             <h2 class="mt-4 text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">
-            Defina o nivel da disputa
+            Defina o nível da disputa
             </h2>
             <p class="mt-5 text-lg leading-8 text-zinc-400">
-              O administrador define as regras do torneio e o sistema recalcula a pontuacao dos cupons quando os resultados entram. Assim, o participante entende com clareza por que subiu ou caiu no ranking.
+              O administrador define as regras do torneio e o sistema recalcula a pontuação dos cupons quando os resultados entram. Assim, o participante entende com clareza por que subiu ou caiu no ranking.
             </p>
 
             <ul class="mt-8 space-y-4">
               <li class="flex items-start gap-3 text-base leading-7 text-zinc-200">
                 <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/25 bg-emerald-400/10 text-[11px] font-black text-emerald-300">✓</span>
-                <span>Regras configuraveis por torneio para refletir o modelo de disputa desejado.</span>
+                <span>Regras configuráveis por torneio para refletir o modelo de disputa desejado.</span>
               </li>
               <li class="flex items-start gap-3 text-base leading-7 text-zinc-200">
                 <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/25 bg-emerald-400/10 text-[11px] font-black text-emerald-300">✓</span>
-                <span>Eventos de pontuacao por cupom para auditar de onde veio cada acerto.</span>
+                <span>Eventos de pontuação por cupom para auditar de onde veio cada acerto.</span>
               </li>
               <li class="flex items-start gap-3 text-base leading-7 text-zinc-200">
                 <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/25 bg-emerald-400/10 text-[11px] font-black text-emerald-300">✓</span>
                 <span>Ranking consolidado com desempate por desempenho, sem depender de leitura manual.</span>
+              </li>
+              <li class="flex items-start gap-3 text-base leading-7 text-zinc-200">
+                <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400/25 bg-emerald-400/10 text-[11px] font-black text-emerald-300">✓</span>
+                <span>Recálculo automático a cada resultado oficial lançado no painel.</span>
               </li>
             </ul>
           </div>
@@ -223,7 +227,7 @@
             >
               <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">Regra ativa</p>
               <h3 class="mt-4 text-lg font-bold text-white">{{ regra.nome }}</h3>
-              <p class="mt-3 text-sm leading-6 text-zinc-400">{{ regra.descricao || 'Pontuacao configurada para o torneio atual.' }}</p>
+              <p class="mt-3 text-sm leading-6 text-zinc-400">{{ regra.descricao || 'Pontuação configurada para o torneio atual.' }}</p>
               <p class="mt-5 text-3xl font-black tracking-[-0.04em] text-white">+{{ regra.pontos }}</p>
             </article>
           </div>
@@ -268,7 +272,7 @@
             Base pronta da Copa 2026
           </h2>
           <p class="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-400">
-            Como cada cupom depende do estado real da Copa, a base do torneio precisa estar consistente. Grupos, selecoes, fases e jogos sustentam a comparacao entre diferentes leituras.
+            Como cada cupom depende do estado real da Copa, a base do torneio precisa estar consistente. Grupos, seleções, fases e jogos sustentam a comparação entre diferentes leituras.
           </p>
         </div>
 
@@ -348,7 +352,7 @@
     </section>
 
     <footer class="relative overflow-hidden py-14">
-      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-0 right-[-6rem] hidden w-64 opacity-15 xl:block">
+      <img :src="trophyAsset" alt="" class="pointer-events-none absolute bottom-0 right-4 hidden w-28 opacity-30 xl:block">
       <div class="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] lg:px-8">
         <div>
           <div class="flex items-center gap-3">
@@ -357,20 +361,20 @@
             </div>
             <div>
               <p class="text-sm font-bold tracking-[0.18em] text-white">INTER WORLD CUP</p>
-              <p class="text-[11px] uppercase tracking-[0.3em] text-emerald-300/80">Bolao 2026</p>
+              <p class="text-[11px] uppercase tracking-[0.3em] text-emerald-300/80">Bolão 2026</p>
             </div>
           </div>
           <p class="mt-6 max-w-sm text-sm leading-7 text-zinc-500">
-            Plataforma focada em cupons independentes para que cada usuario possa testar multiplas estrategias, comparar desempenho e acompanhar o ranking da Copa com clareza.
+            Plataforma focada em cupons independentes para que cada participante possa testar múltiplas estratégias, comparar desempenho e acompanhar o ranking da Copa com clareza.
           </p>
         </div>
 
         <div>
-          <h3 class="text-sm font-bold uppercase tracking-[0.25em] text-zinc-300">Navegacao</h3>
+          <h3 class="text-sm font-bold uppercase tracking-[0.25em] text-zinc-300">Navegação</h3>
           <ul class="mt-5 space-y-3 text-sm text-zinc-500">
             <li><a href="#como-funciona" class="transition hover:text-white">Como funciona</a></li>
             <li><a href="#vantagens" class="transition hover:text-white">Vantagens</a></li>
-            <li><a href="#pontuacao" class="transition hover:text-white">Pontuacao</a></li>
+            <li><a href="#pontuacao" class="transition hover:text-white">Pontuação</a></li>
             <li><a href="#faq" class="transition hover:text-white">FAQ</a></li>
           </ul>
         </div>
@@ -427,7 +431,7 @@ import step02Asset from '../assets/step-02.webp'
 import step03Asset from '../assets/step-03.webp'
 import step04Asset from '../assets/step-04.webp'
 import step05Asset from '../assets/step-05.webp'
-import trophyAsset from '../assets/trophy.webp'
+import trophyAsset from '../assets/taca-copa-transparente.png'
 import { requisicaoApi } from '../services/api'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
 import type { RegraPontuacao, Selecao, Torneio } from '../tipos'
@@ -442,86 +446,86 @@ const regras = ref<RegraPontuacao[]>([])
 const passos = [
   {
     numero: '01',
-    titulo: 'Entrar na conta',
-    descricao: 'Acesse o sistema e va direto para o fluxo principal do bolao.',
+    titulo: 'Entre na conta',
+    descricao: 'Acesse o sistema e vá direto para o fluxo principal do bolão.',
     imagem: step01Asset,
   },
   {
     numero: '02',
-    titulo: 'Comprar cupom',
-    descricao: 'Cada cupom ativa uma entrada independente para disputar o premio.',
+    titulo: 'Compre seu cupom',
+    descricao: 'Cada cupom é uma entrada independente para disputar o prêmio.',
     imagem: step02Asset,
   },
   {
     numero: '03',
-    titulo: 'Registrar palpites',
-    descricao: 'Preencha seus palpites da fase de grupos e acompanhe o chaveamento ate a final.',
+    titulo: 'Registre seus palpites',
+    descricao: 'Palpite na fase de grupos e acompanhe quem palpitou junto com você.',
     imagem: step03Asset,
   },
   {
     numero: '04',
-    titulo: 'Somar pontos',
-    descricao: 'Com os resultados oficiais lancados, o sistema recalcula sua pontuacao.',
+    titulo: 'Some pontos',
+    descricao: 'Com os resultados oficiais lançados, o sistema recalcula sua pontuação evento a evento.',
     imagem: step04Asset,
   },
   {
     numero: '05',
-    titulo: 'Subir no ranking',
-    descricao: 'Acompanhe sua posicao e veja qual cupom esta mais perto de levar o premio.',
+    titulo: 'Suba no ranking',
+    descricao: 'Acompanhe sua posição e veja qual cupom está mais perto de levar o prêmio.',
     imagem: step05Asset,
   },
 ]
 
 const beneficios = [
-  'Cupons independentes para testar estrategias diferentes',
+  'Cupons independentes para testar estratégias diferentes',
   'Palpites completos para grupos e mata-mata com chaveamento visual',
-  'Regras de pontuacao visiveis e configuraveis no backend',
-  'Ranking por cupom com criterios de desempate consistentes',
-  'Estado do torneio vindo da API para manter o fluxo de palpites consistente',
-  'Painel admin para resultados, regras e operacao do torneio',
+  'Regras de pontuação visíveis e configuráveis por torneio',
+  'Ranking por cupom com critérios de desempate consistentes',
+  'Pontuação recalculada automaticamente a cada resultado lançado',
+  'Painel administrativo para resultados, regras e operação do torneio',
 ]
 
 const perfisUso = [
   {
     nome: 'Participante',
     badge: 'Joga',
-    descricao: 'Entra no sistema, escolhe seus cupons e acompanha a evolucao dos palpites ao longo da Copa.',
-    itens: ['Compra e ativa cupom', 'Salva palpites por fase', 'Consulta pontuacao e ranking'],
+    descricao: 'Entra no sistema, escolhe seus cupons e acompanha a evolução dos palpites ao longo da Copa.',
+    itens: ['Compra e ativa cupom via Pix', 'Salva palpites por fase', 'Consulta pontuação e ranking'],
   },
   {
-    nome: 'Competicao',
+    nome: 'Competição',
     badge: 'Disputa',
-    descricao: 'O torneio estrutura fases, jogos e regras para que o ranking tenha lastro em eventos auditaveis.',
-    itens: ['Grupos e fases cadastrados', 'Pontuacao por regra ativa', 'Ranking consolidado por cupom'],
+    descricao: 'O torneio estrutura fases, jogos e regras para que o ranking tenha lastro em eventos auditáveis.',
+    itens: ['Grupos e fases cadastrados', 'Pontuação por regra ativa', 'Ranking consolidado por cupom'],
   },
   {
     nome: 'Administrador',
     badge: 'Opera',
-    descricao: 'Lanca resultados, ajusta regras e garante que o sistema reflita o estado oficial do torneio.',
-    itens: ['Painel para jogos e regras', 'Recalculo da pontuacao', 'Fluxo operacional mais seguro'],
+    descricao: 'Lança resultados, ajusta regras e garante que o sistema reflita o estado oficial do torneio.',
+    itens: ['Painel para jogos e regras', 'Recálculo da pontuação', 'Fluxo operacional mais seguro'],
   },
 ]
 
 const faq = [
   {
     pergunta: 'Como funciona a compra de cupom?',
-    resposta: 'Cada cupom funciona como uma entrada independente. O usuario pode comprar mais de um e usar estrategias diferentes em cada conjunto de palpites.',
+    resposta: 'Cada cupom é uma entrada independente, paga via Pix. Você pode comprar mais de um e usar estratégias diferentes em cada conjunto de palpites.',
   },
   {
-    pergunta: 'Quais palpites entram no produto?',
-    resposta: 'O fluxo cobre fase de grupos, mata-mata progressivo por cupom e ranking consolidado com criterios de desempate.',
+    pergunta: 'Quais palpites entram no bolão?',
+    resposta: 'O fluxo cobre os placares da fase de grupos, o mata-mata progressivo por cupom com chaveamento visual e o ranking consolidado com critérios de desempate.',
   },
   {
     pergunta: 'O ranking atualiza automaticamente?',
-    resposta: 'Quando os resultados sao lancados e o recalculo e executado, o ranking reflete a pontuacao mais recente do torneio.',
+    resposta: 'Sim. Assim que os resultados são lançados, o recálculo roda e o ranking passa a refletir a pontuação mais recente do torneio.',
   },
   {
-    pergunta: 'Preciso instalar app para participar?',
-    resposta: 'Nao. A plataforma roda no navegador e foi pensada para funcionar bem no celular e no desktop.',
+    pergunta: 'Preciso instalar um aplicativo para participar?',
+    resposta: 'Não. A plataforma roda no navegador e foi pensada para funcionar bem no celular e no desktop.',
   },
   {
     pergunta: 'Quem administra os resultados?',
-    resposta: 'O administrador usa o painel para salvar resultados e acionar o recalculo da pontuacao do torneio.',
+    resposta: 'O administrador usa o painel para lançar resultados, ajustar regras e acionar o recálculo da pontuação do torneio.',
   },
 ]
 
@@ -532,14 +536,14 @@ const estatisticasHero = computed(() => {
 
   return [
     {
-      label: 'Selecoes',
+      label: 'Seleções',
       value: selecoes.length || 48,
       caption: 'no torneio',
     },
     {
       label: 'Jogos',
-      value: jogos.length || 72,
-      caption: 'na competicao',
+      value: jogos.length || 104,
+      caption: 'na competição',
     },
     {
       label: 'Cupom',
@@ -553,10 +557,10 @@ const provaSocial = computed(() => {
   const quantidadeRegras = regras.value.length
 
   if (!quantidadeRegras) {
-    return 'Fluxo de palpites e ranking construidos em cima do estado real do torneio.'
+    return 'Palpites e ranking construídos em cima do estado real do torneio.'
   }
 
-  return `${quantidadeRegras} regras ativas prontas para sustentar o calculo da pontuacao.`
+  return `${quantidadeRegras} regras de pontuação ativas sustentando o cálculo do ranking.`
 })
 
 const regrasExibidas = computed(() => {
@@ -567,8 +571,8 @@ const regrasExibidas = computed(() => {
   return [
     { id: 1, nome: 'Placar exato', descricao: 'Premia quem acerta o resultado completo do jogo.', pontos: 10, ativo: true, chave: 'placar_exato', fase_id: null },
     { id: 2, nome: 'Vencedor correto', descricao: 'Reconhece o acerto do vencedor mesmo sem o placar cheio.', pontos: 5, ativo: true, chave: 'vencedor', fase_id: null },
-    { id: 3, nome: 'Classificado do mata-mata', descricao: 'Valoriza quem projeta a progressao correta do bracket.', pontos: 8, ativo: true, chave: 'classificado', fase_id: null },
-    { id: 4, nome: 'Chaveamento', descricao: 'Valoriza a progressao correta das selecoes no mata-mata.', pontos: 12, ativo: true, chave: 'chaveamento', fase_id: null },
+    { id: 3, nome: 'Classificado do mata-mata', descricao: 'Valoriza quem projeta a progressão correta do chaveamento.', pontos: 8, ativo: true, chave: 'classificado', fase_id: null },
+    { id: 4, nome: 'Campeão da Copa', descricao: 'Recompensa quem crava o campeão do torneio.', pontos: 25, ativo: true, chave: 'campeao', fase_id: null },
   ] satisfies RegraPontuacao[]
 })
 
