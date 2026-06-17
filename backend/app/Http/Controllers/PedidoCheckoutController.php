@@ -6,6 +6,7 @@ use App\Exceptions\ExcecaoAsaas;
 use App\Http\Requests\CriarPedidoCheckoutRequest;
 use App\Models\Cupom;
 use App\Models\PedidoCheckout;
+use App\Models\Torneio;
 use App\Services\ServicoAsaas;
 use App\Services\ServicoCheckout;
 use Illuminate\Http\Client\RequestException;
@@ -110,11 +111,12 @@ class PedidoCheckoutController extends Controller
 
     private function garantirComprasAbertas(): void
     {
-        abort_unless(
-            (bool) config('checkout.compras_abertas'),
-            403,
-            'A compra de cupons esta encerrada.',
-        );
+        $aberto = (bool) Torneio::query()
+            ->where('status', 'publicado')
+            ->latest('id')
+            ->value('compras_abertas');
+
+        abort_unless($aberto, 403, 'A compra de cupons esta encerrada.');
     }
 
     public function confirmarSandbox(Request $request, PedidoCheckout $pedidoCheckout): JsonResponse

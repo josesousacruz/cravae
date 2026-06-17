@@ -16,9 +16,6 @@ abstract class TestCase extends BaseTestCase
             'services.asaas.base_url' => 'https://api-sandbox.asaas.com',
             'services.asaas.access_token' => 'test-token',
             'services.asaas.webhook_token' => 'test-webhook-token-with-more-than-32-chars',
-            // Os testes exercitam o fluxo de compra/checkout, que em producao fica
-            // encerrado por padrao. Mantemos aberto aqui para cobrir esse caminho.
-            'checkout.compras_abertas' => true,
         ]);
 
         Http::fake(function (Request $request) {
@@ -57,5 +54,18 @@ abstract class TestCase extends BaseTestCase
 
             return Http::response([], 404);
         });
+    }
+
+    /**
+     * Em producao a compra de cupons fica fechada por padrao. Os testes exercitam o
+     * fluxo de compra, entao abrimos a compra do torneio publicado apos cada seed.
+     */
+    public function seed($class = \Database\Seeders\DatabaseSeeder::class): void
+    {
+        parent::seed($class);
+
+        \App\Models\Torneio::query()
+            ->where('status', 'publicado')
+            ->update(['compras_abertas' => true]);
     }
 }

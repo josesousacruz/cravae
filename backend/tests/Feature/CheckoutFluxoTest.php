@@ -39,7 +39,7 @@ class CheckoutFluxoTest extends TestCase
     public function test_compra_encerrada_bloqueia_criacao_de_pedido(): void
     {
         $this->seed();
-        config(['checkout.compras_abertas' => false]);
+        Torneio::query()->where('status', 'publicado')->update(['compras_abertas' => false]);
 
         $usuario = Usuario::factory()->create([
             'nome' => 'Compra Fechada',
