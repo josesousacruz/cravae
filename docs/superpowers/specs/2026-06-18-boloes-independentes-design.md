@@ -158,6 +158,89 @@ A coluna `torneio_id` em `cupons`/`pedidos_checkout` **não pode** nascer
 
 ---
 
+## 10. Regra do mata-mata: redesenho "pela realidade"
+
+Vale para **o bolão atual (Copa inteira) e para qualquer bolão novo**. Substitui o
+modelo atual de "bracket de fantasia".
+
+### Problema do modelo atual
+
+Hoje o chaveamento do mata-mata é **derivado dos palpites de grupo de cada cupom**
+([ServicoBracketCupom](../../../backend/app/Services/ServicoBracketCupom.php)):
+o sistema calcula quem o usuário "classificou", encaixa os melhores terceiros por
+backtracking e propaga vencedores fase a fase. O bracket não é persistido — é
+recalculado on-demand. Consequências:
+
+1. **Erro ao mudar resultado de grupo** — a regeneração do bracket pode lançar
+   `ValidationException` no backtracking dos terceiros; há lógica de
+   classificação duplicada (backend + frontend) que pode divergir.
+2. **Regra frágil** — se o usuário erra os grupos, o confronto que ele previu no
+   mata-mata não existe na realidade; palpite e realidade ficam entrelaçados.
+
+### Novo modelo (decidido)
+
+- **Fonte de verdade = realidade.** Os confrontos do mata-mata são os **reais**.
+  O usuário palpita o **placar dos jogos que realmente acontecem**.
+- **Fase de grupos** pontua por conta própria (placar/classificado vs resultado
+  real) — já é assim, permanece.
+- **Confrontos definidos/confirmados pelo admin.** Ao lançar resultados, o admin
+  define quem avançou e monta os confrontos da próxima fase (o sistema pode
+  sugerir pelos resultados, mas o admin confirma). Confirmar = preencher os times
+  reais (`jogos.selecao_mandante_id`/`selecao_visitante_id`) daquela fase.
+- **Abertura por fase.** Os palpites de uma fase do mata-mata **só abrem quando
+  seus confrontos reais são confirmados** — oitavas após os grupos, quartas após
+  as oitavas, etc. Combina com o fechamento-por-dia já existente (1h antes do
+  primeiro jogo).
+- **Pontuação do mata-mata.** Compara o palpite (placar + quem avança no empate)
+  com o **resultado real do jogo real**. Direto, igual aos grupos — sem bracket
+  derivado.
+- **Bônus campeão + vice + 3º.** Palpite único por cupom, cravado no início e
+  **fechado junto com a fase de grupos**. Pontua contra o pódio real
+  (`resultado_torneio`, que já existe). Reaproveita a estrutura
+  `campeao/vice/terceiro` já presente ([ResumoBracketCupom](../../../backend/app/Services/ServicoBracketCupom.php)),
+  agora como palpite explícito (não mais derivado do bracket).
+- **Aba "Chaveamento"** vira a **visualização do bracket REAL**, preenchendo a
+  cada fase. Some o bracket de fantasia.
+
+### O que é aposentado
+
+- Derivação de fantasia em `ServicoBracketCupom` (classificação a partir de
+  palpites, backtracking de terceiros, propagação de vencedores-por-palpite) como
+  **fonte da estrutura** do mata-mata.
+- Lógica de classificação duplicada no frontend (`classificacaoGrupos`) para fins
+  de chaveamento.
+- `selecao_classificada_id` no palpite deixa de estruturar o bracket; continua só
+  como "quem avança" do jogo real (para pontuar), referente aos times reais.
+
+### Impacto no bug atual
+
+Mudar um resultado de grupo passa a **apenas re-pontuar os grupos** (e, se for o
+caso, influenciar quais classificados o admin confirma). Sem regeneração de
+bracket por cupom → **sem a exception**. O entrelaçamento some — por isso não
+investimos em consertar o modelo antigo à parte.
+
+### Admin (ações novas)
+
+- "Confirmar confrontos da fase X" — define os times reais dos jogos daquela fase
+  (com sugestão pelos resultados), abrindo os palpites.
+
+### Transição de dados
+
+Palpites de eliminatória do modelo de fantasia (feitos contra times derivados)
+perdem o sentido no novo modelo. Como os palpites de mata-mata passam a abrir só
+quando a fase real é confirmada — e a fase de grupos ainda está em curso —, na
+prática ainda não há palpites de eliminatória "válidos" a preservar. Dev:
+`migrate:fresh`. Produção: descartar/ignorar palpites de eliminatória antigos no
+mesmo plano de backfill da seção 8.
+
+### Bolão só de mata-mata
+
+Encaixa naturalmente: é um torneio cujas fases são só eliminatórias. O admin
+confirma os confrontos de cada fase conforme a competição real avança; o usuário
+palpita os placares. O bônus campeão/vice/3º é opcional por bolão.
+
+---
+
 ## Decisões registradas
 
 | Tema                       | Decisão                                                        |
@@ -173,13 +256,51 @@ A coluna `torneio_id` em `cupons`/`pedidos_checkout` **não pode** nascer
 | Admin                      | Seletor de bolão no painel; fim do `latest('id')`             |
 | Frontend                   | Lista de bolões ativos + aba "Encerrados"                     |
 | Dados existentes           | Dev: migrate:fresh. Produção: backfill em 3 passos            |
+| Mata-mata: fonte de verdade| Pela realidade (confrontos reais), não mais bracket de fantasia |
+| Mata-mata: confrontos      | Admin define/confirma (sistema sugere pelos resultados)       |
+| Mata-mata: abertura        | Por fase, quando os confrontos reais são confirmados          |
+| Mata-mata: bônus           | Palpite de campeão+vice+3º, fecha junto com os grupos         |
+| Mata-mata: chaveamento     | Aba vira bracket REAL preenchendo por fase; some o de fantasia |
+| Bug do resultado de grupo  | Resolvido pela mudança de regra (sem regeneração de bracket)  |
 
 ---
 
-## Fora de escopo (YAGNI por enquanto)
+## Sequenciamento
 
-- Command/UI de criação de bolão pelo admin (criação fica via seeder).
-- "Cupom da copa vale no mata-mata" / cupons compartilhados.
-- Reaproveitamento de jogos/resultados entre bolões.
-- Palpites de campeão/artilheiro no bolão de mata-mata (escopo = placar dos
-  jogos eliminatórios).
+### Entrega 1 (este plano) — núcleo
+
+Bolão = Torneio (seeder por caso), cupom separado por bolão, fim dos
+`latest('id')`, lista de bolões + aba Encerrados, seletor de bolão no admin, e o
+**mata-mata pela realidade** (admin confirma confrontos, abertura por fase, bônus
+campeão/vice/3º, bracket real). Inclui a transição de dados (seção 8 + abaixo).
+
+### Fase 2 (próxima, logo após a Entrega 1)
+
+Comprometidos e priorizados, fora da Entrega 1 para não atrasar o núcleo. Dois
+deles revisitam decisões da Entrega 1 (cupom separado, bolão independente):
+
+- UI admin de criação/edição de bolão (hoje criação é via seeder).
+- "Cupom da copa vale no mata-mata" / cupons compartilhados entre bolões.
+- Reaproveitamento de jogos/resultados entre bolões (ex.: mata-mata reusar
+  resultados reais da Copa).
+- Propagação automática de classificados reais (incl. melhores terceiros, regras
+  FIFA) — substitui a confirmação manual do admin.
+
+### Fora de escopo (YAGNI)
+
+- Palpite de artilheiro no novo bolão (escopo = placar dos jogos + bônus
+  campeão/vice/3º).
+
+## Transição de dados de palpites de eliminatória
+
+Os palpites de mata-mata do modelo antigo (derivados do bracket de fantasia)
+perdem o sentido. Estado atual do banco (dev): **0** apostas
+`placar_jogo_eliminatoria`; todas as 171 apostas são `placar_jogo_grupos` (que
+permanecem válidas). A migration de transição **remove** quaisquer apostas
+`tipo='placar_jogo_eliminatoria'` e recalcula a pontuação. Sem risco de quebra: o
+que lançava exception era a derivação do bracket, que é aposentada.
+
+**Armazenamento do bônus campeão/vice/3º:** hoje campeão/vice/terceiro são
+**derivados** (não salvos). No novo modelo viram palpite explícito — precisam de
+armazenamento próprio (novo `tipo` de aposta, ex.: `podio`, ou colunas no cupom).
+O enum já tem um `artilheiro` ocioso como referência de padrão.
