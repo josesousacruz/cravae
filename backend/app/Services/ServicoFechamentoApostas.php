@@ -66,10 +66,17 @@ class ServicoFechamentoApostas
             return null;
         }
 
-        $primeiroDoDia = Jogo::query()
+        $query = Jogo::query()
             ->where('torneio_id', $jogo->torneio_id)
-            ->whereDate('data_hora_inicio', $jogo->data_hora_inicio->toDateString())
-            ->min('data_hora_inicio');
+            ->whereDate('data_hora_inicio', $jogo->data_hora_inicio->toDateString());
+
+        // Cada rodada fecha por dia de forma independente: considera apenas os jogos
+        // da mesma rodada, para que um jogo de outra rodada no mesmo dia nao interfira.
+        if ($jogo->rodada_id) {
+            $query->where('rodada_id', $jogo->rodada_id);
+        }
+
+        $primeiroDoDia = $query->min('data_hora_inicio');
 
         $referencia = $primeiroDoDia ? Carbon::parse($primeiroDoDia) : $jogo->data_hora_inicio;
 

@@ -80,6 +80,38 @@ class FechamentoApostasTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_jogo_de_outra_rodada_no_mesmo_dia_nao_afeta_o_fechamento(): void
+    {
+        $this->seed();
+        Rodada::query()->update(['data_fechamento' => null]);
+
+        $jogoRodada1 = Jogo::query()->whereHas('rodada', fn ($q) => $q->where('ordem', 1))->orderBy('id')->firstOrFail();
+        $jogoRodada2 = Jogo::query()->whereHas('rodada', fn ($q) => $q->where('ordem', 2))->orderBy('id')->firstOrFail();
+
+        $dia = '2026-09-01';
+        // Rodada 2: primeiro (e unico) jogo do dia as 18:00 -> fecha as 17:00.
+        Jogo::query()->whereKey($jogoRodada2->id)->update(['data_hora_inicio' => "$dia 18:00:00"]);
+        // Rodada 1 mal-datada para o MESMO dia, bem cedo (09:00) -> NAO deve influenciar.
+        Jogo::query()->whereKey($jogoRodada1->id)->update(['data_hora_inicio' => "$dia 09:00:00"]);
+
+        $servico = app(ServicoFechamentoApostas::class);
+        $dadosRodada2 = ['tipo' => 'placar_jogo_grupos', 'jogo_id' => $jogoRodada2->id];
+
+        Carbon::setTestNow("$dia 16:30:00");
+        $this->assertFalse(
+            $servico->prazoEncerrado($dadosRodada2),
+            'Um jogo de outra rodada no mesmo dia nao pode fechar os palpites desta rodada.',
+        );
+
+        Carbon::setTestNow("$dia 17:30:00");
+        $this->assertTrue(
+            $servico->prazoEncerrado($dadosRodada2),
+            'Deve fechar 1h antes do primeiro jogo DA RODADA naquele dia.',
+        );
+
+        Carbon::setTestNow();
+    }
+
     public function test_lote_com_jogo_fechado_inalterado_salva_os_jogos_ainda_abertos(): void
     {
         $this->seed();

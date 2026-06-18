@@ -818,21 +818,22 @@ function jogoCompleto(jogo: JogoCupom): boolean {
   )
 }
 
-// Primeiro jogo agendado para cada dia (ms), para fechar os palpites por dia.
-const primeiroJogoDoDiaMs = computed(() => {
+// Primeiro jogo de cada (rodada, dia) em ms. Os palpites de grupos fecham por dia,
+// 1h antes do primeiro jogo daquela rodada no dia (cada rodada e independente).
+const primeiroJogoRodadaDiaMs = computed(() => {
   const mapa = new Map<string, number>()
   for (const jogo of torneio.value?.jogos ?? []) {
     if (!jogo.data_hora_inicio) continue
-    const dia = jogo.data_hora_inicio.substring(0, 10)
+    const chave = `${jogo.rodada?.id ?? 'sem-rodada'}|${jogo.data_hora_inicio.substring(0, 10)}`
     const inicio = new Date(jogo.data_hora_inicio).getTime()
-    if (!mapa.has(dia) || inicio < (mapa.get(dia) as number)) mapa.set(dia, inicio)
+    if (!mapa.has(chave) || inicio < (mapa.get(chave) as number)) mapa.set(chave, inicio)
   }
   return mapa
 })
 
 // Espelha a regra de fechamento do backend (ServicoFechamentoApostas):
-// grupos fecham POR DIA, 1h antes do primeiro jogo do dia (data_fechamento da
-// rodada e um override opcional); mata-mata fecha no inicio do proprio jogo.
+// grupos fecham POR DIA, 1h antes do primeiro jogo da rodada naquele dia
+// (data_fechamento da rodada e um override opcional); mata-mata fecha no inicio do jogo.
 function jogoFechado(jogo: JogoCupom): boolean {
   if (!jogo.data_hora_inicio) return false
 
@@ -841,8 +842,8 @@ function jogoFechado(jogo: JogoCupom): boolean {
     if (jogo.rodada?.data_fechamento) {
       referenciaMs = new Date(jogo.rodada.data_fechamento).getTime()
     } else {
-      const dia = jogo.data_hora_inicio.substring(0, 10)
-      const primeiro = primeiroJogoDoDiaMs.value.get(dia) ?? new Date(jogo.data_hora_inicio).getTime()
+      const chave = `${jogo.rodada?.id ?? 'sem-rodada'}|${jogo.data_hora_inicio.substring(0, 10)}`
+      const primeiro = primeiroJogoRodadaDiaMs.value.get(chave) ?? new Date(jogo.data_hora_inicio).getTime()
       referenciaMs = primeiro - 3600000
     }
   } else {
