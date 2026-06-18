@@ -154,6 +154,10 @@
                       <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                       Com palpite
                     </span>
+                    <span v-else-if="jogoRepalpiteNecessario(jogo)" class="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning">
+                      <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                      Repalpite necessário
+                    </span>
                     <span v-else class="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning">
                       <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
                       Sem palpite
@@ -685,6 +689,23 @@ function jogoIndisponivelPorId(jogoId: number): boolean {
   return jogo ? jogoSemConfronto(jogo) : false
 }
 
+// Palpite de eliminatoria "obsoleto": feito sobre um confronto antigo (ex.: modelo de
+// fantasia) cujo classificado salvo NAO esta entre os times reais deste jogo. Tratamos
+// como vazio para o usuario repalpitar o confronto real (evita pre-preencher placar errado).
+function apostaEliminatoriaObsoleta(jogo: JogoCupom, aposta?: Aposta): boolean {
+  if (jogo.fase.tipo === 'grupos' || !aposta) return false
+  const m = jogo.selecao_mandante?.id
+  const v = jogo.selecao_visitante?.id
+  if (!m || !v) return false // sem confronto real ainda: jogoSemConfronto cuida disso
+  const classificado = (aposta.conteudo as Record<string, number | null>)?.selecao_classificada_id
+  if (!classificado) return false
+  return classificado !== m && classificado !== v
+}
+
+function jogoRepalpiteNecessario(jogo: JogoCupom): boolean {
+  return apostaEliminatoriaObsoleta(jogo, encontrarAposta('placar_jogo_eliminatoria', jogo.id))
+}
+
 // FIFA code → ISO 2-letter for flags
 const fifaParaIso: Record<string, string> = {
   MEX: 'mx', RSA: 'za', KOR: 'kr', CAN: 'ca', QAT: 'qa', SUI: 'ch',
@@ -1195,18 +1216,20 @@ function preencherFormulario(modo: 'substituir' | 'mesclar' = 'substituir') {
   for (const jogo of jogosDoCupom) {
     const tipo = jogo.fase.tipo === 'grupos' ? 'placar_jogo_grupos' : 'placar_jogo_eliminatoria'
     const aposta = encontrarAposta(tipo, jogo.id)
+    // Palpite obsoleto (confronto antigo) nao pre-preenche: o usuario palpita o confronto real.
+    const fonte = apostaEliminatoriaObsoleta(jogo, aposta) ? undefined : aposta
     if (sobrescrever || !placaresGrupos.value[jogo.id]) {
       placaresGrupos.value[jogo.id] = {
-        placar_mandante: String(aposta?.conteudo.placar_mandante ?? ''),
-        placar_visitante: String(aposta?.conteudo.placar_visitante ?? ''),
+        placar_mandante: String(fonte?.conteudo.placar_mandante ?? ''),
+        placar_visitante: String(fonte?.conteudo.placar_visitante ?? ''),
       }
     }
     if (jogo.fase.tipo !== 'grupos' && (sobrescrever || !placaresEliminatorios.value[jogo.id])) {
       placaresEliminatorios.value[jogo.id] = {
-        placar_mandante: String(aposta?.conteudo.placar_mandante ?? ''),
-        placar_visitante: String(aposta?.conteudo.placar_visitante ?? ''),
-        penal_mandante: String(aposta?.conteudo.penal_mandante ?? ''),
-        penal_visitante: String(aposta?.conteudo.penal_visitante ?? ''),
+        placar_mandante: String(fonte?.conteudo.placar_mandante ?? ''),
+        placar_visitante: String(fonte?.conteudo.placar_visitante ?? ''),
+        penal_mandante: String(fonte?.conteudo.penal_mandante ?? ''),
+        penal_visitante: String(fonte?.conteudo.penal_visitante ?? ''),
       }
     }
   }
