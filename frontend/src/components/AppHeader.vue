@@ -12,6 +12,13 @@
 
       <!-- Desktop nav -->
       <nav class="hidden sm:flex items-center gap-1">
+        <RouterLink
+          to="/boloes"
+          class="rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-card-hover hover:text-text"
+          active-class="!bg-primary-dim !text-primary"
+        >
+          Bolões
+        </RouterLink>
         <template v-if="autenticacao.estaAutenticado">
           <RouterLink
             to="/painel"

@@ -50,6 +50,14 @@
 
         <!-- Nav links -->
         <nav class="flex-1 overflow-y-auto px-2 py-3">
+          <RouterLink
+            to="/boloes"
+            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-card-hover hover:text-text"
+            active-class="!bg-primary-dim !text-primary"
+            @click="$emit('fechar')"
+          >
+            Bolões
+          </RouterLink>
           <template v-if="autenticacao.estaAutenticado">
             <RouterLink
               to="/painel"
