@@ -818,15 +818,38 @@ function jogoCompleto(jogo: JogoCupom): boolean {
   )
 }
 
+// Primeiro jogo agendado para cada dia (ms), para fechar os palpites por dia.
+const primeiroJogoDoDiaMs = computed(() => {
+  const mapa = new Map<string, number>()
+  for (const jogo of torneio.value?.jogos ?? []) {
+    if (!jogo.data_hora_inicio) continue
+    const dia = jogo.data_hora_inicio.substring(0, 10)
+    const inicio = new Date(jogo.data_hora_inicio).getTime()
+    if (!mapa.has(dia) || inicio < (mapa.get(dia) as number)) mapa.set(dia, inicio)
+  }
+  return mapa
+})
+
 // Espelha a regra de fechamento do backend (ServicoFechamentoApostas):
-// grupos fecham na data_fechamento da rodada (ou 1h antes do jogo); mata-mata
-// fecha no inicio do proprio jogo. Jogo fechado nao pode ter o palpite alterado.
+// grupos fecham POR DIA, 1h antes do primeiro jogo do dia (data_fechamento da
+// rodada e um override opcional); mata-mata fecha no inicio do proprio jogo.
 function jogoFechado(jogo: JogoCupom): boolean {
-  const referencia = jogo.fase.tipo === 'grupos'
-    ? (jogo.rodada?.data_fechamento ?? new Date(new Date(jogo.data_hora_inicio).getTime() - 3600000).toISOString())
-    : jogo.data_hora_inicio
-  if (!referencia) return false
-  return Date.now() >= new Date(referencia).getTime()
+  if (!jogo.data_hora_inicio) return false
+
+  let referenciaMs: number
+  if (jogo.fase.tipo === 'grupos') {
+    if (jogo.rodada?.data_fechamento) {
+      referenciaMs = new Date(jogo.rodada.data_fechamento).getTime()
+    } else {
+      const dia = jogo.data_hora_inicio.substring(0, 10)
+      const primeiro = primeiroJogoDoDiaMs.value.get(dia) ?? new Date(jogo.data_hora_inicio).getTime()
+      referenciaMs = primeiro - 3600000
+    }
+  } else {
+    referenciaMs = new Date(jogo.data_hora_inicio).getTime()
+  }
+
+  return Date.now() >= referenciaMs
 }
 
 const jogosGruposDoTorneio = computed(() => torneio.value?.jogos.filter((jogo) => jogo.fase.tipo === 'grupos') ?? [])
@@ -981,17 +1004,32 @@ const jogosDoDia = computed(() => {
   return jogosFaseAtual.value.filter(j => j.data_hora_inicio.startsWith(diaSelecionado.value))
 })
 
-// Texto de fechamento
+// Texto de fechamento do DIA selecionado (grupos: 1h antes do primeiro jogo do dia).
 const textoFechamento = computed(() => {
-  const referencia = rodadaAtual.value?.data_fechamento ?? jogosFaseAtual.value[0]?.data_hora_inicio ?? faseAtual.value?.data_fechamento
-  if (!referencia) return 'Sem prazo definido'
-  const diff = new Date(referencia).getTime() - Date.now()
+  const doDia = jogosDoDia.value.filter((jogo) => jogo.data_hora_inicio)
+  if (!doDia.length) return 'Sem prazo definido'
+
+  const primeiroMs = Math.min(...doDia.map((jogo) => new Date(jogo.data_hora_inicio).getTime()))
+  const override = rodadaAtual.value?.data_fechamento
+
+  let referenciaMs: number
+  if (override) {
+    referenciaMs = new Date(override).getTime()
+  } else if (faseAtual.value?.tipo === 'grupos') {
+    referenciaMs = primeiroMs - 3600000
+  } else {
+    referenciaMs = primeiroMs
+  }
+
+  const diff = referenciaMs - Date.now()
   if (diff <= 0) return 'Fechado'
   const dias = Math.floor(diff / 86400000)
   if (dias > 30) return `Fecha em ${Math.floor(dias / 30)} meses`
   if (dias > 0) return `Fecha em ${dias} dia${dias > 1 ? 's' : ''}`
   const horas = Math.floor(diff / 3600000)
-  return `Fecha em ${horas}h`
+  if (horas > 0) return `Fecha em ${horas}h`
+  const minutos = Math.max(1, Math.floor(diff / 60000))
+  return `Fecha em ${minutos}min`
 })
 
 const todasSelecoes = computed<Selecao[]>(() => torneio.value?.grupos.flatMap(g => g.selecoes) ?? [])
