@@ -29,7 +29,7 @@ class CheckoutFluxoTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $response = $this->postJson('/api/pedidos-checkout');
+        $response = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id]);
 
         $response
             ->assertCreated()
@@ -40,6 +40,7 @@ class CheckoutFluxoTest extends TestCase
     {
         $this->seed();
         Torneio::query()->where('status', 'publicado')->update(['compras_abertas' => false]);
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
 
         $usuario = Usuario::factory()->create([
             'nome' => 'Compra Fechada',
@@ -50,7 +51,7 @@ class CheckoutFluxoTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $this->postJson('/api/pedidos-checkout')->assertForbidden();
+        $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->assertForbidden();
     }
 
     public function test_admin_abre_e_fecha_a_compra_de_cupons(): void
@@ -101,6 +102,7 @@ class CheckoutFluxoTest extends TestCase
     public function test_checkout_rejeita_valor_enviado_pelo_cliente(): void
     {
         $this->seed();
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
 
         $usuario = Usuario::factory()->create([
             'nome' => 'Valor Cliente',
@@ -112,6 +114,7 @@ class CheckoutFluxoTest extends TestCase
         Sanctum::actingAs($usuario);
 
         $this->postJson('/api/pedidos-checkout', [
+            'torneio_id' => $torneio->id,
             'valor' => 1,
         ])->assertStatus(422)
             ->assertJsonValidationErrors(['valor']);
@@ -120,6 +123,7 @@ class CheckoutFluxoTest extends TestCase
     public function test_rota_de_simulacao_de_pagamento_nao_fica_disponivel_para_usuario(): void
     {
         $this->seed();
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
 
         $usuario = Usuario::factory()->create([
             'nome' => 'Sem Simulacao',
@@ -130,7 +134,7 @@ class CheckoutFluxoTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $pedido = $this->postJson('/api/pedidos-checkout')->assertCreated()->json('pedido');
+        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->assertCreated()->json('pedido');
 
         $this->postJson("/api/pedidos-checkout/{$pedido['id']}/simular-pagamento")
             ->assertNotFound();
@@ -139,6 +143,7 @@ class CheckoutFluxoTest extends TestCase
     public function test_confirmar_pagamento_sandbox_ativa_cupom(): void
     {
         $this->seed();
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
 
         $usuario = Usuario::factory()->create([
             'nome' => 'Pagamento User',
@@ -149,7 +154,7 @@ class CheckoutFluxoTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $pedidoResponse = $this->postJson('/api/pedidos-checkout');
+        $pedidoResponse = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id]);
         $pedidoId = $pedidoResponse->json('pedido.id');
 
         $response = $this->postJson("/api/pedidos-checkout/{$pedidoId}/confirmar-sandbox");
@@ -163,6 +168,7 @@ class CheckoutFluxoTest extends TestCase
     public function test_multiplos_cupons_por_usuario(): void
     {
         $this->seed();
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
 
         $usuario = Usuario::factory()->create([
             'nome' => 'Multi Cupom',
@@ -173,10 +179,10 @@ class CheckoutFluxoTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $pedido1 = $this->postJson('/api/pedidos-checkout');
+        $pedido1 = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id]);
         $this->postJson("/api/pedidos-checkout/{$pedido1->json('pedido.id')}/confirmar-sandbox");
 
-        $pedido2 = $this->postJson('/api/pedidos-checkout');
+        $pedido2 = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id]);
         $this->postJson("/api/pedidos-checkout/{$pedido2->json('pedido.id')}/confirmar-sandbox");
 
         $cuponsResponse = $this->getJson('/api/cupons');
@@ -190,6 +196,7 @@ class CheckoutFluxoTest extends TestCase
     public function test_pagamento_duplicado_retorna_cupom_existente(): void
     {
         $this->seed();
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
 
         $usuario = Usuario::factory()->create([
             'nome' => 'Idempotente User',
@@ -200,7 +207,7 @@ class CheckoutFluxoTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $pedido = $this->postJson('/api/pedidos-checkout');
+        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id]);
         $pedidoId = $pedido->json('pedido.id');
 
         $primeiro = $this->postJson("/api/pedidos-checkout/{$pedidoId}/confirmar-sandbox");

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AutenticacaoController;
 use App\Http\Controllers\ApostaController;
+use App\Http\Controllers\BolaoController;
 use App\Http\Controllers\CupomController;
 use App\Http\Controllers\PainelAdministradorController;
 use App\Http\Controllers\PedidoCheckoutController;
@@ -24,7 +25,9 @@ Route::get('/status', function () {
 });
 
 Route::get('/torneio', [TorneioController::class, 'publico']);
+Route::get('/boloes', [BolaoController::class, 'index']);
 Route::get('/torneios/{torneio}/ranking', [TorneioController::class, 'ranking']);
+Route::get('/torneios/{torneio}', [TorneioController::class, 'show']);
 Route::get('/ranking/cupons/{cupom}/eventos', [TorneioController::class, 'eventosCupom']);
 Route::get('/jogos/{jogo}/palpiteiros', [TorneioController::class, 'palpiteiros']);
 

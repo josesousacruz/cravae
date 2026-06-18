@@ -12,6 +12,7 @@ class PedidoCheckout extends Model
 
     protected $fillable = [
         'usuario_id',
+        'torneio_id',
         'valor',
         'status',
         'forma_pagamento',
@@ -38,6 +39,11 @@ class PedidoCheckout extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'usuario_id');
+    }
+
+    public function torneio(): BelongsTo
+    {
+        return $this->belongsTo(Torneio::class, 'torneio_id');
     }
 
     public function cupons(): HasMany

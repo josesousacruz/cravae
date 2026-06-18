@@ -391,7 +391,8 @@ class FechamentoApostasTest extends TestCase
         ]);
 
         Sanctum::actingAs($usuario);
-        $pedido = $this->postJson('/api/pedidos-checkout', [])->assertCreated()->json('pedido');
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
+        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->assertCreated()->json('pedido');
         $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])->assertOk()->json('cupom');
 
         return [$usuario, Cupom::query()->findOrFail($cupom['id'])];
