@@ -314,34 +314,7 @@
 
                 <div class="p-3 sm:p-4">
                   <div class="overflow-x-auto pb-2 scrollbar-none 2xl:overflow-visible">
-                    <div class="grid min-w-[1280px] grid-cols-[minmax(172px,1.05fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(112px,.68fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(172px,1.05fr)] items-center gap-2 2xl:min-w-0 2xl:w-full">
-                      <aside class="flex min-h-[920px] flex-col justify-around gap-3">
-                        <article
-                          v-for="grupo in gruposChaveamentoEsquerda"
-                          :key="grupo.letra"
-                          class="rounded-2xl border border-white/15 bg-white/10 p-3 text-white shadow-inner shadow-white/5 backdrop-blur"
-                        >
-                          <div class="mb-2 flex items-center justify-between">
-                            <strong class="flex h-7 w-7 items-center justify-center rounded-lg border border-[#d4af37]/60 bg-[#d4af37]/20 text-xs text-[#f8e7a1]">
-                              {{ grupo.letra }}
-                            </strong>
-                            <span class="text-[9px] font-bold uppercase tracking-[0.18em] text-white/55">Grupo {{ grupo.letra }}</span>
-                          </div>
-                          <div class="space-y-1.5">
-                            <div
-                              v-for="linha in grupo.tabela"
-                              :key="linha.selecao.id"
-                              class="grid grid-cols-[24px_1fr_30px] items-center gap-1.5 rounded-lg border px-2 py-1.5"
-                              :class="linha.posicao <= 2 ? 'border-[#d4af37]/35 bg-[#d4af37]/15' : linha.qualificadoTerceiro ? 'border-emerald-300/30 bg-emerald-300/10' : 'border-white/10 bg-black/10'"
-                            >
-                              <span class="text-[10px] font-black text-[#f8e7a1]">{{ linha.posicao }}o</span>
-                              <span class="min-w-0 truncate text-[11px] font-semibold">{{ linha.selecao.nome }}</span>
-                              <span class="rounded-md bg-black/20 px-1 py-0.5 text-center text-[9px] font-bold text-white/80">{{ linha.pontos }}</span>
-                            </div>
-                          </div>
-                        </article>
-                      </aside>
-
+                    <div class="grid min-w-[920px] grid-cols-[minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(112px,.68fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(104px,.64fr)_minmax(104px,.64fr)] items-center gap-2 2xl:min-w-0 2xl:w-full">
                       <section class="flex min-h-[920px] flex-col justify-around gap-2">
                         <h3 class="text-center text-[10px] font-black uppercase tracking-[0.22em] text-[#d4af37]">32 avos</h3>
                         <component :is="JogoChaveamento"
@@ -444,49 +417,44 @@
                         />
                       </section>
 
-                      <aside class="flex min-h-[920px] flex-col justify-around gap-3">
-                        <article
-                          v-for="grupo in gruposChaveamentoDireita"
-                          :key="grupo.letra"
-                          class="rounded-2xl border border-white/15 bg-white/10 p-3 text-white shadow-inner shadow-white/5 backdrop-blur"
-                        >
-                          <div class="mb-2 flex items-center justify-between">
-                            <span class="text-[9px] font-bold uppercase tracking-[0.18em] text-white/55">Grupo {{ grupo.letra }}</span>
-                            <strong class="flex h-7 w-7 items-center justify-center rounded-lg border border-[#d4af37]/60 bg-[#d4af37]/20 text-xs text-[#f8e7a1]">
-                              {{ grupo.letra }}
-                            </strong>
-                          </div>
-                          <div class="space-y-1.5">
-                            <div
-                              v-for="linha in grupo.tabela"
-                              :key="linha.selecao.id"
-                              class="grid grid-cols-[30px_1fr_24px] items-center gap-1.5 rounded-lg border px-2 py-1.5"
-                              :class="linha.posicao <= 2 ? 'border-[#d4af37]/35 bg-[#d4af37]/15' : linha.qualificadoTerceiro ? 'border-emerald-300/30 bg-emerald-300/10' : 'border-white/10 bg-black/10'"
-                            >
-                              <span class="rounded-md bg-black/20 px-1 py-0.5 text-center text-[9px] font-bold text-white/80">{{ linha.pontos }}</span>
-                              <span class="min-w-0 truncate text-right text-[11px] font-semibold">{{ linha.selecao.nome }}</span>
-                              <span class="text-right text-[10px] font-black text-[#f8e7a1]">{{ linha.posicao }}o</span>
-                            </div>
-                          </div>
-                        </article>
-                      </aside>
                     </div>
                   </div>
                 </div>
               </section>
 
-              <div class="grid gap-3 sm:grid-cols-3">
-                <div class="rounded-2xl border border-border bg-bg-card p-4">
-                  <span class="block text-[10px] uppercase text-text-muted">Campeao</span>
-                  <span class="mt-1 block text-sm font-medium">{{ resumoBracket.campeao ?? 'A definir' }}</span>
+              <!-- Palpite de pódio (campeão/vice/3º) -->
+              <div class="rounded-2xl border border-border bg-bg-card p-4">
+                <div class="mb-3 flex items-center justify-between gap-2">
+                  <h3 class="text-sm font-bold text-text">Palpite de pódio</h3>
+                  <span v-if="podioFechado" class="rounded-full bg-text-muted/15 px-2 py-0.5 text-[10px] font-medium text-text-muted">Fechado</span>
                 </div>
-                <div class="rounded-2xl border border-border bg-bg-card p-4">
-                  <span class="block text-[10px] uppercase text-text-muted">Vice</span>
-                  <span class="mt-1 block text-sm font-medium">{{ resumoBracket.vice ?? 'A definir' }}</span>
+                <div class="grid gap-3 sm:grid-cols-3">
+                  <label class="block">
+                    <span class="mb-1 block text-[10px] uppercase text-text-muted">Campeão</span>
+                    <select v-model.number="palpitePodio.campeao" :disabled="podioFechado" class="w-full rounded-lg border border-border bg-bg-input px-2 py-2 text-sm text-text disabled:opacity-50" @change="aoMudarPodio">
+                      <option :value="null">A definir</option>
+                      <option v-for="s in todasSelecoesOrdenadas" :key="`c-${s.id}`" :value="s.id">{{ s.nome }}</option>
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="mb-1 block text-[10px] uppercase text-text-muted">Vice</span>
+                    <select v-model.number="palpitePodio.vice" :disabled="podioFechado" class="w-full rounded-lg border border-border bg-bg-input px-2 py-2 text-sm text-text disabled:opacity-50" @change="aoMudarPodio">
+                      <option :value="null">A definir</option>
+                      <option v-for="s in todasSelecoesOrdenadas" :key="`v-${s.id}`" :value="s.id">{{ s.nome }}</option>
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="mb-1 block text-[10px] uppercase text-text-muted">Terceiro</span>
+                    <select v-model.number="palpitePodio.terceiro" :disabled="podioFechado" class="w-full rounded-lg border border-border bg-bg-input px-2 py-2 text-sm text-text disabled:opacity-50" @change="aoMudarPodio">
+                      <option :value="null">A definir</option>
+                      <option v-for="s in todasSelecoesOrdenadas" :key="`t-${s.id}`" :value="s.id">{{ s.nome }}</option>
+                    </select>
+                  </label>
                 </div>
-                <div class="rounded-2xl border border-border bg-bg-card p-4">
-                  <span class="block text-[10px] uppercase text-text-muted">Terceiro</span>
-                  <span class="mt-1 block text-sm font-medium">{{ resumoBracket.terceiro ?? 'A definir' }}</span>
+                <div v-if="resumoBracketIds.podio_real.campeao" class="mt-4 grid gap-2 text-xs sm:grid-cols-3">
+                  <div><span class="text-text-muted">Campeão real: </span><span class="font-medium text-text">{{ nomeSelecaoPorId(resumoBracketIds.podio_real.campeao) }}</span></div>
+                  <div><span class="text-text-muted">Vice real: </span><span class="font-medium text-text">{{ nomeSelecaoPorId(resumoBracketIds.podio_real.vice) }}</span></div>
+                  <div><span class="text-text-muted">3º real: </span><span class="font-medium text-text">{{ nomeSelecaoPorId(resumoBracketIds.podio_real.terceiro) }}</span></div>
                 </div>
               </div>
             </div>
@@ -588,7 +556,7 @@ import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch, t
 import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { useToast } from '../composables/useToast'
-import type { Aposta, BracketJogoCupom, Cupom, RankingItem, ResumoBracketCupom, Selecao, Torneio } from '../tipos'
+import type { Aposta, BracketJogoCupom, Cupom, RankingItem, ResumoBracketReal, Selecao, Torneio } from '../tipos'
 import tacaCopaAsset from '../assets/taca-copa-transparente.png'
 import ModalPixPagamento from '../components/ModalPixPagamento.vue'
 import RankingConteudo from '../components/RankingConteudo.vue'
@@ -602,10 +570,15 @@ const torneio = ref<Torneio | null>(null)
 const cupom = ref<Cupom | null>(null)
 const apostas = ref<Aposta[]>([])
 const bracketCupom = ref<BracketJogoCupom[]>([])
-const resumoBracketIds = ref<ResumoBracketCupom>({
-  campeao_selecao_id: null,
-  vice_campeao_selecao_id: null,
-  terceiro_colocado_selecao_id: null,
+const resumoBracketIds = ref<ResumoBracketReal>({
+  podio_palpite: { campeao: null, vice: null, terceiro: null },
+  podio_real: { campeao: null, vice: null, terceiro: null },
+})
+// Palpite de campeao/vice/3o (aposta 'podio'), escolhido pelo usuario.
+const palpitePodio = ref<{ campeao: number | null; vice: number | null; terceiro: number | null }>({
+  campeao: null,
+  vice: null,
+  terceiro: null,
 })
 const ranking = ref<RankingItem[]>([])
 const carregando = ref(true)
@@ -709,16 +682,6 @@ const fifaParaIso: Record<string, string> = {
 }
 
 type JogoCupom = Torneio['jogos'][number] | BracketJogoCupom
-type LinhaClassificacaoGrupo = {
-  grupo: string
-  posicao: number
-  selecao: Selecao
-  pontos: number
-  saldo: number
-  golsPro: number
-  vitorias: number
-  qualificadoTerceiro: boolean
-}
 type LadoChaveamento = {
   chave: string
   selecao: Selecao | null
@@ -774,44 +737,15 @@ function bandeira(sigla: string): string {
   return `https://flagcdn.com/w80/${iso}.png`
 }
 
-function letraGrupo(nome: string): string {
-  return nome.replace(/^Grupo\s+/i, '')
-}
-
-function ordenarClassificacao(a: LinhaClassificacaoGrupo, b: LinhaClassificacaoGrupo): number {
-  return b.pontos - a.pontos
-    || b.saldo - a.saldo
-    || b.golsPro - a.golsPro
-    || b.vitorias - a.vitorias
-    || a.selecao.nome.localeCompare(b.selecao.nome)
-}
-
+// Chaveamento mostra o resultado REAL (read-only): placar e vencedor reais do jogo.
 function placarChaveamento(jogo: BracketJogoCupom, lado: 'mandante' | 'visitante'): string {
-  const placar = placaresGrupos.value[jogo.id]
-  const campo = lado === 'mandante' ? 'placar_mandante' : 'placar_visitante'
-  return placar?.[campo] !== '' && placar?.[campo] !== undefined ? placar[campo] : '-'
+  const r = jogo.resultado
+  if (!r || r.placar_mandante === null || r.placar_visitante === null) return '-'
+  return String(lado === 'mandante' ? r.placar_mandante : r.placar_visitante)
 }
 
 function vencedorChaveamentoId(jogo: BracketJogoCupom): number | null {
-  const placar = placaresGrupos.value[jogo.id]
-  if (!placar || placar.placar_mandante === '' || placar.placar_visitante === '') return null
-
-  const mandante = jogo.selecao_mandante?.id ?? null
-  const visitante = jogo.selecao_visitante?.id ?? null
-  const golsMandante = Number(placar.placar_mandante)
-  const golsVisitante = Number(placar.placar_visitante)
-
-  if (golsMandante > golsVisitante) return mandante
-  if (golsVisitante > golsMandante) return visitante
-
-  const penaltis = placaresEliminatorios.value[jogo.id]
-  if (!penaltis || penaltis.penal_mandante === '' || penaltis.penal_visitante === '') return null
-
-  const penalMandante = Number(penaltis.penal_mandante)
-  const penalVisitante = Number(penaltis.penal_visitante)
-  if (penalMandante > penalVisitante) return mandante
-  if (penalVisitante > penalMandante) return visitante
-  return null
+  return jogo.resultado?.selecao_classificada_id ?? null
 }
 
 function ladosJogoChaveamento(jogo: BracketJogoCupom) {
@@ -915,77 +849,27 @@ function jogoFechadoPorId(jogoId: number): boolean {
 const totalJogosGrupos = computed(() => jogosGruposDoTorneio.value.length)
 const gruposPreenchidos = computed(() => jogosGruposDoTorneio.value.filter((jogo) => jogoCompleto(jogo)).length)
 
-const classificacaoGrupos = computed(() => {
-  if (!torneio.value) return []
+// Pódio (campeão/vice/3º): palpite do usuário (seletor) e resultado real, para a aba Chaveamento.
+const todasSelecoesOrdenadas = computed<Selecao[]>(() =>
+  [...todasSelecoes.value].sort((a, b) => a.nome.localeCompare(b.nome)),
+)
 
-  const grupos = torneio.value.grupos.map((grupo) => {
-    const letra = letraGrupo(grupo.nome)
-    const tabela = new Map<number, LinhaClassificacaoGrupo>()
+function nomeSelecaoPorId(id: number | null): string {
+  if (!id) return 'A definir'
+  return todasSelecoes.value.find((s) => s.id === id)?.nome ?? 'A definir'
+}
 
-    for (const selecao of grupo.selecoes) {
-      tabela.set(selecao.id, {
-        grupo: letra,
-        posicao: 0,
-        selecao,
-        pontos: 0,
-        saldo: 0,
-        golsPro: 0,
-        vitorias: 0,
-        qualificadoTerceiro: false,
-      })
-    }
-
-    for (const jogo of jogosGruposDoTorneio.value.filter((item) => item.grupo_id === grupo.id)) {
-      const palpite = placaresGrupos.value[jogo.id]
-      if (!palpite || palpite.placar_mandante === '' || palpite.placar_visitante === '' || !jogo.selecao_mandante || !jogo.selecao_visitante) continue
-
-      const mandante = tabela.get(jogo.selecao_mandante.id)
-      const visitante = tabela.get(jogo.selecao_visitante.id)
-      if (!mandante || !visitante) continue
-
-      const golsMandante = Number(palpite.placar_mandante)
-      const golsVisitante = Number(palpite.placar_visitante)
-      mandante.golsPro += golsMandante
-      visitante.golsPro += golsVisitante
-      mandante.saldo += golsMandante - golsVisitante
-      visitante.saldo += golsVisitante - golsMandante
-
-      if (golsMandante > golsVisitante) {
-        mandante.pontos += 3
-        mandante.vitorias += 1
-      } else if (golsVisitante > golsMandante) {
-        visitante.pontos += 3
-        visitante.vitorias += 1
-      } else {
-        mandante.pontos += 1
-        visitante.pontos += 1
-      }
-    }
-
-    const linhas = [...tabela.values()]
-      .sort(ordenarClassificacao)
-      .map((linha, indice) => ({ ...linha, posicao: indice + 1 }))
-
-    return { letra, tabela: linhas }
-  })
-
-  const terceiros = grupos
-    .map((grupo) => grupo.tabela[2])
-    .filter((linha): linha is LinhaClassificacaoGrupo => Boolean(linha))
-    .sort(ordenarClassificacao)
-    .slice(0, 8)
-    .map((linha) => `${linha.grupo}-${linha.selecao.id}`)
-
-  return grupos.map((grupo) => ({
-    ...grupo,
-    tabela: grupo.tabela.map((linha) => ({
-      ...linha,
-      qualificadoTerceiro: terceiros.includes(`${linha.grupo}-${linha.selecao.id}`),
-    })),
-  }))
+// O pódio (aposta 'podio') fecha 1h antes do início do torneio, igual ao artilheiro.
+const podioFechado = computed(() => {
+  const inicio = torneio.value?.data_inicio
+  if (!inicio) return false
+  return Date.now() >= new Date(inicio).getTime() - 3600000
 })
-const gruposChaveamentoEsquerda = computed(() => classificacaoGrupos.value.slice(0, Math.ceil(classificacaoGrupos.value.length / 2)))
-const gruposChaveamentoDireita = computed(() => classificacaoGrupos.value.slice(Math.ceil(classificacaoGrupos.value.length / 2)))
+
+function aoMudarPodio() {
+  if (podioFechado.value) return
+  agendarAutoSave()
+}
 
 // Fases e rodadas disponíveis
 const fasesRodadas = computed(() => {
@@ -1078,17 +962,6 @@ const textoFechamento = computed(() => {
 })
 
 const todasSelecoes = computed<Selecao[]>(() => torneio.value?.grupos.flatMap(g => g.selecoes) ?? [])
-const resumoBracket = computed(() => {
-  if (!torneio.value) return { campeao: null, vice: null, terceiro: null }
-
-  const nomeSelecao = (id: number | null | undefined) => todasSelecoes.value.find((selecao) => selecao.id === id)?.nome ?? null
-
-  return {
-    campeao: nomeSelecao(resumoBracketIds.value.campeao_selecao_id),
-    vice: nomeSelecao(resumoBracketIds.value.vice_campeao_selecao_id),
-    terceiro: nomeSelecao(resumoBracketIds.value.terceiro_colocado_selecao_id),
-  }
-})
 const podioRanking = computed(() => ranking.value.slice(0, 3))
 
 function classePosicaoRanking(indice: number) {
@@ -1198,6 +1071,19 @@ function montarApostasParaEnvio() {
     }
   }
 
+  // Palpite de pódio (campeão/vice/3º): só envia se completo, distinto e ainda aberto.
+  const pod = palpitePodio.value
+  if (!podioFechado.value && pod.campeao && pod.vice && pod.terceiro
+    && pod.campeao !== pod.vice && pod.campeao !== pod.terceiro && pod.vice !== pod.terceiro) {
+    apostasArr.push({
+      tipo: 'podio',
+      torneio_id: torneio.value.id,
+      campeao_selecao_id: pod.campeao,
+      vice_selecao_id: pod.vice,
+      terceiro_selecao_id: pod.terceiro,
+    })
+  }
+
   return apostasArr
 }
 
@@ -1224,7 +1110,7 @@ async function recarregarEstadoDerivado() {
   const [rC, rA, rB] = await Promise.all([
     requisicaoApi<{ cupom: Cupom }>(`/cupons/${rota.params.id}`),
     requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${rota.params.id}/apostas`),
-    requisicaoApi<{ bracket: BracketJogoCupom[]; resumo: ResumoBracketCupom }>(`/cupons/${rota.params.id}/bracket`),
+    requisicaoApi<{ bracket: BracketJogoCupom[]; resumo: ResumoBracketReal }>(`/cupons/${rota.params.id}/bracket`),
   ])
 
   cupom.value = rC.cupom
@@ -1306,6 +1192,16 @@ function preencherFormulario(modo: 'substituir' | 'mesclar' = 'substituir') {
       }
     }
   }
+
+  const apostaPodio = apostas.value.find((a) => a.tipo === 'podio')
+  if (sobrescrever || (palpitePodio.value.campeao === null && palpitePodio.value.vice === null && palpitePodio.value.terceiro === null)) {
+    const c = (apostaPodio?.conteudo ?? {}) as Record<string, number | null>
+    palpitePodio.value = {
+      campeao: c.campeao_selecao_id ?? null,
+      vice: c.vice_selecao_id ?? null,
+      terceiro: c.terceiro_selecao_id ?? null,
+    }
+  }
 }
 
 async function carregarDados() {
@@ -1318,7 +1214,7 @@ async function carregarDados() {
     const [rT, rA, rB] = await Promise.all([
       requisicaoApi<{ torneio: Torneio }>(caminhoTorneio),
       requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${rota.params.id}/apostas`),
-      requisicaoApi<{ bracket: BracketJogoCupom[]; resumo: ResumoBracketCupom }>(`/cupons/${rota.params.id}/bracket`),
+      requisicaoApi<{ bracket: BracketJogoCupom[]; resumo: ResumoBracketReal }>(`/cupons/${rota.params.id}/bracket`),
     ])
     torneio.value = rT.torneio
     apostas.value = rA.apostas

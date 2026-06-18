@@ -42,11 +42,25 @@ class ServicoBracketReal
 
                 return [
                     'id' => $jogo->id,
-                    'fase' => ['slug' => $jogo->fase->slug, 'nome' => $jogo->fase->nome, 'ordem' => $jogo->fase->ordem],
+                    'fase_id' => $jogo->fase_id,
+                    'rodada_id' => $jogo->rodada_id,
+                    'grupo_id' => $jogo->grupo_id,
+                    'ordem_na_fase' => $jogo->ordem_na_fase,
+                    'status' => $jogo->status,
+                    'fase' => [
+                        'slug' => $jogo->fase->slug,
+                        'nome' => $jogo->fase->nome,
+                        'ordem' => $jogo->fase->ordem,
+                        'tipo' => $jogo->fase->tipo,
+                    ],
+                    'rodada' => null,
+                    'grupo' => null,
                     'data_hora_inicio' => $jogo->data_hora_inicio,
                     'selecao_mandante' => $par['mandante'],
                     'selecao_visitante' => $par['visitante'],
                     'resultado' => $jogo->resultado,
+                    'bloqueado' => false,
+                    'motivo_bloqueio' => null,
                     'palpite' => $aposta?->conteudo,
                 ];
             })
