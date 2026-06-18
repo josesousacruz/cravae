@@ -48,6 +48,7 @@ class ServicoBracketReal
                     'ordem_na_fase' => $jogo->ordem_na_fase,
                     'status' => $jogo->status,
                     'fase' => [
+                        'id' => $jogo->fase->id,
                         'slug' => $jogo->fase->slug,
                         'nome' => $jogo->fase->nome,
                         'ordem' => $jogo->fase->ordem,
