@@ -105,6 +105,21 @@ class MataMataRealidadeTest extends TestCase
         $this->assertSame(50, (int) $pontuacao->pontuacao_total, 'esperava 50 pts (so o campeao correto)');
     }
 
+    public function test_endpoint_bracket_retorna_jogos_de_mata_mata_com_times_reais_ou_nulos(): void
+    {
+        $this->seed();
+        [$usuario, $cupom, $torneio] = $this->criarCupom('bracket@teste.local');
+
+        Sanctum::actingAs($usuario);
+        $resp = $this->getJson("/api/cupons/{$cupom->id}/bracket")->assertOk();
+
+        $this->assertIsArray($resp->json('bracket'));
+        $this->assertNotEmpty($resp->json('bracket'));
+        $this->assertArrayHasKey('podio_real', $resp->json('resumo'));
+        $primeiro = $resp->json('bracket.0');
+        $this->assertArrayHasKey('selecao_mandante', $primeiro);
+    }
+
     private function lancarResultadosDeGrupos(Torneio $torneio): void
     {
         $jogos = Jogo::query()
