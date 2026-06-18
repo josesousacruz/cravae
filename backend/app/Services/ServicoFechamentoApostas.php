@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Cupom;
-use App\Models\Fase;
 use App\Models\Jogo;
 use App\Models\Torneio;
 use Illuminate\Support\Carbon;
@@ -20,8 +19,6 @@ class ServicoFechamentoApostas
                 'cupom' => 'Este cupom nao pode receber apostas.',
             ]);
         }
-
-        $this->validarDesbloqueioProgressivo($cupom, $dados);
     }
 
     public function prazoEncerrado(array $dados): bool
@@ -81,76 +78,5 @@ class ServicoFechamentoApostas
         $referencia = $primeiroDoDia ? Carbon::parse($primeiroDoDia) : $jogo->data_hora_inicio;
 
         return $referencia->copy()->subHour();
-    }
-
-    private function validarDesbloqueioProgressivo(Cupom $cupom, array $dados): void
-    {
-        if (($dados['tipo'] ?? null) !== 'placar_jogo_eliminatoria') {
-            return;
-        }
-
-        $jogo = Jogo::query()->with('fase')->findOrFail($dados['jogo_id']);
-        $faseAtual = $jogo->fase;
-
-        if (! $faseAtual) {
-            return;
-        }
-
-        $primeiraEliminatoria = Fase::query()
-            ->where('torneio_id', $jogo->torneio_id)
-            ->where('tipo', '!=', 'grupos')
-            ->orderBy('ordem')
-            ->first();
-
-        if (! $primeiraEliminatoria) {
-            return;
-        }
-
-        if ($faseAtual->id === $primeiraEliminatoria->id) {
-            $totalJogosGrupos = Jogo::query()
-                ->where('torneio_id', $jogo->torneio_id)
-                ->whereHas('fase', fn ($query) => $query->where('tipo', 'grupos'))
-                ->count();
-
-            $totalPalpitesGrupos = $cupom->apostas()
-                ->where('tipo', 'placar_jogo_grupos')
-                ->distinct('jogo_id')
-                ->count('jogo_id');
-
-            if ($totalPalpitesGrupos < $totalJogosGrupos) {
-                throw ValidationException::withMessages([
-                    'apostas' => 'As eliminatorias so desbloqueiam apos preencher todos os jogos da fase de grupos.',
-                ]);
-            }
-
-            return;
-        }
-
-        $faseAnterior = Fase::query()
-            ->where('torneio_id', $jogo->torneio_id)
-            ->where('tipo', '!=', 'grupos')
-            ->where('ordem', '<', $faseAtual->ordem)
-            ->orderByDesc('ordem')
-            ->first();
-
-        if (! $faseAnterior) {
-            return;
-        }
-
-        $totalJogosFaseAnterior = Jogo::query()
-            ->where('fase_id', $faseAnterior->id)
-            ->count();
-
-        $totalPalpitesFaseAnterior = $cupom->apostas()
-            ->where('tipo', 'placar_jogo_eliminatoria')
-            ->where('fase_id', $faseAnterior->id)
-            ->distinct('jogo_id')
-            ->count('jogo_id');
-
-        if ($totalPalpitesFaseAnterior < $totalJogosFaseAnterior) {
-            throw ValidationException::withMessages([
-                'apostas' => 'Esta fase do mata-mata ainda esta bloqueada para este cupom.',
-            ]);
-        }
     }
 }
