@@ -17,16 +17,17 @@ class ServicoCheckout
         private readonly ServicoAsaas $servicoAsaas,
     ) {}
 
-    public function criarPedido(Usuario $usuario, ?Cupom $cupom = null): PedidoCheckout
+    public function criarPedido(Usuario $usuario, Torneio $torneio, ?Cupom $cupom = null): PedidoCheckout
     {
-        $pedido = DB::transaction(function () use ($usuario, $cupom) {
+        $pedido = DB::transaction(function () use ($usuario, $torneio, $cupom) {
             if ($cupom?->pedido_checkout_id) {
                 return $cupom->pedidoCheckout()->lockForUpdate()->firstOrFail();
             }
 
             $pedido = PedidoCheckout::query()->create([
                 'usuario_id' => $usuario->id,
-                'valor' => Torneio::where('status', 'publicado')->latest('id')->value('valor_cupom') ?? 10,
+                'torneio_id' => $torneio->id,
+                'valor' => $torneio->valor_cupom ?? 10,
                 'status' => 'pendente',
                 'forma_pagamento' => 'pix',
                 'referencia_checkout' => (string) Str::uuid(),
@@ -35,6 +36,7 @@ class ServicoCheckout
             if ($cupom) {
                 $cupom->forceFill([
                     'pedido_checkout_id' => $pedido->id,
+                    'torneio_id' => $torneio->id,
                     'status' => 'aguardando_pagamento',
                 ])->save();
             }
@@ -109,6 +111,7 @@ class ServicoCheckout
 
             return Cupom::query()->create([
                 'usuario_id' => $pedido->usuario_id,
+                'torneio_id' => $pedido->torneio_id,
                 'pedido_checkout_id' => $pedido->id,
                 'codigo' => $this->gerarCodigoCupom(),
                 'status' => 'ativo',

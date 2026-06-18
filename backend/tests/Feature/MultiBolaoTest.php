@@ -39,4 +39,23 @@ class MultiBolaoTest extends TestCase
         $this->assertSame($torneio->id, $cupom->torneio->id);
         $this->assertSame($torneio->id, $pedido->torneio->id);
     }
+
+    public function test_pedido_e_cupom_herdam_torneio_do_checkout(): void
+    {
+        $this->seed();
+        $torneio = \App\Models\Torneio::query()->where('status', 'publicado')->firstOrFail();
+
+        $usuario = \App\Models\Usuario::factory()->create([
+            'perfil' => 'usuario',
+            'cpf_cnpj' => '12345678909',
+        ]);
+
+        $servico = app(\App\Services\ServicoCheckout::class);
+        $pedido = $servico->criarPedido($usuario, $torneio);
+
+        $this->assertSame($torneio->id, $pedido->torneio_id);
+
+        $cupom = $servico->marcarComoPago($pedido, 'RECEIVED');
+        $this->assertSame($torneio->id, $cupom->torneio_id);
+    }
 }
