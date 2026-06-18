@@ -298,6 +298,7 @@ class MvpFluxoApiTest extends TestCase
             'data_fechamento' => now()->subHour(),
         ]);
 
+        // Fora do prazo: o item e ignorado (lote nao falha) e nao e persistido.
         $this->postJson("/api/cupons/{$cupom['id']}/apostas/lote", [
             'apostas' => [
                 [
@@ -307,7 +308,12 @@ class MvpFluxoApiTest extends TestCase
                     'placar_visitante' => 0,
                 ],
             ],
-        ])->assertStatus(422);
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('apostas', [
+            'cupom_id' => $cupom['id'],
+            'jogo_id' => $jogo->id,
+        ]);
     }
 
     private function preencherResultadosReaisDosGrupos(Torneio $torneio): void

@@ -146,7 +146,11 @@
                 <!-- Top row: palpite status + quem palpitou + group -->
                 <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
                   <div class="flex min-w-0 flex-wrap items-center gap-2">
-                    <span v-if="jogoCompleto(jogo)" class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                    <span v-if="jogoSemConfronto(jogo)" class="inline-flex items-center gap-1 rounded-full bg-text-muted/15 px-2 py-0.5 text-[10px] font-medium text-text-muted">
+                      <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      Aguardando confronto
+                    </span>
+                    <span v-else-if="jogoCompleto(jogo)" class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                       <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                       Com palpite
                     </span>
@@ -224,21 +228,21 @@
 
                   <div class="flex items-center justify-center gap-1 sm:gap-2">
                     <div class="flex items-center gap-0.5">
-                      <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPlacar(jogo.id, 'mandante')">-</button>
+                      <button type="button" :disabled="jogoFechado(jogo) || jogoSemConfronto(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPlacar(jogo.id, 'mandante')">-</button>
                       <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresGrupos[jogo.id]?.placar_mandante !== '' ? 'text-text' : 'text-text-muted'">
                         {{ placaresGrupos[jogo.id]?.placar_mandante !== '' ? placaresGrupos[jogo.id]?.placar_mandante : '-' }}
                       </div>
-                      <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="incrementarPlacar(jogo.id, 'mandante')">+</button>
+                      <button type="button" :disabled="jogoFechado(jogo) || jogoSemConfronto(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="incrementarPlacar(jogo.id, 'mandante')">+</button>
                     </div>
 
                     <span class="text-xs text-text-muted font-medium">x</span>
 
                     <div class="flex items-center gap-0.5">
-                      <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPlacar(jogo.id, 'visitante')">-</button>
+                      <button type="button" :disabled="jogoFechado(jogo) || jogoSemConfronto(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPlacar(jogo.id, 'visitante')">-</button>
                       <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresGrupos[jogo.id]?.placar_visitante !== '' ? 'text-text' : 'text-text-muted'">
                         {{ placaresGrupos[jogo.id]?.placar_visitante !== '' ? placaresGrupos[jogo.id]?.placar_visitante : '-' }}
                       </div>
-                      <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="incrementarPlacar(jogo.id, 'visitante')">+</button>
+                      <button type="button" :disabled="jogoFechado(jogo) || jogoSemConfronto(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="incrementarPlacar(jogo.id, 'visitante')">+</button>
                     </div>
                   </div>
 
@@ -272,19 +276,19 @@
                     <span class="mb-2 block text-xs font-medium text-primary">Empate: informe os penaltis</span>
                     <div class="flex items-center justify-center gap-2">
                       <div class="flex items-center gap-0.5">
-                        <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPenal(jogo.id, 'mandante')">-</button>
+                        <button type="button" :disabled="jogoFechado(jogo) || jogoSemConfronto(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPenal(jogo.id, 'mandante')">-</button>
                         <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresEliminatorios[jogo.id].penal_mandante !== '' ? 'text-text' : 'text-text-muted'">
                           {{ placaresEliminatorios[jogo.id].penal_mandante !== '' ? placaresEliminatorios[jogo.id].penal_mandante : '-' }}
                         </div>
-                        <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="incrementarPenal(jogo.id, 'mandante')">+</button>
+                        <button type="button" :disabled="jogoFechado(jogo) || jogoSemConfronto(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="incrementarPenal(jogo.id, 'mandante')">+</button>
                       </div>
                       <span class="text-xs text-text-muted font-medium">x</span>
                       <div class="flex items-center gap-0.5">
-                        <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPenal(jogo.id, 'visitante')">-</button>
+                        <button type="button" :disabled="jogoFechado(jogo) || jogoSemConfronto(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPenal(jogo.id, 'visitante')">-</button>
                         <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-input text-base font-bold" :class="placaresEliminatorios[jogo.id].penal_visitante !== '' ? 'text-text' : 'text-text-muted'">
                           {{ placaresEliminatorios[jogo.id].penal_visitante !== '' ? placaresEliminatorios[jogo.id].penal_visitante : '-' }}
                         </div>
-                        <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="incrementarPenal(jogo.id, 'visitante')">+</button>
+                        <button type="button" :disabled="jogoFechado(jogo) || jogoSemConfronto(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="incrementarPenal(jogo.id, 'visitante')">+</button>
                       </div>
                     </div>
                   </div>
@@ -669,6 +673,18 @@ function temResultadoReal(jogo: JogoCupom): boolean {
   return !!r && r.placar_mandante !== null && r.placar_visitante !== null
 }
 
+// Mata-mata cujo confronto real ainda nao foi definido (algum lado "A definir").
+// Palpitar nesse caso e ignorado pelo backend, entao a UI desabilita e nao envia.
+function jogoSemConfronto(jogo: JogoCupom): boolean {
+  return jogo.fase.tipo !== 'grupos' && (!jogo.selecao_mandante || !jogo.selecao_visitante)
+}
+
+function jogoIndisponivelPorId(jogoId: number): boolean {
+  if (jogoFechadoPorId(jogoId)) return true
+  const jogo = jogosPorId.value.get(jogoId)
+  return jogo ? jogoSemConfronto(jogo) : false
+}
+
 // FIFA code → ISO 2-letter for flags
 const fifaParaIso: Record<string, string> = {
   MEX: 'mx', RSA: 'za', KOR: 'kr', CAN: 'ca', QAT: 'qa', SUI: 'ch',
@@ -985,7 +1001,7 @@ function faseProxima() { if (indiceFase.value < fasesRodadas.value.length - 1) i
 
 // Score starts at '-' (empty). First click on + sets to 0, then 1, 2...
 function incrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
-  if (jogoFechadoPorId(jogoId)) return
+  if (jogoIndisponivelPorId(jogoId)) return
   const campo = lado === 'mandante' ? 'placar_mandante' : 'placar_visitante'
   const current = placaresGrupos.value[jogoId][campo]
   if (current === '') {
@@ -997,7 +1013,7 @@ function incrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
 }
 
 function decrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
-  if (jogoFechadoPorId(jogoId)) return
+  if (jogoIndisponivelPorId(jogoId)) return
   const campo = lado === 'mandante' ? 'placar_mandante' : 'placar_visitante'
   const current = placaresGrupos.value[jogoId][campo]
   if (current === '' || current === '0') {
@@ -1009,7 +1025,7 @@ function decrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
 }
 
 function incrementarPenal(jogoId: number, lado: 'mandante' | 'visitante') {
-  if (jogoFechadoPorId(jogoId)) return
+  if (jogoIndisponivelPorId(jogoId)) return
   const campo = lado === 'mandante' ? 'penal_mandante' : 'penal_visitante'
   const current = placaresEliminatorios.value[jogoId][campo]
   placaresEliminatorios.value[jogoId][campo] = current === '' ? '0' : String(Number(current) + 1)
@@ -1017,7 +1033,7 @@ function incrementarPenal(jogoId: number, lado: 'mandante' | 'visitante') {
 }
 
 function decrementarPenal(jogoId: number, lado: 'mandante' | 'visitante') {
-  if (jogoFechadoPorId(jogoId)) return
+  if (jogoIndisponivelPorId(jogoId)) return
   const campo = lado === 'mandante' ? 'penal_mandante' : 'penal_visitante'
   const current = placaresEliminatorios.value[jogoId][campo]
   if (current === '' || current === '0') {
@@ -1049,6 +1065,8 @@ function montarApostasParaEnvio() {
     // Jogos ja fechados nao entram no lote: o palpite deles e imutavel e reenvia-los
     // faria o backend recusar o lote inteiro, derrubando os jogos ainda abertos.
     if (jogoFechado(jogo)) continue
+    // Mata-mata sem confronto definido: o backend ignoraria; nao enviar para nao confundir.
+    if (jogoSemConfronto(jogo)) continue
     const p = placaresGrupos.value[jogo.id]
     if (!p || p.placar_mandante === '' || p.placar_visitante === '') continue
     if (jogo.fase.tipo === 'grupos') {
