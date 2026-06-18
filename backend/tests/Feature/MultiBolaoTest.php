@@ -58,4 +58,25 @@ class MultiBolaoTest extends TestCase
         $cupom = $servico->marcarComoPago($pedido, 'RECEIVED');
         $this->assertSame($torneio->id, $cupom->torneio_id);
     }
+
+    public function test_compra_usa_compras_abertas_do_torneio_escolhido(): void
+    {
+        $this->seed();
+        $torneio = \App\Models\Torneio::query()->where('status', 'publicado')->firstOrFail();
+        $torneio->forceFill(['compras_abertas' => false, 'valor_cupom' => 25.00])->save();
+
+        $usuario = \App\Models\Usuario::factory()->create([
+            'perfil' => 'usuario',
+            'cpf_cnpj' => '12345678909',
+        ]);
+        \Laravel\Sanctum\Sanctum::actingAs($usuario);
+
+        $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->assertForbidden();
+
+        $torneio->forceFill(['compras_abertas' => true])->save();
+        $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])
+            ->assertCreated()
+            ->assertJsonPath('pedido.valor', '25.00')
+            ->assertJsonPath('pedido.torneio_id', $torneio->id);
+    }
 }

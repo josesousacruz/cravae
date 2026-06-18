@@ -19,6 +19,7 @@ class CriarPedidoCheckoutRequest extends FormRequest
     {
         return [
             'valor' => ['prohibited'],
+            'torneio_id' => ['required', 'integer', 'exists:torneios,id'],
             'cupom_id' => ['nullable', 'integer', 'exists:cupons,id'],
         ];
     }
