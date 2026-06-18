@@ -1301,8 +1301,31 @@ watch(fasesRodadas, (items) => {
   }
 })
 
+// Abre na fase/dia do dia atual (ou o proximo dia com jogos; senao o ultimo).
+function definirDiaInicial(): void {
+  if (!fasesRodadas.value.length) return
+  const jogos = [...jogosGruposDoTorneio.value, ...jogosEliminatoriosDoCupom.value]
+    .filter((jogo) => jogo.data_hora_inicio)
+    .sort((a, b) => a.data_hora_inicio.localeCompare(b.data_hora_inicio))
+  if (!jogos.length) return
+
+  const hoje = new Date().toISOString().substring(0, 10)
+  const alvo = jogos.find((jogo) => jogo.data_hora_inicio.substring(0, 10) === hoje)
+    ?? jogos.find((jogo) => jogo.data_hora_inicio.substring(0, 10) >= hoje)
+    ?? jogos[jogos.length - 1]
+
+  const idx = fasesRodadas.value.findIndex((item) =>
+    item.fase.tipo === 'grupos'
+      ? (item.rodada?.id ?? null) === alvo.rodada_id
+      : item.fase.id === alvo.fase_id,
+  )
+  if (idx >= 0) indiceFase.value = idx
+  diaSelecionado.value = alvo.data_hora_inicio.substring(0, 10)
+}
+
 onMounted(async () => {
   await carregarDados()
+  definirDiaInicial()
   carregarRanking()
 })
 </script>
