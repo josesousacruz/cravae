@@ -109,6 +109,41 @@ class MultiBolaoTest extends TestCase
             ->assertJsonStructure(['torneio' => ['id', 'nome', 'fases', 'jogos', 'grupos']]);
     }
 
+    public function test_compra_bloqueada_para_torneio_nao_publicado(): void
+    {
+        $this->seed();
+        $encerrado = \App\Models\Torneio::query()->create([
+            'nome' => 'Bolao Encerrado',
+            'edicao' => '2025',
+            'status' => 'encerrado',
+            'valor_cupom' => 10.00,
+            'compras_abertas' => true, // mesmo com compras "abertas", torneio encerrado nao vende
+        ]);
+
+        $usuario = \App\Models\Usuario::factory()->create([
+            'perfil' => 'usuario',
+            'cpf_cnpj' => '12345678909',
+        ]);
+        \Laravel\Sanctum\Sanctum::actingAs($usuario);
+
+        $this->postJson('/api/pedidos-checkout', ['torneio_id' => $encerrado->id])
+            ->assertForbidden();
+    }
+
+    public function test_show_torneio_nao_publicado_retorna_404(): void
+    {
+        $this->seed();
+        $rascunho = \App\Models\Torneio::query()->create([
+            'nome' => 'Bolao Rascunho',
+            'edicao' => '2027',
+            'status' => 'rascunho',
+            'valor_cupom' => 10.00,
+            'compras_abertas' => false,
+        ]);
+
+        $this->getJson("/api/torneios/{$rascunho->id}")->assertNotFound();
+    }
+
     public function test_admin_dados_carrega_torneio_escolhido(): void
     {
         $this->seed();

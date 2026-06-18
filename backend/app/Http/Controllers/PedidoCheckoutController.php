@@ -110,7 +110,11 @@ class PedidoCheckoutController extends Controller
 
     private function garantirComprasAbertas(Torneio $torneio): void
     {
-        abort_unless((bool) $torneio->compras_abertas, 403, 'A compra de cupons esta encerrada.');
+        abort_unless(
+            $torneio->status === 'publicado' && (bool) $torneio->compras_abertas,
+            403,
+            'A compra de cupons esta encerrada.'
+        );
     }
 
     public function confirmarSandbox(Request $request, PedidoCheckout $pedidoCheckout): JsonResponse

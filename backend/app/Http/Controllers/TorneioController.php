@@ -27,6 +27,8 @@ class TorneioController extends Controller
 
     public function show(Torneio $torneio): JsonResponse
     {
+        abort_unless($torneio->status === 'publicado', 404);
+
         return response()->json([
             'torneio' => $this->carregarRelacionamentos($torneio),
         ]);
