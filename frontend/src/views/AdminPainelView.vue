@@ -569,8 +569,28 @@ function preencherFormulario() {
   }
 
   if (!faseSelecionadaId.value || !fasesComJogos.value.some((fase) => fase.id === faseSelecionadaId.value)) {
-    faseSelecionadaId.value = fasesComJogos.value[0]?.id ?? null
+    definirDiaInicialAdmin()
   }
+}
+
+// Abre na fase/dia do dia atual (ou o proximo dia com jogos; senao o ultimo).
+function definirDiaInicialAdmin(): void {
+  const jogos = (torneio.value?.jogos ?? [])
+    .filter((jogo) => jogo.data_hora_inicio)
+    .sort((a, b) => a.data_hora_inicio.localeCompare(b.data_hora_inicio))
+
+  if (!jogos.length) {
+    faseSelecionadaId.value = fasesComJogos.value[0]?.id ?? null
+    return
+  }
+
+  const hoje = new Date().toISOString().substring(0, 10)
+  const alvo = jogos.find((jogo) => jogo.data_hora_inicio.substring(0, 10) === hoje)
+    ?? jogos.find((jogo) => jogo.data_hora_inicio.substring(0, 10) >= hoje)
+    ?? jogos[jogos.length - 1]
+
+  faseSelecionadaId.value = alvo.fase_id
+  diaSelecionadoAdmin.value = alvo.data_hora_inicio.substring(0, 10)
 }
 
 async function carregarDados(torneioId?: number) {
