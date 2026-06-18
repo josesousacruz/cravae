@@ -15,12 +15,11 @@ class ServicoApostas
 {
     public function __construct(
         private readonly ServicoFechamentoApostas $servicoFechamentoApostas,
-        private readonly ServicoBracketCupom $servicoBracketCupom,
-    ) {
-    }
+        private readonly ServicoResultadosTorneio $servicoResultadosTorneio,
+    ) {}
 
     /**
-     * @param array<int, array<string, mixed>> $itens
+     * @param  array<int, array<string, mixed>>  $itens
      */
     public function salvarLote(Cupom $cupom, Usuario $usuario, array $itens): void
     {
@@ -79,7 +78,7 @@ class ServicoApostas
     /**
      * Remove (limpa) os palpites dos jogos informados, respeitando o prazo de cada um.
      *
-     * @param array<int, int> $jogoIds
+     * @param  array<int, int>  $jogoIds
      */
     public function removerLote(Cupom $cupom, Usuario $usuario, array $jogoIds): void
     {
@@ -123,7 +122,7 @@ class ServicoApostas
     }
 
     /**
-     * @param array<string, mixed> $item
+     * @param  array<string, mixed>  $item
      * @return array<string, mixed>|null Null quando o item deve ser ignorado no lote
      *                                   (confronto do mata-mata ainda sem participantes).
      */
@@ -141,15 +140,10 @@ class ServicoApostas
             $selecaoClassificadaId = null;
 
             if ($tipo === 'placar_jogo_eliminatoria') {
-                // O bracket deriva os participantes a partir das apostas ja gravadas. Dentro de
-                // um mesmo lote, as apostas das fases anteriores recem-criadas precisam estar
-                // visiveis; sem isso o relacionamento fica num snapshot defasado e as fases
-                // profundas (ex.: a final) nunca resolvem os participantes em um unico save.
-                $cupom->unsetRelation('apostas');
-                $participantes = $this->servicoBracketCupom->participantesDoJogo($cupom, $jogo);
+                $participantes = $this->servicoResultadosTorneio->participantesDoJogo($jogo);
 
                 if (! $participantes['mandante'] || ! $participantes['visitante']) {
-                    // Sem participantes resolviveis: sinaliza para o lote ignorar o item.
+                    // Participantes reais ainda nao definidos: ignora o item no lote.
                     return null;
                 }
 
@@ -198,6 +192,24 @@ class ServicoApostas
             ];
         }
 
+        if ($tipo === 'podio') {
+            return [
+                'tipo' => 'podio',
+                'torneio_id' => (int) $item['torneio_id'],
+                'fase_id' => null,
+                'rodada_id' => null,
+                'grupo_id' => null,
+                'jogo_id' => null,
+                'selecao_id' => null,
+                'jogador_id' => null,
+                'conteudo' => [
+                    'campeao_selecao_id' => (int) $item['campeao_selecao_id'],
+                    'vice_selecao_id' => (int) $item['vice_selecao_id'],
+                    'terceiro_selecao_id' => (int) $item['terceiro_selecao_id'],
+                ],
+            ];
+        }
+
         throw ValidationException::withMessages([
             'apostas' => "Tipo de aposta nao suportado: {$tipo}.",
         ]);
@@ -231,7 +243,7 @@ class ServicoApostas
     }
 
     /**
-     * @param array<string, mixed> $normalizado
+     * @param  array<string, mixed>  $normalizado
      */
     private function conteudoInalterado(?Aposta $existente, array $normalizado): bool
     {
@@ -239,7 +251,7 @@ class ServicoApostas
     }
 
     /**
-     * @param array<string, mixed> $dados
+     * @param  array<string, mixed>  $dados
      */
     private function localizarAposta(Cupom $cupom, array $dados): ?Aposta
     {

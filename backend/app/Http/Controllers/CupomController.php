@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cupom;
-use App\Services\ServicoBracketCupom;
+use App\Services\ServicoBracketReal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CupomController extends Controller
 {
     public function __construct(
-        private readonly ServicoBracketCupom $servicoBracketCupom,
+        private readonly ServicoBracketReal $servicoBracketReal,
     ) {
     }
 
@@ -53,8 +53,8 @@ class CupomController extends Controller
         $cupom->loadMissing('apostas');
 
         return response()->json([
-            'bracket' => $this->servicoBracketCupom->gerar($cupom),
-            'resumo' => $this->servicoBracketCupom->resumo($cupom),
+            'bracket' => $this->servicoBracketReal->gerar($cupom),
+            'resumo' => $this->servicoBracketReal->resumo($cupom),
         ]);
     }
 }

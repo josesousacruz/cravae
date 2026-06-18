@@ -12,6 +12,7 @@ class SalvarApostasRequest extends FormRequest
         'placar_jogo_grupos',
         'placar_jogo_eliminatoria',
         'artilheiro',
+        'podio',
     ];
 
     public function authorize(): bool
@@ -32,6 +33,9 @@ class SalvarApostasRequest extends FormRequest
             'apostas.*.grupo_id' => ['nullable', 'integer', 'exists:grupos,id'],
             'apostas.*.jogador_id' => ['nullable', 'integer', 'exists:jogadores,id'],
             'apostas.*.selecao_id' => ['nullable', 'integer', 'exists:selecoes,id'],
+            'apostas.*.campeao_selecao_id' => ['nullable', 'integer', 'exists:selecoes,id'],
+            'apostas.*.vice_selecao_id' => ['nullable', 'integer', 'exists:selecoes,id'],
+            'apostas.*.terceiro_selecao_id' => ['nullable', 'integer', 'exists:selecoes,id'],
             'apostas.*.placar_mandante' => ['nullable', 'integer', 'min:0'],
             'apostas.*.placar_visitante' => ['nullable', 'integer', 'min:0'],
             'apostas.*.penal_mandante' => ['nullable', 'integer', 'min:0'],
@@ -59,6 +63,7 @@ class SalvarApostasRequest extends FormRequest
                         'placar_jogo_grupos' => $this->validarPlacarJogo($validator, $indice, $aposta, false),
                         'placar_jogo_eliminatoria' => $this->validarPlacarJogo($validator, $indice, $aposta, true),
                         'artilheiro' => $this->validarArtilheiro($validator, $indice, $aposta),
+                        'podio' => $this->validarPodio($validator, $indice, $aposta),
                         default => null,
                     };
                 }
@@ -113,6 +118,28 @@ class SalvarApostasRequest extends FormRequest
             if (! isset($aposta[$campo])) {
                 $validator->errors()->add("apostas.$indice.$campo", 'Campo obrigatorio para artilheiro.');
             }
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $aposta
+     */
+    private function validarPodio(Validator $validator, int $indice, array $aposta): void
+    {
+        foreach (['torneio_id', 'campeao_selecao_id', 'vice_selecao_id', 'terceiro_selecao_id'] as $campo) {
+            if (! isset($aposta[$campo])) {
+                $validator->errors()->add("apostas.$indice.$campo", 'Campo obrigatorio para o palpite de podio.');
+            }
+        }
+
+        $ids = array_filter([
+            $aposta['campeao_selecao_id'] ?? null,
+            $aposta['vice_selecao_id'] ?? null,
+            $aposta['terceiro_selecao_id'] ?? null,
+        ], fn ($id) => $id !== null);
+
+        if (count($ids) === 3 && count(array_unique($ids)) !== 3) {
+            $validator->errors()->add("apostas.$indice.podio", 'Campeao, vice e terceiro devem ser selecoes diferentes.');
         }
     }
 }

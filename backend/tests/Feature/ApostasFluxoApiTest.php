@@ -8,9 +8,10 @@ use App\Models\Jogo;
 use App\Models\Jogador;
 use App\Models\LogAposta;
 use App\Models\Rodada;
+use App\Models\ResultadoJogo;
 use App\Models\Torneio;
 use App\Models\Usuario;
-use App\Services\ServicoBracketCupom;
+use App\Services\ServicoResultadosTorneio;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -92,33 +93,27 @@ class ApostasFluxoApiTest extends TestCase
         $torneio = Torneio::query()->firstOrFail();
         $jogador = Jogador::query()->firstOrFail();
         $jogoGrupos = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))->firstOrFail();
-        $jogoEliminatoria = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'round_of_32'))->firstOrFail();
 
         // Mantem o teste deterministico mesmo apos o inicio real da Copa: garante
         // que o jogo de grupos e o artilheiro ainda estejam dentro do prazo.
         Rodada::query()->whereKey($jogoGrupos->rodada_id)->update(['data_fechamento' => now()->addDay()]);
         Torneio::query()->whereKey($torneio->id)->update(['data_inicio' => now()->addDay()]);
 
-        foreach (Jogo::query()->whereHas('fase', fn ($query) => $query->where('tipo', 'grupos'))->get() as $jogo) {
-            Aposta::query()->create([
-                'cupom_id' => $cupom->id,
-                'tipo' => 'placar_jogo_grupos',
-                'torneio_id' => $jogo->torneio_id,
-                'fase_id' => $jogo->fase_id,
-                'rodada_id' => $jogo->rodada_id,
-                'grupo_id' => $jogo->grupo_id,
-                'jogo_id' => $jogo->id,
-                'selecao_id' => null,
-                'jogador_id' => null,
-                'conteudo' => [
-                    'placar_mandante' => 1,
-                    'placar_visitante' => 0,
-                    'penal_mandante' => null,
-                    'penal_visitante' => null,
-                    'selecao_classificada_id' => null,
-                ],
-            ]);
-        }
+        // No modelo real, o palpite de eliminatoria so e salvo quando os participantes
+        // REAIS do jogo existem -> e necessario lancar resultados reais dos grupos.
+        $this->lancarResultadosDeGrupos($torneio);
+
+        // Escolhe um jogo do round_of_32 cujos participantes reais ja existem.
+        $participantes = app(ServicoResultadosTorneio::class)->participantesPorJogo($torneio);
+        $jogoEliminatoria = Jogo::query()
+            ->whereHas('fase', fn ($query) => $query->where('slug', 'round_of_32'))
+            ->get()
+            ->first(fn (Jogo $jogo) => ($participantes[$jogo->id]['mandante'] ?? null) && ($participantes[$jogo->id]['visitante'] ?? null));
+        $this->assertNotNull($jogoEliminatoria, 'Round of 32 deve ter participantes reais apos lancar os grupos.');
+
+        $par = $participantes[$jogoEliminatoria->id];
+        // Vitoria do mandante no tempo normal -> classificado e o mandante real.
+        $classificadoEsperado = (int) $par['mandante']->id;
 
         Sanctum::actingAs($usuario);
 
@@ -138,10 +133,8 @@ class ApostasFluxoApiTest extends TestCase
                 [
                     'tipo' => 'placar_jogo_eliminatoria',
                     'jogo_id' => $jogoEliminatoria->id,
-                    'placar_mandante' => 1,
+                    'placar_mandante' => 2,
                     'placar_visitante' => 1,
-                    'penal_mandante' => 4,
-                    'penal_visitante' => 3,
                 ],
             ],
         ])->assertOk();
@@ -151,12 +144,26 @@ class ApostasFluxoApiTest extends TestCase
             ->where('tipo', 'placar_jogo_eliminatoria')
             ->where('jogo_id', $jogoEliminatoria->id)
             ->firstOrFail();
-        $participantes = collect(app(ServicoBracketCupom::class)->gerar($cupom))->keyBy('id');
-        $classificadoEsperado = $participantes[$jogoEliminatoria->id]['selecao_mandante']['id'] ?? null;
 
-        $this->assertSame(4, $apostaEliminatoria->conteudo['penal_mandante']);
+        $this->assertSame(2, $apostaEliminatoria->conteudo['placar_mandante']);
         $this->assertSame($classificadoEsperado, $apostaEliminatoria->conteudo['selecao_classificada_id']);
         $this->assertDatabaseCount('logs_apostas', 3);
+    }
+
+    private function lancarResultadosDeGrupos(Torneio $torneio): void
+    {
+        $jogos = Jogo::query()
+            ->where('torneio_id', $torneio->id)
+            ->whereHas('fase', fn ($q) => $q->where('tipo', 'grupos'))
+            ->whereNotNull('selecao_mandante_id')->whereNotNull('selecao_visitante_id')->get();
+
+        foreach ($jogos as $i => $jogo) {
+            ResultadoJogo::query()->updateOrCreate(
+                ['jogo_id' => $jogo->id],
+                ['placar_mandante' => ($i % 3) + 1, 'placar_visitante' => 0, 'selecao_classificada_id' => null, 'encerrado_at' => now()],
+            );
+            $jogo->update(['status' => 'encerrado']);
+        }
     }
 
     public function test_request_rejeita_payload_invalido_por_tipo_e_recusa_tipos_removidos(): void
