@@ -108,4 +108,29 @@ class MultiBolaoTest extends TestCase
             ->assertJsonPath('torneio.id', $torneio->id)
             ->assertJsonStructure(['torneio' => ['id', 'nome', 'fases', 'jogos', 'grupos']]);
     }
+
+    public function test_admin_dados_carrega_torneio_escolhido(): void
+    {
+        $this->seed();
+        $atual = \App\Models\Torneio::query()->where('status', 'publicado')->firstOrFail();
+
+        $outro = \App\Models\Torneio::query()->create([
+            'nome' => 'Bolao Mata-mata',
+            'edicao' => '2026',
+            'status' => 'publicado',
+            'valor_cupom' => 20.00,
+            'compras_abertas' => true,
+        ]);
+
+        $admin = \App\Models\Usuario::factory()->create(['perfil' => 'administrador']);
+        \Laravel\Sanctum\Sanctum::actingAs($admin);
+
+        $this->getJson('/api/admin/dados')
+            ->assertOk()
+            ->assertJsonPath('torneio.id', $outro->id);
+
+        $this->getJson("/api/admin/dados?torneio_id={$atual->id}")
+            ->assertOk()
+            ->assertJsonPath('torneio.id', $atual->id);
+    }
 }

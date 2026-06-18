@@ -106,9 +106,13 @@ class PainelAdministradorController extends Controller
         return response()->json(['torneio' => $torneio->fresh()]);
     }
 
-    public function dados(): JsonResponse
+    public function dados(Request $request): JsonResponse
     {
         $torneio = Torneio::query()
+            ->when(
+                $request->filled('torneio_id'),
+                fn ($query) => $query->whereKey($request->integer('torneio_id')),
+            )
             ->with([
                 'resultadoTorneio',
                 'grupos.selecoes.jogadores',
@@ -205,9 +209,12 @@ class PainelAdministradorController extends Controller
 
     public function criarRegraPontuacao(Request $request): JsonResponse
     {
-        $torneio = Torneio::query()->latest('id')->firstOrFail();
+        $torneio = $request->filled('torneio_id')
+            ? Torneio::query()->findOrFail($request->integer('torneio_id'))
+            : Torneio::query()->latest('id')->firstOrFail();
 
         $dados = $request->validate([
+            'torneio_id' => ['nullable', 'integer', 'exists:torneios,id'],
             'chave' => ['required', 'string', Rule::in(array_keys(self::CHAVES_PONTUACAO))],
             'fase_id' => ['nullable', 'integer', Rule::exists('fases', 'id')->where('torneio_id', $torneio->id)],
             'nome' => ['required', 'string', 'max:120'],
