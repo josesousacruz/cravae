@@ -135,6 +135,52 @@
 
             <!-- ═══ Sub-tab: Jogos ═══ -->
             <template v-if="subTabAtiva === 'jogos'">
+            <!-- ═══ Banner: Palpite de pódio (visível só enquanto o pódio estiver aberto) ═══ -->
+            <div
+              v-if="!podioFechado"
+              class="mb-4 overflow-hidden rounded-2xl border border-gold/40 bg-[radial-gradient(circle_at_0%_0%,rgba(251,191,36,0.16),transparent_45%),linear-gradient(135deg,#1a1404,#141414_62%)] shadow-lg shadow-black/30"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gold/15 px-4 py-3 sm:px-5">
+                <div class="flex items-center gap-2.5">
+                  <svg class="h-6 w-6 shrink-0 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" /></svg>
+                  <div class="min-w-0">
+                    <h3 class="text-sm font-black text-text sm:text-base">Palpite de pódio</h3>
+                    <p class="text-[11px] text-text-muted">Campeão, vice e 3º lugar — fecha 1h antes do mata-mata</p>
+                  </div>
+                </div>
+                <div
+                  v-if="contagemPodio"
+                  class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold"
+                  :class="contagemPodio.urgente ? 'animate-pulse border-warning/50 bg-warning/15 text-warning' : 'border-gold/40 bg-gold/10 text-gold'"
+                >
+                  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <span>Fecha em {{ textoContagemPodio }}</span>
+                </div>
+              </div>
+              <div class="grid gap-3 p-4 sm:grid-cols-3 sm:px-5">
+                <label class="block">
+                  <span class="mb-1 block text-[10px] uppercase tracking-wide text-text-muted">Campeão</span>
+                  <select v-model.number="palpitePodio.campeao" :disabled="podioFechado" class="w-full rounded-lg border border-gold/25 bg-bg-input px-2 py-2 text-sm text-text focus:border-gold/60 focus:outline-none disabled:opacity-50" @change="aoMudarPodio">
+                    <option :value="null">A definir</option>
+                    <option v-for="s in todasSelecoesOrdenadas" :key="`bc-${s.id}`" :value="s.id">{{ s.nome }}</option>
+                  </select>
+                </label>
+                <label class="block">
+                  <span class="mb-1 block text-[10px] uppercase tracking-wide text-text-muted">Vice</span>
+                  <select v-model.number="palpitePodio.vice" :disabled="podioFechado" class="w-full rounded-lg border border-gold/25 bg-bg-input px-2 py-2 text-sm text-text focus:border-gold/60 focus:outline-none disabled:opacity-50" @change="aoMudarPodio">
+                    <option :value="null">A definir</option>
+                    <option v-for="s in todasSelecoesOrdenadas" :key="`bv-${s.id}`" :value="s.id">{{ s.nome }}</option>
+                  </select>
+                </label>
+                <label class="block">
+                  <span class="mb-1 block text-[10px] uppercase tracking-wide text-text-muted">Terceiro</span>
+                  <select v-model.number="palpitePodio.terceiro" :disabled="podioFechado" class="w-full rounded-lg border border-gold/25 bg-bg-input px-2 py-2 text-sm text-text focus:border-gold/60 focus:outline-none disabled:opacity-50" @change="aoMudarPodio">
+                    <option :value="null">A definir</option>
+                    <option v-for="s in todasSelecoesOrdenadas" :key="`bt-${s.id}`" :value="s.id">{{ s.nome }}</option>
+                  </select>
+                </label>
+              </div>
+            </div>
             <!-- Match cards -->
             <div class="min-w-0 space-y-4">
               <div
@@ -430,36 +476,27 @@
                 </div>
               </section>
 
-              <!-- Palpite de pódio (campeão/vice/3º) -->
+              <!-- Palpite de pódio (campeão/vice/3º): resumo. A edição fica no banner da aba Jogos. -->
               <div class="rounded-2xl border border-border bg-bg-card p-4">
-                <div class="mb-3 flex items-center justify-between gap-2">
+                <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <h3 class="text-sm font-bold text-text">Palpite de pódio</h3>
                   <span v-if="podioFechado" class="rounded-full bg-text-muted/15 px-2 py-0.5 text-[10px] font-medium text-text-muted">Fechado</span>
+                  <button
+                    v-else
+                    type="button"
+                    class="inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-0.5 text-[10px] font-medium text-gold transition hover:bg-gold/20"
+                    @click="subTabAtiva = 'jogos'"
+                  >
+                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" /></svg>
+                    Editar na aba Jogos
+                  </button>
                 </div>
-                <div class="grid gap-3 sm:grid-cols-3">
-                  <label class="block">
-                    <span class="mb-1 block text-[10px] uppercase text-text-muted">Campeão</span>
-                    <select v-model.number="palpitePodio.campeao" :disabled="podioFechado" class="w-full rounded-lg border border-border bg-bg-input px-2 py-2 text-sm text-text disabled:opacity-50" @change="aoMudarPodio">
-                      <option :value="null">A definir</option>
-                      <option v-for="s in todasSelecoesOrdenadas" :key="`c-${s.id}`" :value="s.id">{{ s.nome }}</option>
-                    </select>
-                  </label>
-                  <label class="block">
-                    <span class="mb-1 block text-[10px] uppercase text-text-muted">Vice</span>
-                    <select v-model.number="palpitePodio.vice" :disabled="podioFechado" class="w-full rounded-lg border border-border bg-bg-input px-2 py-2 text-sm text-text disabled:opacity-50" @change="aoMudarPodio">
-                      <option :value="null">A definir</option>
-                      <option v-for="s in todasSelecoesOrdenadas" :key="`v-${s.id}`" :value="s.id">{{ s.nome }}</option>
-                    </select>
-                  </label>
-                  <label class="block">
-                    <span class="mb-1 block text-[10px] uppercase text-text-muted">Terceiro</span>
-                    <select v-model.number="palpitePodio.terceiro" :disabled="podioFechado" class="w-full rounded-lg border border-border bg-bg-input px-2 py-2 text-sm text-text disabled:opacity-50" @change="aoMudarPodio">
-                      <option :value="null">A definir</option>
-                      <option v-for="s in todasSelecoesOrdenadas" :key="`t-${s.id}`" :value="s.id">{{ s.nome }}</option>
-                    </select>
-                  </label>
+                <div class="grid gap-2 text-sm sm:grid-cols-3">
+                  <div><span class="text-[10px] uppercase tracking-wide text-text-muted">Campeão</span><p class="font-medium text-text">{{ nomeSelecaoPorId(palpitePodio.campeao) }}</p></div>
+                  <div><span class="text-[10px] uppercase tracking-wide text-text-muted">Vice</span><p class="font-medium text-text">{{ nomeSelecaoPorId(palpitePodio.vice) }}</p></div>
+                  <div><span class="text-[10px] uppercase tracking-wide text-text-muted">Terceiro</span><p class="font-medium text-text">{{ nomeSelecaoPorId(palpitePodio.terceiro) }}</p></div>
                 </div>
-                <div v-if="resumoBracketIds.podio_real.campeao" class="mt-4 grid gap-2 text-xs sm:grid-cols-3">
+                <div v-if="resumoBracketIds.podio_real.campeao" class="mt-4 grid gap-2 border-t border-border pt-4 text-xs sm:grid-cols-3">
                   <div><span class="text-text-muted">Campeão real: </span><span class="font-medium text-text">{{ nomeSelecaoPorId(resumoBracketIds.podio_real.campeao) }}</span></div>
                   <div><span class="text-text-muted">Vice real: </span><span class="font-medium text-text">{{ nomeSelecaoPorId(resumoBracketIds.podio_real.vice) }}</span></div>
                   <div><span class="text-text-muted">3º real: </span><span class="font-medium text-text">{{ nomeSelecaoPorId(resumoBracketIds.podio_real.terceiro) }}</span></div>
@@ -602,6 +639,9 @@ const valorCupomFormatado = computed(() => {
 const tabAtiva = ref<'palpites' | 'ranking' | 'resultados'>('palpites')
 const subTabAtiva = ref<'jogos' | 'chaveamento'>('jogos')
 const indiceFase = ref(0)
+// Relogio reativo (atualizado a cada segundo) para o fechamento do podio e a contagem regressiva.
+const agoraMs = ref(Date.now())
+let relogioTimer: ReturnType<typeof setInterval> | null = null
 const diaSelecionado = ref('')
 
 const tabs = [
@@ -665,11 +705,13 @@ function fecharPalpiteiros(evento?: Event) {
 onMounted(() => {
   document.addEventListener('mousedown', fecharPalpiteiros)
   window.addEventListener('scroll', fecharPalpiteiros, true)
+  relogioTimer = setInterval(() => { agoraMs.value = Date.now() }, 1000)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', fecharPalpiteiros)
   window.removeEventListener('scroll', fecharPalpiteiros, true)
+  if (relogioTimer) clearInterval(relogioTimer)
 })
 
 function temResultadoReal(jogo: JogoCupom): boolean {
@@ -896,11 +938,47 @@ function nomeSelecaoPorId(id: number | null): string {
   return todasSelecoes.value.find((s) => s.id === id)?.nome ?? 'A definir'
 }
 
-// O pódio (aposta 'podio') fecha 1h antes do início do torneio, igual ao artilheiro.
-const podioFechado = computed(() => {
+// O pódio (aposta 'podio') fecha no FIM da fase de grupos: 1h antes do primeiro jogo
+// do mata-mata. Espelha ServicoFechamentoApostas. Fallback: 1h antes do início do torneio
+// (ex.: bolão só de mata-mata, ou quando o mata-mata ainda não tem data definida).
+const prazoPodioMs = computed<number | null>(() => {
+  const inicios = (torneio.value?.jogos ?? [])
+    .filter((jogo) => jogo.fase.tipo !== 'grupos' && jogo.data_hora_inicio)
+    .map((jogo) => new Date(jogo.data_hora_inicio).getTime())
+  if (inicios.length) return Math.min(...inicios) - 3600000
   const inicio = torneio.value?.data_inicio
-  if (!inicio) return false
-  return Date.now() >= new Date(inicio).getTime() - 3600000
+  return inicio ? new Date(inicio).getTime() - 3600000 : null
+})
+
+const podioFechado = computed(() => {
+  const prazo = prazoPodioMs.value
+  if (prazo === null) return false
+  return agoraMs.value >= prazo
+})
+
+// Contagem regressiva até o fechamento do pódio (null quando não há prazo ou já fechou).
+const contagemPodio = computed(() => {
+  const prazo = prazoPodioMs.value
+  if (prazo === null) return null
+  const restanteMs = prazo - agoraMs.value
+  if (restanteMs <= 0) return null
+  const totalSeg = Math.floor(restanteMs / 1000)
+  return {
+    dias: Math.floor(totalSeg / 86400),
+    horas: Math.floor((totalSeg % 86400) / 3600),
+    min: Math.floor((totalSeg % 3600) / 60),
+    seg: totalSeg % 60,
+    urgente: restanteMs <= 86_400_000, // últimas 24h
+  }
+})
+
+const textoContagemPodio = computed(() => {
+  const c = contagemPodio.value
+  if (!c) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return c.dias > 0
+    ? `${c.dias}d ${pad(c.horas)}h ${pad(c.min)}m`
+    : `${pad(c.horas)}h ${pad(c.min)}m ${pad(c.seg)}s`
 })
 
 function aoMudarPodio() {
