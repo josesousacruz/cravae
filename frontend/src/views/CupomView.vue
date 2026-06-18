@@ -942,6 +942,10 @@ function nomeSelecaoPorId(id: number | null): string {
 // do mata-mata. Espelha ServicoFechamentoApostas. Fallback: 1h antes do início do torneio
 // (ex.: bolão só de mata-mata, ou quando o mata-mata ainda não tem data definida).
 const prazoPodioMs = computed<number | null>(() => {
+  // Override opcional definido pelo admin tem prioridade.
+  if (torneio.value?.data_fechamento_podio) {
+    return new Date(torneio.value.data_fechamento_podio).getTime()
+  }
   const inicios = (torneio.value?.jogos ?? [])
     .filter((jogo) => jogo.fase.tipo !== 'grupos' && jogo.data_hora_inicio)
     .map((jogo) => new Date(jogo.data_hora_inicio).getTime())
