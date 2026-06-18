@@ -62,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/admin/jogos/{jogo}/resultado', [PainelAdministradorController::class, 'limparResultadoJogo']);
         Route::put('/admin/torneios/{torneio}/resultado', [PainelAdministradorController::class, 'salvarResultadoTorneio']);
         Route::put('/admin/torneios/{torneio}/compras', [PainelAdministradorController::class, 'atualizarComprasAbertas']);
+        Route::put('/admin/torneios/{torneio}/fechamento-podio', [PainelAdministradorController::class, 'atualizarFechamentoPodio']);
         Route::post('/admin/regras-pontuacao', [PainelAdministradorController::class, 'criarRegraPontuacao']);
         Route::put('/admin/regras-pontuacao/{regraPontuacao}', [PainelAdministradorController::class, 'atualizarRegraPontuacao']);
         Route::delete('/admin/regras-pontuacao/{regraPontuacao}', [PainelAdministradorController::class, 'excluirRegraPontuacao']);
