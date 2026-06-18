@@ -84,14 +84,25 @@
                 {{ jogo.grupo?.nome ?? 'Mata-mata' }}
               </p>
             </div>
-            <button
-              type="button"
-              class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-bg transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
-              :disabled="salvandoJogoId === jogo.id"
-              @click="salvarResultadoJogo(jogo.id)"
-            >
-              {{ salvandoJogoId === jogo.id ? 'Salvando...' : 'Salvar resultado' }}
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                v-if="jogo.resultado"
+                type="button"
+                class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition hover:text-text disabled:cursor-not-allowed disabled:opacity-60"
+                :disabled="salvandoJogoId === jogo.id"
+                @click="limparResultadoJogo(jogo.id)"
+              >
+                {{ salvandoJogoId === jogo.id ? 'Limpando...' : 'Limpar' }}
+              </button>
+              <button
+                type="button"
+                class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-bg transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+                :disabled="salvandoJogoId === jogo.id"
+                @click="salvarResultadoJogo(jogo.id)"
+              >
+                {{ salvandoJogoId === jogo.id ? 'Salvando...' : 'Salvar resultado' }}
+              </button>
+            </div>
           </div>
 
           <div class="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
@@ -584,6 +595,14 @@ async function salvarResultadoJogo(jogoId: number) {
       },
     })
   }, 'Resultado salvo. Recalculo enviado para processamento.')
+  salvandoJogoId.value = null
+}
+
+async function limparResultadoJogo(jogoId: number) {
+  salvandoJogoId.value = jogoId
+  await executarAcao(async () => {
+    await requisicaoApi(`/admin/jogos/${jogoId}/resultado`, { metodo: 'DELETE' })
+  }, 'Resultado removido. Recalculo enviado para processamento.')
   salvandoJogoId.value = null
 }
 
