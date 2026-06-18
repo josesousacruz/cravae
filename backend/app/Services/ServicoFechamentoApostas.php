@@ -51,8 +51,13 @@ class ServicoFechamentoApostas
         }
 
         if ($tipo === 'podio') {
-            // O palpite de campeao/vice/3o fecha no FIM da fase de grupos: 1h antes do
-            // primeiro jogo do mata-mata. Para bolao so de mata-mata, e antes do 1o jogo.
+            // Override opcional definido pelo admin: se presente, fecha exatamente nesse horario.
+            if ($torneio->data_fechamento_podio) {
+                return $torneio->data_fechamento_podio;
+            }
+
+            // Caso contrario, o palpite de campeao/vice/3o fecha no FIM da fase de grupos:
+            // 1h antes do primeiro jogo do mata-mata. Para bolao so de mata-mata, e antes do 1o jogo.
             $primeiroMataMata = Jogo::query()
                 ->where('torneio_id', $torneio->id)
                 ->whereHas('fase', fn ($query) => $query->where('tipo', '!=', 'grupos'))

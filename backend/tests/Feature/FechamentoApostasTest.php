@@ -318,6 +318,72 @@ class FechamentoApostasTest extends TestCase
         ]);
     }
 
+    public function test_podio_respeita_override_de_fechamento_definido_pelo_admin(): void
+    {
+        $this->seed();
+        $torneio = Torneio::query()->firstOrFail();
+
+        // Override explicito do admin: o podio fecha exatamente nesse horario,
+        // independente do calendario do mata-mata.
+        Torneio::query()->whereKey($torneio->id)->update([
+            'data_fechamento_podio' => '2026-07-01 12:00:00',
+        ]);
+
+        $servico = app(ServicoFechamentoApostas::class);
+        $dados = ['tipo' => 'podio', 'torneio_id' => $torneio->id];
+
+        Carbon::setTestNow('2026-07-01 11:00:00');
+        $this->assertFalse(
+            $servico->prazoEncerrado($dados),
+            '1h antes do override, o podio deve estar aberto.',
+        );
+
+        Carbon::setTestNow('2026-07-01 12:30:00');
+        $this->assertTrue(
+            $servico->prazoEncerrado($dados),
+            'Apos o override, o podio deve estar fechado.',
+        );
+
+        Carbon::setTestNow();
+    }
+
+    public function test_podio_usa_calculo_automatico_quando_sem_override(): void
+    {
+        $this->seed();
+        $torneio = Torneio::query()->firstOrFail();
+        Torneio::query()->whereKey($torneio->id)->update(['data_fechamento_podio' => null]);
+
+        // Define os jogos do mata-mata; o mais cedo fica as 13:00 -> podio fecha as 12:00.
+        Jogo::query()
+            ->where('torneio_id', $torneio->id)
+            ->whereHas('fase', fn ($q) => $q->where('tipo', '!=', 'grupos'))
+            ->update(['data_hora_inicio' => '2026-08-10 16:00:00']);
+
+        $primeiroMataMata = Jogo::query()
+            ->where('torneio_id', $torneio->id)
+            ->whereHas('fase', fn ($q) => $q->where('tipo', '!=', 'grupos'))
+            ->orderBy('id')
+            ->firstOrFail();
+        Jogo::query()->whereKey($primeiroMataMata->id)->update(['data_hora_inicio' => '2026-08-10 13:00:00']);
+
+        $servico = app(ServicoFechamentoApostas::class);
+        $dados = ['tipo' => 'podio', 'torneio_id' => $torneio->id];
+
+        Carbon::setTestNow('2026-08-10 11:00:00');
+        $this->assertFalse(
+            $servico->prazoEncerrado($dados),
+            'Sem override, o podio segue o automatico (1h antes do 1o mata-mata).',
+        );
+
+        Carbon::setTestNow('2026-08-10 12:30:00');
+        $this->assertTrue(
+            $servico->prazoEncerrado($dados),
+            'Sem override, fecha 1h antes do 1o jogo do mata-mata (12:00).',
+        );
+
+        Carbon::setTestNow();
+    }
+
     public function test_backend_ignora_oitavas_antes_de_completar_todos_os_grupos_do_cupom(): void
     {
         $this->seed();

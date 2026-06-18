@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AtualizarComprasCupomRequest;
+use App\Http\Requests\AtualizarFechamentoPodioRequest;
 use App\Http\Requests\AtualizarRegraPontuacaoRequest;
 use App\Http\Requests\SalvarResultadoJogoRequest;
 use App\Http\Requests\SalvarResultadoTorneioRequest;
@@ -102,6 +103,15 @@ class PainelAdministradorController extends Controller
     public function atualizarComprasAbertas(AtualizarComprasCupomRequest $request, Torneio $torneio): JsonResponse
     {
         $torneio->forceFill(['compras_abertas' => $request->boolean('compras_abertas')])->save();
+
+        return response()->json(['torneio' => $torneio->fresh()]);
+    }
+
+    public function atualizarFechamentoPodio(AtualizarFechamentoPodioRequest $request, Torneio $torneio): JsonResponse
+    {
+        $torneio->forceFill([
+            'data_fechamento_podio' => $request->date('data_fechamento_podio'),
+        ])->save();
 
         return response()->json(['torneio' => $torneio->fresh()]);
     }

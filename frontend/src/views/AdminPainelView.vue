@@ -46,6 +46,37 @@
           />
         </button>
       </div>
+
+      <div class="mt-4 rounded-xl border border-border bg-bg-input px-4 py-3">
+        <p class="text-sm font-semibold">Fechamento do pódio</p>
+        <p class="text-xs text-text-muted">
+          Quando o palpite de campeão, vice e 3º fecha. Deixe vazio para usar o automático
+          (1h antes do 1º jogo do mata-mata).
+        </p>
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <input
+            v-model="fechamentoPodioInput"
+            type="datetime-local"
+            class="rounded-lg border border-border bg-bg-card px-3 py-2 text-sm text-text [color-scheme:dark]"
+          />
+          <button
+            type="button"
+            :disabled="salvandoFechamentoPodio"
+            class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-hover disabled:opacity-50"
+            @click="salvarFechamentoPodio"
+          >
+            Salvar
+          </button>
+          <button
+            type="button"
+            :disabled="salvandoFechamentoPodio || !torneio.data_fechamento_podio"
+            class="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary transition hover:text-text disabled:opacity-50"
+            @click="limparFechamentoPodio"
+          >
+            Limpar
+          </button>
+        </div>
+      </div>
     </section>
 
     <div class="flex overflow-x-auto border-b border-border">
@@ -358,6 +389,8 @@ const excluindoRegraId = ref<number | null>(null)
 const adicionandoRegra = ref(false)
 const salvandoResultadoTorneio = ref(false)
 const salvandoCompras = ref(false)
+const salvandoFechamentoPodio = ref(false)
+const fechamentoPodioInput = ref('')
 const chavesDisponiveis = ref<{ chave: string; label: string }[]>([])
 const boloes = ref<Bolao[]>([])
 const torneioSelecionadoId = ref<number | null>(null)
@@ -556,6 +589,8 @@ function jogoExigeClassificado(jogo: Torneio['jogos'][number]) {
 function preencherFormulario() {
   if (!torneio.value) return
 
+  fechamentoPodioInput.value = isoParaInputLocal(torneio.value?.data_fechamento_podio ?? null)
+
   for (const regra of torneio.value.regras_pontuacao) {
     pontosRegras.value[regra.id] = String(regra.pontos)
   }
@@ -615,6 +650,23 @@ async function trocarBolao(torneioId: number) {
   await carregarDados(torneioId)
 }
 
+// App roda em UTC; o input datetime-local opera em horario LOCAL sem timezone.
+// Converte o ISO (UTC) vindo da API para o formato do input (local).
+function isoParaInputLocal(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// Converte o valor local do input para ISO UTC (ou null se vazio) para enviar ao backend.
+function inputLocalParaIso(local: string): string | null {
+  if (!local) return null
+  const d = new Date(local) // interpretado como horario local do navegador
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
+
 async function alternarCompras() {
   if (!torneio.value || salvandoCompras.value) return
   salvandoCompras.value = true
@@ -635,6 +687,33 @@ async function alternarCompras() {
   } finally {
     salvandoCompras.value = false
   }
+}
+
+async function salvarFechamentoPodio() {
+  if (!torneio.value || salvandoFechamentoPodio.value) return
+  salvandoFechamentoPodio.value = true
+  mensagem.value = ''
+  erro.value = ''
+  try {
+    const resposta = await requisicaoApi<{ torneio: Torneio }>(
+      `/admin/torneios/${torneio.value.id}/fechamento-podio`,
+      { metodo: 'PUT', corpo: { data_fechamento_podio: inputLocalParaIso(fechamentoPodioInput.value) } },
+    )
+    torneio.value.data_fechamento_podio = resposta.torneio.data_fechamento_podio
+    fechamentoPodioInput.value = isoParaInputLocal(torneio.value.data_fechamento_podio)
+    mensagem.value = torneio.value.data_fechamento_podio
+      ? 'Prazo de fechamento do pódio atualizado.'
+      : 'Fechamento do pódio voltou ao automático.'
+  } catch (e) {
+    erro.value = e instanceof Error ? e.message : 'Falha ao atualizar o fechamento do pódio.'
+  } finally {
+    salvandoFechamentoPodio.value = false
+  }
+}
+
+function limparFechamentoPodio() {
+  fechamentoPodioInput.value = ''
+  void salvarFechamentoPodio()
 }
 
 async function executarAcao(acao: () => Promise<void>, mensagemSucesso = 'Salvo com sucesso. Recalculo enviado para processamento.') {

@@ -16,6 +16,7 @@ class Torneio extends Model
         'status',
         'data_inicio',
         'data_fim',
+        'data_fechamento_podio',
         'valor_cupom',
         'compras_abertas',
     ];
@@ -25,6 +26,7 @@ class Torneio extends Model
         return [
             'data_inicio' => 'datetime',
             'data_fim' => 'datetime',
+            'data_fechamento_podio' => 'datetime',
             'valor_cupom' => 'decimal:2',
             'compras_abertas' => 'boolean',
         ];

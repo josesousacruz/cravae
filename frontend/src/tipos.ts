@@ -178,6 +178,7 @@ export type Torneio = {
   status: string
   data_inicio: string | null
   data_fim: string | null
+  data_fechamento_podio: string | null
   valor_cupom: number
   compras_abertas: boolean
   grupos: Grupo[]
