@@ -37,16 +37,11 @@ class ServicoApostas
                 $existente = $this->localizarAposta($cupom, $normalizado);
 
                 if ($this->servicoFechamentoApostas->prazoEncerrado($normalizado)) {
-                    // Jogo ja fechado: reenviar o mesmo palpite (no auto-save em lote)
-                    // e ignorado para nao derrubar os jogos ainda abertos. Qualquer
-                    // tentativa real de alterar um jogo fechado continua recusada.
-                    if ($this->conteudoInalterado($existente, $normalizado)) {
-                        continue;
-                    }
-
-                    throw ValidationException::withMessages([
-                        'apostas' => 'O prazo desta aposta ja foi encerrado.',
-                    ]);
+                    // Jogo ja fechado: ignora este item (mantem o palpite anterior) em vez de
+                    // derrubar o lote inteiro. Cobre tanto o reenvio inalterado do auto-save
+                    // quanto uma alteracao no limite do prazo (divergencia de relogio cliente
+                    // x servidor) -- assim os demais jogos ainda abertos continuam salvando.
+                    continue;
                 }
 
                 $this->servicoFechamentoApostas->validar($cupom, $normalizado);
@@ -240,14 +235,6 @@ class ServicoApostas
         return $penalMandante > $penalVisitante
             ? (int) $mandante->id
             : (int) $visitante->id;
-    }
-
-    /**
-     * @param  array<string, mixed>  $normalizado
-     */
-    private function conteudoInalterado(?Aposta $existente, array $normalizado): bool
-    {
-        return $existente !== null && $existente->conteudo == ($normalizado['conteudo'] ?? null);
     }
 
     /**

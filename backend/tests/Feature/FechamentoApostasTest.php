@@ -33,6 +33,7 @@ class FechamentoApostasTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
+        // Jogo fora do prazo e ignorado (nao derruba o lote); a aposta nao e persistida.
         $this->postJson("/api/cupons/{$cupom->id}/apostas/lote", [
             'apostas' => [[
                 'tipo' => 'placar_jogo_grupos',
@@ -40,8 +41,12 @@ class FechamentoApostasTest extends TestCase
                 'placar_mandante' => 1,
                 'placar_visitante' => 0,
             ]],
-        ])->assertStatus(422)
-            ->assertJsonValidationErrors(['apostas']);
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('apostas', [
+            'cupom_id' => $cupom->id,
+            'jogo_id' => $jogo->id,
+        ]);
     }
 
     public function test_grupos_fecham_por_dia_uma_hora_antes_do_primeiro_jogo_do_dia(): void
@@ -175,7 +180,7 @@ class FechamentoApostasTest extends TestCase
         $this->assertSame(2, $apostaFechada->conteudo['placar_mandante']);
     }
 
-    public function test_lote_recusa_alteracao_de_jogo_ja_fechado(): void
+    public function test_lote_ignora_jogo_fechado_sem_persistir(): void
     {
         $this->seed();
 
@@ -186,6 +191,7 @@ class FechamentoApostasTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
+        // Jogo ja fechado: o item e ignorado (lote nao falha) e o palpite nao e gravado.
         $this->postJson("/api/cupons/{$cupom->id}/apostas/lote", [
             'apostas' => [[
                 'tipo' => 'placar_jogo_grupos',
@@ -193,8 +199,12 @@ class FechamentoApostasTest extends TestCase
                 'placar_mandante' => 4,
                 'placar_visitante' => 2,
             ]],
-        ])->assertStatus(422)
-            ->assertJsonValidationErrors(['apostas']);
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('apostas', [
+            'cupom_id' => $cupom->id,
+            'jogo_id' => $jogo->id,
+        ]);
     }
 
     public function test_cupom_aguardando_pagamento_consegue_apostar(): void
@@ -260,6 +270,7 @@ class FechamentoApostasTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
+        // Fechado: item ignorado (lote nao falha) e o palpite nao e gravado.
         $this->postJson("/api/cupons/{$cupom->id}/apostas/lote", [
             'apostas' => [[
                 'tipo' => 'placar_jogo_eliminatoria',
@@ -269,8 +280,13 @@ class FechamentoApostasTest extends TestCase
                 'penal_mandante' => 5,
                 'penal_visitante' => 4,
             ]],
-        ])->assertStatus(422)
-            ->assertJsonValidationErrors(['apostas']);
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('apostas', [
+            'cupom_id' => $cupom->id,
+            'jogo_id' => $jogo->id,
+            'tipo' => 'placar_jogo_eliminatoria',
+        ]);
     }
 
     public function test_backend_bloqueia_artilheiro_apos_inicio_do_torneio(): void
@@ -287,13 +303,19 @@ class FechamentoApostasTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
+        // Apos o inicio do torneio o palpite de artilheiro fecha: item ignorado, nao gravado.
         $this->postJson("/api/cupons/{$cupom->id}/apostas/lote", [
             'apostas' => [[
                 'tipo' => 'artilheiro',
                 'torneio_id' => $torneio->id,
                 'jogador_id' => $grupo->selecoes()->firstOrFail()->jogadores()->firstOrFail()->id,
             ]],
-        ])->assertStatus(422);
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('apostas', [
+            'cupom_id' => $cupom->id,
+            'tipo' => 'artilheiro',
+        ]);
     }
 
     public function test_backend_ignora_oitavas_antes_de_completar_todos_os_grupos_do_cupom(): void

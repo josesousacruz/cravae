@@ -14,11 +14,21 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // O comportamento ON UPDATE CURRENT_TIMESTAMP e especifico do MySQL; em outros
+        // drivers (ex.: SQLite dos testes) a coluna nao tem esse problema.
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement('ALTER TABLE jogos MODIFY data_hora_inicio TIMESTAMP NULL DEFAULT NULL');
     }
 
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement('ALTER TABLE jogos MODIFY data_hora_inicio TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
     }
 };
