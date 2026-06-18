@@ -63,6 +63,48 @@ class MataMataRealidadeTest extends TestCase
         $this->assertNotNull($aposta->conteudo['selecao_classificada_id']);
     }
 
+    public function test_aposta_podio_pontua_contra_resultado_real(): void
+    {
+        $this->seed();
+        [$usuario, $cupom, $torneio] = $this->criarCupom('podio@teste.local');
+
+        $selecoes = \App\Models\Selecao::query()->where('torneio_id', $torneio->id)->take(5)->pluck('id')->all();
+        // [campeao, vice, terceiro] = palpite; o resultado REAL usa outras selecoes para
+        // vice/terceiro, de modo que so o campeao acerta (FKs reais, sem ids ficticios).
+        [$campeao, $vice, $terceiro, $viceReal, $terceiroReal] = $selecoes;
+
+        foreach (['campeao' => 50, 'vice_campeao' => 30, 'terceiro_colocado' => 20] as $chave => $pontos) {
+            \App\Models\RegraPontuacao::query()->updateOrCreate(
+                ['torneio_id' => $torneio->id, 'fase_id' => null, 'chave' => $chave],
+                ['nome' => $chave, 'pontos' => $pontos, 'ativo' => true],
+            );
+        }
+
+        // Cria a aposta de podio direto (o endpoint de lote fecharia pelo prazo, pois o
+        // torneio do seed ja comecou; aqui o foco e a PONTUACAO).
+        $cupom->apostas()->create([
+            'tipo' => 'podio',
+            'torneio_id' => $torneio->id,
+            'fase_id' => null, 'rodada_id' => null, 'grupo_id' => null,
+            'jogo_id' => null, 'selecao_id' => null, 'jogador_id' => null,
+            'conteudo' => [
+                'campeao_selecao_id' => $campeao,
+                'vice_selecao_id' => $vice,
+                'terceiro_selecao_id' => $terceiro,
+            ],
+        ]);
+
+        \App\Models\ResultadoTorneio::query()->updateOrCreate(
+            ['torneio_id' => $torneio->id],
+            ['campeao_selecao_id' => $campeao, 'vice_campeao_selecao_id' => $viceReal, 'terceiro_colocado_selecao_id' => $terceiroReal],
+        );
+
+        app(\App\Services\ServicoPontuacao::class)->recalcularCupom($cupom->fresh());
+
+        $pontuacao = \App\Models\PontuacaoCupom::query()->where('cupom_id', $cupom->id)->firstOrFail();
+        $this->assertSame(50, (int) $pontuacao->pontuacao_total, 'esperava 50 pts (so o campeao correto)');
+    }
+
     private function lancarResultadosDeGrupos(Torneio $torneio): void
     {
         $jogos = Jogo::query()

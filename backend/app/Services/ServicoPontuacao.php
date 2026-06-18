@@ -13,9 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class ServicoPontuacao
 {
-    public function __construct(
-        private readonly ServicoBracketCupom $servicoBracketCupom,
-    ) {
+    public function __construct()
+    {
     }
 
     public function recalcularTorneio(Torneio $torneio): void
@@ -76,12 +75,15 @@ class ServicoPontuacao
                     $pontos = $this->pontuarArtilheiro($aposta, $torneio, $regras);
                     $total += $pontos;
                     $palpitesFinaisCorretos += $pontos > 0 ? 1 : 0;
+                    continue;
+                }
+
+                if ($aposta->tipo === 'podio') {
+                    $resultadoPodio = $this->pontuarPodio($aposta, $torneio, $regras);
+                    $total += $resultadoPodio['pontos'];
+                    $palpitesFinaisCorretos += $resultadoPodio['acertos'];
                 }
             }
-
-            $resultadoDerivado = $this->pontuarPodioDerivado($cupom, $torneio, $regras);
-            $total += $resultadoDerivado['pontos'];
-            $palpitesFinaisCorretos += $resultadoDerivado['acertos'];
 
             PontuacaoCupom::query()->updateOrCreate(
                 ['cupom_id' => $cupom->id],
@@ -206,10 +208,15 @@ class ServicoPontuacao
     /**
      * @return array{pontos:int,acertos:int}
      */
-    private function pontuarPodioDerivado(Cupom $cupom, Torneio $torneio, Collection $regras): array
+    private function pontuarPodio(Aposta $aposta, Torneio $torneio, Collection $regras): array
     {
-        $podioPrevisto = $this->resolverPodioPrevisto($cupom, $torneio);
-        $podioReal = $this->resolverPodioReal($torneio);
+        $conteudo = $aposta->conteudo;
+        $previsto = [
+            'campeao' => (int) ($conteudo['campeao_selecao_id'] ?? 0) ?: null,
+            'vice' => (int) ($conteudo['vice_selecao_id'] ?? 0) ?: null,
+            'terceiro' => (int) ($conteudo['terceiro_selecao_id'] ?? 0) ?: null,
+        ];
+        $real = $this->resolverPodioReal($torneio);
 
         $total = 0;
         $acertos = 0;
@@ -219,7 +226,7 @@ class ServicoPontuacao
             'vice' => 'vice_campeao',
             'terceiro' => 'terceiro_colocado',
         ] as $campo => $regra) {
-            if (! $podioPrevisto[$campo] || ! $podioReal[$campo] || $podioPrevisto[$campo] !== $podioReal[$campo]) {
+            if (! $previsto[$campo] || ! $real[$campo] || $previsto[$campo] !== $real[$campo]) {
                 continue;
             }
 
@@ -232,41 +239,16 @@ class ServicoPontuacao
             $total += $pontos;
             $acertos++;
             EventoPontuacao::query()->create([
-                'cupom_id' => $cupom->id,
+                'cupom_id' => $aposta->cupom_id,
                 'regra_pontuacao_id' => $regraId,
                 'jogo_id' => null,
-                'aposta_id' => null,
+                'aposta_id' => $aposta->id,
                 'pontos' => $pontos,
-                'descricao' => 'Podio derivado do mata-mata',
+                'descricao' => 'Palpite de podio ('.$regra.')',
             ]);
         }
 
         return ['pontos' => $total, 'acertos' => $acertos];
-    }
-
-    /**
-     * @return array{campeao:?int,vice:?int,terceiro:?int}
-     */
-    private function resolverPodioPrevisto(Cupom $cupom, Torneio $torneio): array
-    {
-        $bracket = collect($this->servicoBracketCupom->gerar($cupom));
-        $final = $bracket->first(fn (array $jogo) => $jogo['fase']->slug === 'final');
-        $terceiroLugar = $bracket->first(fn (array $jogo) => $jogo['fase']->slug === 'terceiro_lugar');
-
-        $apostaFinal = $cupom->apostas->first(fn (Aposta $aposta) => $aposta->tipo === 'placar_jogo_eliminatoria' && $aposta->jogo_id === ($final['id'] ?? null));
-        $apostaTerceiro = $cupom->apostas->first(fn (Aposta $aposta) => $aposta->tipo === 'placar_jogo_eliminatoria' && $aposta->jogo_id === ($terceiroLugar['id'] ?? null));
-
-        $campeao = (int) ($apostaFinal?->conteudo['selecao_classificada_id'] ?? 0) ?: null;
-        $vice = $final && $campeao
-            ? collect([$final['selecao_mandante']?->id ?? null, $final['selecao_visitante']?->id ?? null])->first(fn ($id) => $id && (int) $id !== $campeao)
-            : null;
-        $terceiro = (int) ($apostaTerceiro?->conteudo['selecao_classificada_id'] ?? 0) ?: null;
-
-        return [
-            'campeao' => $campeao,
-            'vice' => $vice ? (int) $vice : null,
-            'terceiro' => $terceiro,
-        ];
     }
 
     /**
