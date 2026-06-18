@@ -167,60 +167,61 @@
                     <div class="relative">
                       <button
                         type="button"
+                        data-palpiteiros
                         class="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-[10px] font-medium text-primary transition hover:bg-primary/10"
-                        @click="togglePalpiteiros(jogo.id)"
+                        @click="togglePalpiteiros(jogo.id, $event)"
                       >
                         <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
                         Quem palpitou
                       </button>
-                      <!-- Popover -->
-                      <div
-                        v-if="palpiteirosAberto === jogo.id"
-                        class="absolute right-0 top-full z-20 mt-1 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-bg-card p-3 shadow-xl"
-                      >
-                        <div class="flex items-center justify-between mb-2">
-                          <span class="text-xs font-bold text-text">Palpiteiros</span>
-                          <span class="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary">
-                            {{ palpiteirosCache[jogo.id]?.total ?? '...' }}
-                          </span>
-                        </div>
-                        <div v-if="!palpiteirosCache[jogo.id]" class="py-2 text-center">
-                          <span class="text-xs text-text-muted animate-pulse">Carregando...</span>
-                        </div>
-                        <div v-else-if="palpiteirosCache[jogo.id].total === 0" class="py-2 text-center">
-                          <span class="text-xs text-text-muted">Ninguem palpitou ainda</span>
-                        </div>
-                        <div v-else class="max-h-32 space-y-1 overflow-y-auto">
-                          <div
-                            v-for="(p, pi) in palpiteirosCache[jogo.id].palpiteiros"
-                            :key="pi"
-                            class="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-bg-input"
-                          >
-                            <div class="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-[9px] font-bold text-primary">
-                              {{ p.nome.charAt(0).toUpperCase() }}
+                      <!-- Popover (teleportado para o body para escapar do overflow-hidden do card) -->
+                      <Teleport to="body">
+                        <div
+                          v-if="palpiteirosAberto === jogo.id"
+                          data-palpiteiros
+                          class="fixed z-50 w-56 max-w-[calc(100vw-1rem)] rounded-xl border border-border bg-bg-card p-3 shadow-xl"
+                          :style="{ top: `${palpiteirosPos.top}px`, left: `${palpiteirosPos.left}px` }"
+                        >
+                          <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-text">Palpiteiros</span>
+                            <span class="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary">
+                              {{ palpiteirosCache[jogo.id]?.total ?? '...' }}
+                            </span>
+                          </div>
+                          <div v-if="!palpiteirosCache[jogo.id]" class="py-2 text-center">
+                            <span class="text-xs text-text-muted animate-pulse">Carregando...</span>
+                          </div>
+                          <div v-else-if="palpiteirosCache[jogo.id].total === 0" class="py-2 text-center">
+                            <span class="text-xs text-text-muted">Ninguem palpitou ainda</span>
+                          </div>
+                          <div v-else class="max-h-48 space-y-1 overflow-y-auto">
+                            <div
+                              v-for="(p, pi) in palpiteirosCache[jogo.id].palpiteiros"
+                              :key="pi"
+                              class="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-bg-input"
+                            >
+                              <div class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-[9px] font-bold text-primary">
+                                {{ p.nome.charAt(0).toUpperCase() }}
+                              </div>
+                              <span class="text-xs text-text-secondary truncate">{{ p.nome }}</span>
                             </div>
-                            <span class="text-xs text-text-secondary truncate">{{ p.nome }}</span>
                           </div>
                         </div>
-                      </div>
+                      </Teleport>
                     </div>
                   </div>
                 </div>
 
-                <!-- Teams + score -->
-                <div class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-4 sm:flex sm:items-center sm:gap-6">
-                  <!-- Home team -->
-                  <div class="min-w-0 text-center">
-                    <img
-                      :src="bandeira(jogo.selecao_mandante?.sigla ?? '')"
-                      :alt="jogo.selecao_mandante?.nome ?? 'A definir'"
-                      class="mx-auto h-10 w-14 rounded object-cover shadow"
-                      @error="($event.target as HTMLImageElement).style.display='none'"
-                    />
-                    <p class="mt-2 break-words text-xs font-medium sm:text-sm">{{ jogo.selecao_mandante?.nome ?? 'A definir' }}</p>
-                  </div>
+                <!-- Teams + score (grade de 2 linhas: bandeiras+placar / nomes+resultado) -->
+                <div class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 sm:gap-x-8">
+                  <!-- Linha 1: bandeira mandante | placar | bandeira visitante -->
+                  <img
+                    :src="bandeira(jogo.selecao_mandante?.sigla ?? '')"
+                    :alt="jogo.selecao_mandante?.nome ?? 'A definir'"
+                    class="mx-auto h-10 w-14 rounded object-cover shadow"
+                    @error="($event.target as HTMLImageElement).style.visibility='hidden'"
+                  />
 
-                  <!-- Score inputs with +/- buttons -->
                   <div class="flex items-center justify-center gap-1 sm:gap-2">
                     <div class="flex items-center gap-0.5">
                       <button type="button" :disabled="jogoFechado(jogo)" class="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-input text-text-muted transition hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-bg-input disabled:hover:text-text-muted" @click="decrementarPlacar(jogo.id, 'mandante')">-</button>
@@ -241,16 +242,28 @@
                     </div>
                   </div>
 
-                  <!-- Away team -->
-                  <div class="min-w-0 text-center">
-                    <img
-                      :src="bandeira(jogo.selecao_visitante?.sigla ?? '')"
-                      :alt="jogo.selecao_visitante?.nome ?? 'A definir'"
-                      class="mx-auto h-10 w-14 rounded object-cover shadow"
-                      @error="($event.target as HTMLImageElement).style.display='none'"
-                    />
-                    <p class="mt-2 break-words text-xs font-medium sm:text-sm">{{ jogo.selecao_visitante?.nome ?? 'A definir' }}</p>
+                  <img
+                    :src="bandeira(jogo.selecao_visitante?.sigla ?? '')"
+                    :alt="jogo.selecao_visitante?.nome ?? 'A definir'"
+                    class="mx-auto h-10 w-14 rounded object-cover shadow"
+                    @error="($event.target as HTMLImageElement).style.visibility='hidden'"
+                  />
+
+                  <!-- Linha 2: nome mandante | resultado real | nome visitante -->
+                  <p class="break-words text-center text-xs font-medium sm:text-sm">{{ jogo.selecao_mandante?.nome ?? 'A definir' }}</p>
+
+                  <div class="flex items-center justify-center gap-1.5">
+                    <template v-if="temResultadoReal(jogo)">
+                      <span class="text-[9px] font-medium uppercase tracking-wide text-text-muted">Resultado</span>
+                      <span class="inline-flex items-center gap-1 rounded-md bg-bg-input px-2 py-0.5 text-xs font-bold text-text">
+                        {{ jogo.resultado?.placar_mandante }}
+                        <span class="text-text-muted">x</span>
+                        {{ jogo.resultado?.placar_visitante }}
+                      </span>
+                    </template>
                   </div>
+
+                  <p class="break-words text-center text-xs font-medium sm:text-sm">{{ jogo.selecao_visitante?.nome ?? 'A definir' }}</p>
                 </div>
 
                 <!-- Knockout: penalties on draw -->
@@ -571,7 +584,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, h, onMounted, ref, watch, type PropType } from 'vue'
+import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch, type PropType } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { usarTorneioStore } from '../stores/torneio'
@@ -634,14 +647,22 @@ let salvarNovamente = false
 
 // Quem palpitou
 const palpiteirosAberto = ref<number | null>(null)
+const palpiteirosPos = ref<{ top: number; left: number }>({ top: 0, left: 0 })
 const palpiteirosCache = ref<Record<number, { total: number; palpiteiros: { nome: string; cupom_codigo: string }[] }>>({})
 
-async function togglePalpiteiros(jogoId: number) {
+const LARGURA_POPOVER = 224 // w-56
+
+async function togglePalpiteiros(jogoId: number, evento: MouseEvent) {
   if (palpiteirosAberto.value === jogoId) {
     palpiteirosAberto.value = null
     return
   }
+
+  const rect = (evento.currentTarget as HTMLElement).getBoundingClientRect()
+  const left = Math.max(8, rect.right - LARGURA_POPOVER)
+  palpiteirosPos.value = { top: rect.bottom + 4, left }
   palpiteirosAberto.value = jogoId
+
   if (!palpiteirosCache.value[jogoId]) {
     try {
       const r = await requisicaoApi<{ total: number; palpiteiros: { nome: string; cupom_codigo: string }[] }>(`/jogos/${jogoId}/palpiteiros`)
@@ -650,6 +671,31 @@ async function togglePalpiteiros(jogoId: number) {
       palpiteirosCache.value[jogoId] = { total: 0, palpiteiros: [] }
     }
   }
+}
+
+// Fecha o popover ao clicar fora dele ou ao rolar a página (posicao fixa fica descolada do botao).
+function fecharPalpiteiros(evento?: Event) {
+  if (palpiteirosAberto.value === null) return
+  if (evento?.type === 'mousedown') {
+    const alvo = evento.target as HTMLElement | null
+    if (alvo?.closest('[data-palpiteiros]')) return
+  }
+  palpiteirosAberto.value = null
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', fecharPalpiteiros)
+  window.addEventListener('scroll', fecharPalpiteiros, true)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', fecharPalpiteiros)
+  window.removeEventListener('scroll', fecharPalpiteiros, true)
+})
+
+function temResultadoReal(jogo: JogoCupom): boolean {
+  const r = jogo.resultado
+  return !!r && r.placar_mandante !== null && r.placar_visitante !== null
 }
 
 // FIFA code → ISO 2-letter for flags
