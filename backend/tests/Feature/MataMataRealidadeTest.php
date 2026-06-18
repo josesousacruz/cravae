@@ -120,6 +120,28 @@ class MataMataRealidadeTest extends TestCase
         $this->assertArrayHasKey('selecao_mandante', $primeiro);
     }
 
+    public function test_podio_pode_ser_palpitado_durante_a_fase_de_grupos(): void
+    {
+        $this->seed();
+        [$usuario, $cupom, $torneio] = $this->criarCupom('podio-prazo@teste.local');
+
+        $selecoes = \App\Models\Selecao::query()->where('torneio_id', $torneio->id)->take(3)->pluck('id')->all();
+
+        // O podio fecha 1h antes do 1o jogo do mata-mata (futuro no seed), entao esta aberto.
+        Sanctum::actingAs($usuario);
+        $this->postJson("/api/cupons/{$cupom->id}/apostas/lote", [
+            'apostas' => [[
+                'tipo' => 'podio',
+                'torneio_id' => $torneio->id,
+                'campeao_selecao_id' => $selecoes[0],
+                'vice_selecao_id' => $selecoes[1],
+                'terceiro_selecao_id' => $selecoes[2],
+            ]],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('apostas', ['cupom_id' => $cupom->id, 'tipo' => 'podio']);
+    }
+
     private function lancarResultadosDeGrupos(Torneio $torneio): void
     {
         $jogos = Jogo::query()

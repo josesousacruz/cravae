@@ -46,8 +46,22 @@ class ServicoFechamentoApostas
 
         $torneio = Torneio::query()->with('fases')->findOrFail($dados['torneio_id']);
 
-        if (in_array($tipo, ['artilheiro', 'podio'], true)) {
+        if ($tipo === 'artilheiro') {
             return $torneio->data_inicio?->copy()->subHour();
+        }
+
+        if ($tipo === 'podio') {
+            // O palpite de campeao/vice/3o fecha no FIM da fase de grupos: 1h antes do
+            // primeiro jogo do mata-mata. Para bolao so de mata-mata, e antes do 1o jogo.
+            $primeiroMataMata = Jogo::query()
+                ->where('torneio_id', $torneio->id)
+                ->whereHas('fase', fn ($query) => $query->where('tipo', '!=', 'grupos'))
+                ->whereNotNull('data_hora_inicio')
+                ->min('data_hora_inicio');
+
+            return $primeiroMataMata
+                ? Carbon::parse($primeiroMataMata)->subHour()
+                : $torneio->data_inicio?->copy()->subHour();
         }
 
         return null;
