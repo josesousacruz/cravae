@@ -587,7 +587,6 @@
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch, type PropType } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
-import { usarTorneioStore } from '../stores/torneio'
 import { useToast } from '../composables/useToast'
 import type { Aposta, BracketJogoCupom, Cupom, RankingItem, ResumoBracketCupom, Selecao, Torneio } from '../tipos'
 import tacaCopaAsset from '../assets/taca-copa-transparente.png'
@@ -596,7 +595,6 @@ import RankingConteudo from '../components/RankingConteudo.vue'
 import { useEventosCupom } from '../composables/useEventosCupom'
 
 const rota = useRoute()
-const torneioStore = usarTorneioStore()
 const { mostrar } = useToast()
 const { descricaoJogo } = useEventosCupom()
 
@@ -1288,14 +1286,16 @@ function preencherFormulario(modo: 'substituir' | 'mesclar' = 'substituir') {
 async function carregarDados() {
   carregando.value = true
   try {
-    const [rT, rC, rA, rB] = await Promise.all([
-      requisicaoApi<{ torneio: Torneio }>('/torneio'),
-      requisicaoApi<{ cupom: Cupom }>(`/cupons/${rota.params.id}`),
+    const rC = await requisicaoApi<{ cupom: Cupom }>(`/cupons/${rota.params.id}`)
+    cupom.value = rC.cupom
+
+    const caminhoTorneio = rC.cupom.torneio_id ? `/torneios/${rC.cupom.torneio_id}` : '/torneio'
+    const [rT, rA, rB] = await Promise.all([
+      requisicaoApi<{ torneio: Torneio }>(caminhoTorneio),
       requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${rota.params.id}/apostas`),
       requisicaoApi<{ bracket: BracketJogoCupom[]; resumo: ResumoBracketCupom }>(`/cupons/${rota.params.id}/bracket`),
     ])
     torneio.value = rT.torneio
-    cupom.value = rC.cupom
     apostas.value = rA.apostas
     bracketCupom.value = rB.bracket
     resumoBracketIds.value = rB.resumo
@@ -1309,10 +1309,10 @@ async function carregarDados() {
 
 
 async function carregarRanking() {
-  if (!torneioStore.torneio) return
+  if (!torneio.value) return
   carregandoRanking.value = true
   try {
-    const r = await requisicaoApi<{ ranking: RankingItem[] }>(`/torneios/${torneioStore.torneio.id}/ranking`)
+    const r = await requisicaoApi<{ ranking: RankingItem[] }>(`/torneios/${torneio.value.id}/ranking`)
     ranking.value = r.ranking
   } catch {} finally { carregandoRanking.value = false }
 }
@@ -1340,7 +1340,7 @@ watch(fasesRodadas, (items) => {
 })
 
 onMounted(async () => {
-  await Promise.all([carregarDados(), torneioStore.carregar()])
+  await carregarDados()
   carregarRanking()
 })
 </script>
