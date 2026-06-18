@@ -53,6 +53,51 @@ class CheckoutFluxoTest extends TestCase
         $this->postJson('/api/pedidos-checkout')->assertForbidden();
     }
 
+    public function test_admin_abre_e_fecha_a_compra_de_cupons(): void
+    {
+        $this->seed();
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
+
+        $admin = Usuario::factory()->create([
+            'nome' => 'Admin Toggle',
+            'email' => 'adm-toggle@example.com',
+            'telefone' => '11999990010',
+            'perfil' => 'administrador',
+        ]);
+
+        Sanctum::actingAs($admin);
+
+        $this->putJson("/api/admin/torneios/{$torneio->id}/compras", ['compras_abertas' => false])
+            ->assertOk()
+            ->assertJsonPath('torneio.compras_abertas', false);
+
+        $this->assertFalse((bool) $torneio->fresh()->compras_abertas);
+
+        $this->putJson("/api/admin/torneios/{$torneio->id}/compras", ['compras_abertas' => true])
+            ->assertOk()
+            ->assertJsonPath('torneio.compras_abertas', true);
+
+        $this->assertTrue((bool) $torneio->fresh()->compras_abertas);
+    }
+
+    public function test_usuario_comum_nao_altera_compra_de_cupons(): void
+    {
+        $this->seed();
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
+
+        $usuario = Usuario::factory()->create([
+            'nome' => 'Comum Toggle',
+            'email' => 'comum-toggle@example.com',
+            'telefone' => '11999990011',
+            'perfil' => 'usuario',
+        ]);
+
+        Sanctum::actingAs($usuario);
+
+        $this->putJson("/api/admin/torneios/{$torneio->id}/compras", ['compras_abertas' => true])
+            ->assertForbidden();
+    }
+
     public function test_checkout_rejeita_valor_enviado_pelo_cliente(): void
     {
         $this->seed();
