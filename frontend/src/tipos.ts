@@ -160,6 +160,7 @@ export type Torneio = {
   data_inicio: string | null
   data_fim: string | null
   valor_cupom: number
+  compras_abertas: boolean
   grupos: Grupo[]
   fases: Fase[]
   jogos: Jogo[]
