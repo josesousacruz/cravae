@@ -175,6 +175,22 @@ class PainelAdministradorController extends Controller
         ]);
     }
 
+    public function limparResultadoJogo(Jogo $jogo): JsonResponse
+    {
+        $jogo->loadMissing('torneio');
+
+        ResultadoJogo::query()->where('jogo_id', $jogo->id)->delete();
+        $jogo->forceFill(['status' => 'agendado'])->save();
+
+        $torneio = $jogo->torneio()->firstOrFail();
+        $this->sincronizarResultadoTorneio($torneio);
+        RecalcularPontuacaoTorneioJob::dispatchAfterResponse($torneio->id);
+
+        return response()->json([
+            'mensagem' => 'Resultado removido. Recalculo enviado para processamento.',
+        ]);
+    }
+
     public function salvarResultadoTorneio(SalvarResultadoTorneioRequest $request, Torneio $torneio): JsonResponse
     {
         $dadosDerivados = $this->resolverPodioReal($torneio->loadMissing(['jogos.fase', 'jogos.resultado']));

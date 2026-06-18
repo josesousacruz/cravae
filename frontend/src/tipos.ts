@@ -38,6 +38,7 @@ export type PontuacaoCupom = {
 
 export type Cupom = {
   id: number
+  torneio_id?: number
   codigo: string
   status: string
   pedido_checkout_id: number | null
@@ -219,4 +220,20 @@ export type RespostaRanking = {
     finalizadas: number
     total: number
   }
+}
+
+export type Bolao = {
+  id: number
+  nome: string
+  edicao: string
+  status: string
+  valor_cupom: number
+  compras_abertas: boolean
+  data_inicio: string | null
+  data_fim: string | null
+}
+
+export type RespostaBoloes = {
+  ativos: Bolao[]
+  encerrados: Bolao[]
 }

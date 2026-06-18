@@ -127,6 +127,11 @@ const cupomId = computed(() => {
   return Number.isFinite(id) && id > 0 ? id : null
 })
 
+const torneioIdSelecionado = computed(() => {
+  const id = Number(route.query.torneio)
+  return Number.isFinite(id) && id > 0 ? id : null
+})
+
 const valorCupomFormatado = computed(() => {
   const valor = pedido.value ? Number(pedido.value.valor) : torneio.value?.valor_cupom
   if (!valor) return 'R$ --'
@@ -144,7 +149,10 @@ const statusPagamento = computed(() => {
 
 onMounted(async () => {
   try {
-    const resposta = await requisicaoApi<{ torneio: Torneio }>('/torneio')
+    const caminhoTorneio = torneioIdSelecionado.value
+      ? `/torneios/${torneioIdSelecionado.value}`
+      : '/torneio'
+    const resposta = await requisicaoApi<{ torneio: Torneio }>(caminhoTorneio)
     torneio.value = resposta.torneio
   } catch {
     mostrar('erro', 'Nao foi possivel carregar dados do torneio.')
@@ -158,9 +166,18 @@ onUnmounted(() => pararConsulta())
 async function gerarPagamento() {
   processando.value = true
   try {
+    const torneioId = torneio.value?.id
+    if (!torneioId) {
+      mostrar('erro', 'Bolão não encontrado para o checkout.')
+      return
+    }
+    const corpo: Record<string, number> = { torneio_id: torneioId }
+    if (cupomId.value) {
+      corpo.cupom_id = cupomId.value
+    }
     const resposta = await requisicaoApi<RespostaPedidoCheckout>('/pedidos-checkout', {
       metodo: 'POST',
-      corpo: cupomId.value ? { cupom_id: cupomId.value } : {},
+      corpo,
     })
 
     pedido.value = resposta.pedido

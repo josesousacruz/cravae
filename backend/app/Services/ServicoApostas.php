@@ -6,6 +6,7 @@ use App\Models\Aposta;
 use App\Models\Cupom;
 use App\Models\Jogo;
 use App\Models\LogAposta;
+use App\Models\Selecao;
 use App\Models\Usuario;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -26,6 +27,14 @@ class ServicoApostas
         DB::transaction(function () use ($cupom, $usuario, $itens) {
             foreach ($itens as $item) {
                 $normalizado = $this->normalizarItem($cupom, $item);
+
+                if ($normalizado === null) {
+                    // Confronto do mata-mata ainda sem participantes resolviveis para este
+                    // cupom (a fase anterior nao foi totalmente palpitada). Ignorar este item
+                    // em vez de derrubar o lote inteiro, para nao travar as demais alteracoes.
+                    continue;
+                }
+
                 $existente = $this->localizarAposta($cupom, $normalizado);
 
                 if ($this->servicoFechamentoApostas->prazoEncerrado($normalizado)) {
@@ -68,10 +77,57 @@ class ServicoApostas
     }
 
     /**
-     * @param array<string, mixed> $item
-     * @return array<string, mixed>
+     * Remove (limpa) os palpites dos jogos informados, respeitando o prazo de cada um.
+     *
+     * @param array<int, int> $jogoIds
      */
-    private function normalizarItem(Cupom $cupom, array $item): array
+    public function removerLote(Cupom $cupom, Usuario $usuario, array $jogoIds): void
+    {
+        $jogoIds = array_values(array_unique(array_map('intval', $jogoIds)));
+
+        if ($jogoIds === []) {
+            return;
+        }
+
+        DB::transaction(function () use ($cupom, $usuario, $jogoIds) {
+            $apostas = Aposta::query()
+                ->where('cupom_id', $cupom->id)
+                ->whereIn('tipo', ['placar_jogo_grupos', 'placar_jogo_eliminatoria'])
+                ->whereIn('jogo_id', $jogoIds)
+                ->get();
+
+            foreach ($apostas as $aposta) {
+                if ($this->servicoFechamentoApostas->prazoEncerrado([
+                    'tipo' => $aposta->tipo,
+                    'jogo_id' => $aposta->jogo_id,
+                    'torneio_id' => $aposta->torneio_id,
+                ])) {
+                    throw ValidationException::withMessages([
+                        'apostas' => 'O prazo desta aposta ja foi encerrado.',
+                    ]);
+                }
+
+                $conteudoAnterior = $aposta->conteudo;
+                $aposta->delete();
+
+                LogAposta::query()->create([
+                    'cupom_id' => $cupom->id,
+                    'aposta_id' => null,
+                    'usuario_id' => $usuario->id,
+                    'acao' => 'removida',
+                    'conteudo_anterior' => $conteudoAnterior,
+                    'conteudo_novo' => null,
+                ]);
+            }
+        });
+    }
+
+    /**
+     * @param array<string, mixed> $item
+     * @return array<string, mixed>|null Null quando o item deve ser ignorado no lote
+     *                                   (confronto do mata-mata ainda sem participantes).
+     */
+    private function normalizarItem(Cupom $cupom, array $item): ?array
     {
         $tipo = $item['tipo'];
 
@@ -85,9 +141,21 @@ class ServicoApostas
             $selecaoClassificadaId = null;
 
             if ($tipo === 'placar_jogo_eliminatoria') {
+                // O bracket deriva os participantes a partir das apostas ja gravadas. Dentro de
+                // um mesmo lote, as apostas das fases anteriores recem-criadas precisam estar
+                // visiveis; sem isso o relacionamento fica num snapshot defasado e as fases
+                // profundas (ex.: a final) nunca resolvem os participantes em um unico save.
+                $cupom->unsetRelation('apostas');
+                $participantes = $this->servicoBracketCupom->participantesDoJogo($cupom, $jogo);
+
+                if (! $participantes['mandante'] || ! $participantes['visitante']) {
+                    // Sem participantes resolviveis: sinaliza para o lote ignorar o item.
+                    return null;
+                }
+
                 $selecaoClassificadaId = $this->resolverClassificadoEliminatoria(
-                    $cupom,
-                    $jogo,
+                    $participantes['mandante'],
+                    $participantes['visitante'],
                     $placarMandante,
                     $placarVisitante,
                     $penalMandante,
@@ -136,23 +204,13 @@ class ServicoApostas
     }
 
     private function resolverClassificadoEliminatoria(
-        Cupom $cupom,
-        Jogo $jogo,
+        Selecao $mandante,
+        Selecao $visitante,
         int $placarMandante,
         int $placarVisitante,
         ?int $penalMandante,
         ?int $penalVisitante,
     ): int {
-        $participantes = $this->servicoBracketCupom->participantesDoJogo($cupom, $jogo);
-        $mandante = $participantes['mandante'];
-        $visitante = $participantes['visitante'];
-
-        if (! $mandante || ! $visitante) {
-            throw ValidationException::withMessages([
-                'apostas' => 'Este confronto do mata-mata ainda nao possui participantes definidos para o cupom.',
-            ]);
-        }
-
         if ($placarMandante > $placarVisitante) {
             return (int) $mandante->id;
         }

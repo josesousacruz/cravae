@@ -282,7 +282,7 @@ class FechamentoApostasTest extends TestCase
         ])->assertStatus(422);
     }
 
-    public function test_backend_bloqueia_oitavas_antes_de_completar_todos_os_grupos_do_cupom(): void
+    public function test_backend_ignora_oitavas_antes_de_completar_todos_os_grupos_do_cupom(): void
     {
         $this->seed();
 
@@ -291,6 +291,8 @@ class FechamentoApostasTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
+        // Confronto sem participantes resolviveis (grupos incompletos): o item e ignorado
+        // em vez de derrubar o lote inteiro, mas nao deve ser persistido.
         $this->postJson("/api/cupons/{$cupom->id}/apostas/lote", [
             'apostas' => [[
                 'tipo' => 'placar_jogo_eliminatoria',
@@ -298,8 +300,13 @@ class FechamentoApostasTest extends TestCase
                 'placar_mandante' => 1,
                 'placar_visitante' => 0,
             ]],
-        ])->assertStatus(422)
-            ->assertJsonValidationErrors(['apostas']);
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('apostas', [
+            'cupom_id' => $cupom->id,
+            'tipo' => 'placar_jogo_eliminatoria',
+            'jogo_id' => $jogo->id,
+        ]);
     }
 
     public function test_backend_libera_proxima_fase_quando_a_fase_anterior_esta_completa_no_cupom(): void

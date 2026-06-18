@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import { usarAutenticacaoStore } from '../stores/autenticacao'
 import AdminPainelView from '../views/AdminPainelView.vue'
+import BoloesView from '../views/BoloesView.vue'
 import CupomView from '../views/CupomView.vue'
 import InicioView from '../views/InicioView.vue'
 import PainelView from '../views/PainelView.vue'
@@ -18,6 +19,11 @@ export const roteador = createRouter({
       path: '/',
       name: 'inicio',
       component: InicioView,
+    },
+    {
+      path: '/boloes',
+      name: 'boloes',
+      component: BoloesView,
     },
     {
       path: '/ranking',

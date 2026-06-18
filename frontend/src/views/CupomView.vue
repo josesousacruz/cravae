@@ -587,7 +587,6 @@
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch, type PropType } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
-import { usarTorneioStore } from '../stores/torneio'
 import { useToast } from '../composables/useToast'
 import type { Aposta, BracketJogoCupom, Cupom, RankingItem, ResumoBracketCupom, Selecao, Torneio } from '../tipos'
 import tacaCopaAsset from '../assets/taca-copa-transparente.png'
@@ -596,7 +595,6 @@ import RankingConteudo from '../components/RankingConteudo.vue'
 import { useEventosCupom } from '../composables/useEventosCupom'
 
 const rota = useRoute()
-const torneioStore = usarTorneioStore()
 const { mostrar } = useToast()
 const { descricaoJogo } = useEventosCupom()
 
@@ -1203,6 +1201,25 @@ function montarApostasParaEnvio() {
   return apostasArr
 }
 
+// Jogos que tinham palpite salvo e foram esvaziados ("sem palpite"): precisam ser
+// removidos no backend, senao o palpite antigo continua gravado.
+function montarRemocoes(): number[] {
+  if (!torneio.value) return []
+  const remover: number[] = []
+  const jogosDoCupom: JogoCupom[] = [...jogosGruposDoTorneio.value, ...jogosEliminatoriosDoCupom.value]
+
+  for (const jogo of jogosDoCupom) {
+    if (jogoFechado(jogo)) continue
+    const tipo = jogo.fase.tipo === 'grupos' ? 'placar_jogo_grupos' : 'placar_jogo_eliminatoria'
+    if (!encontrarAposta(tipo, jogo.id)) continue
+    const p = placaresGrupos.value[jogo.id]
+    const vazio = !p || (p.placar_mandante === '' && p.placar_visitante === '')
+    if (vazio) remover.push(jogo.id)
+  }
+
+  return remover
+}
+
 async function recarregarEstadoDerivado() {
   const [rC, rA, rB] = await Promise.all([
     requisicaoApi<{ cupom: Cupom }>(`/cupons/${rota.params.id}`),
@@ -1225,13 +1242,19 @@ async function autoSalvar() {
   }
 
   const apostasArr = montarApostasParaEnvio()
-  if (!apostasArr?.length) return
+  const remocoes = montarRemocoes()
+  if (!apostasArr?.length && !remocoes.length) return
 
   salvando.value = true
   ultimoSalvo.value = false
   salvarNovamente = false
   try {
-    await requisicaoApi(`/cupons/${rota.params.id}/apostas/lote`, { metodo: 'POST', corpo: { apostas: apostasArr } })
+    if (apostasArr?.length) {
+      await requisicaoApi(`/cupons/${rota.params.id}/apostas/lote`, { metodo: 'POST', corpo: { apostas: apostasArr } })
+    }
+    if (remocoes.length) {
+      await requisicaoApi(`/cupons/${rota.params.id}/apostas/remover`, { metodo: 'POST', corpo: { jogos: remocoes } })
+    }
     await recarregarEstadoDerivado()
     ultimoSalvo.value = true
     setTimeout(() => { ultimoSalvo.value = false }, 3000)
@@ -1288,14 +1311,16 @@ function preencherFormulario(modo: 'substituir' | 'mesclar' = 'substituir') {
 async function carregarDados() {
   carregando.value = true
   try {
-    const [rT, rC, rA, rB] = await Promise.all([
-      requisicaoApi<{ torneio: Torneio }>('/torneio'),
-      requisicaoApi<{ cupom: Cupom }>(`/cupons/${rota.params.id}`),
+    const rC = await requisicaoApi<{ cupom: Cupom }>(`/cupons/${rota.params.id}`)
+    cupom.value = rC.cupom
+
+    const caminhoTorneio = rC.cupom.torneio_id ? `/torneios/${rC.cupom.torneio_id}` : '/torneio'
+    const [rT, rA, rB] = await Promise.all([
+      requisicaoApi<{ torneio: Torneio }>(caminhoTorneio),
       requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${rota.params.id}/apostas`),
       requisicaoApi<{ bracket: BracketJogoCupom[]; resumo: ResumoBracketCupom }>(`/cupons/${rota.params.id}/bracket`),
     ])
     torneio.value = rT.torneio
-    cupom.value = rC.cupom
     apostas.value = rA.apostas
     bracketCupom.value = rB.bracket
     resumoBracketIds.value = rB.resumo
@@ -1309,10 +1334,10 @@ async function carregarDados() {
 
 
 async function carregarRanking() {
-  if (!torneioStore.torneio) return
+  if (!torneio.value) return
   carregandoRanking.value = true
   try {
-    const r = await requisicaoApi<{ ranking: RankingItem[] }>(`/torneios/${torneioStore.torneio.id}/ranking`)
+    const r = await requisicaoApi<{ ranking: RankingItem[] }>(`/torneios/${torneio.value.id}/ranking`)
     ranking.value = r.ranking
   } catch {} finally { carregandoRanking.value = false }
 }
@@ -1340,7 +1365,7 @@ watch(fasesRodadas, (items) => {
 })
 
 onMounted(async () => {
-  await Promise.all([carregarDados(), torneioStore.carregar()])
+  await carregarDados()
   carregarRanking()
 })
 </script>
