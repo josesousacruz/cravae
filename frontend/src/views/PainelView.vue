@@ -9,7 +9,16 @@
             Cada cupom representa um conjunto independente de apostas.
           </p>
         </div>
+        <RouterLink
+          v-if="comprasAbertas"
+          to="/checkout"
+          class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-center text-sm font-semibold text-bg shadow-lg shadow-primary/20 transition hover:bg-primary-hover"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+          Comprar cupom
+        </RouterLink>
         <span
+          v-else
           class="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border bg-bg-input px-6 py-2.5 text-center text-sm font-semibold text-text-muted"
           title="A compra de cupons esta encerrada ate o fim do campeonato"
         >
@@ -60,7 +69,19 @@
             </svg>
           </div>
           <h3 class="mt-4 text-lg font-bold">Nenhum cupom ainda</h3>
-          <p class="mx-auto mt-2 max-w-md text-sm text-text-secondary">
+          <template v-if="comprasAbertas">
+            <p class="mx-auto mt-2 max-w-md text-sm text-text-secondary">
+              Compre seu primeiro cupom para começar a palpitar e disputar o prêmio.
+            </p>
+            <RouterLink
+              to="/checkout"
+              class="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-bg shadow-lg shadow-primary/20 transition hover:bg-primary-hover"
+            >
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+              Comprar cupom
+            </RouterLink>
+          </template>
+          <p v-else class="mx-auto mt-2 max-w-md text-sm text-text-secondary">
             A compra de cupons esta encerrada ate o fim do campeonato.
           </p>
         </div>
@@ -111,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { requisicaoApi } from '../services/api'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
 import { usarTorneioStore } from '../stores/torneio'
@@ -122,6 +143,7 @@ import InfoTorneio from '../components/InfoTorneio.vue'
 
 const autenticacao = usarAutenticacaoStore()
 const torneioStore = usarTorneioStore()
+const comprasAbertas = computed(() => torneioStore.torneio?.compras_abertas === true)
 const cupons = ref<Cupom[]>([])
 const carregando = ref(true)
 const carouselRef = ref<HTMLElement | null>(null)
