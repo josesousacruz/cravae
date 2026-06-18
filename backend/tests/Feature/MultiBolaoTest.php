@@ -97,4 +97,15 @@ class MultiBolaoTest extends TestCase
         $this->assertNotEmpty($resp->json('ativos'));
         $this->assertSame('encerrado', $resp->json('encerrados.0.status'));
     }
+
+    public function test_mostra_torneio_especifico_por_id(): void
+    {
+        $this->seed();
+        $torneio = \App\Models\Torneio::query()->where('status', 'publicado')->firstOrFail();
+
+        $this->getJson("/api/torneios/{$torneio->id}")
+            ->assertOk()
+            ->assertJsonPath('torneio.id', $torneio->id)
+            ->assertJsonStructure(['torneio' => ['id', 'nome', 'fases', 'jogos', 'grupos']]);
+    }
 }

@@ -15,8 +15,20 @@ class TorneioController extends Controller
 {
     public function publico(): JsonResponse
     {
+        $torneio = Torneio::query()
+            ->where('status', 'publicado')
+            ->latest('id')
+            ->firstOrFail();
+
         return response()->json([
-            'torneio' => $this->carregarTorneio(),
+            'torneio' => $this->carregarRelacionamentos($torneio),
+        ]);
+    }
+
+    public function show(Torneio $torneio): JsonResponse
+    {
+        return response()->json([
+            'torneio' => $this->carregarRelacionamentos($torneio),
         ]);
     }
 
@@ -106,25 +118,21 @@ class TorneioController extends Controller
         ]);
     }
 
-    private function carregarTorneio(): Torneio
+    private function carregarRelacionamentos(Torneio $torneio): Torneio
     {
-        return Torneio::query()
-            ->with([
-                'resultadoTorneio',
-                'grupos.selecoes.jogadores',
-                'fases' => fn ($query) => $query->orderBy('ordem'),
-                'fases.rodadas' => fn ($query) => $query->orderBy('ordem'),
-                'jogos' => fn ($query) => $query->orderBy('data_hora_inicio'),
-                'jogos.fase',
-                'jogos.rodada',
-                'jogos.grupo',
-                'jogos.selecaoMandante',
-                'jogos.selecaoVisitante',
-                'jogos.resultado',
-                'regrasPontuacao' => fn ($query) => $query->orderBy('chave'),
-            ])
-            ->where('status', 'publicado')
-            ->latest('id')
-            ->firstOrFail();
+        return $torneio->load([
+            'resultadoTorneio',
+            'grupos.selecoes.jogadores',
+            'fases' => fn ($query) => $query->orderBy('ordem'),
+            'fases.rodadas' => fn ($query) => $query->orderBy('ordem'),
+            'jogos' => fn ($query) => $query->orderBy('data_hora_inicio'),
+            'jogos.fase',
+            'jogos.rodada',
+            'jogos.grupo',
+            'jogos.selecaoMandante',
+            'jogos.selecaoVisitante',
+            'jogos.resultado',
+            'regrasPontuacao' => fn ($query) => $query->orderBy('chave'),
+        ]);
     }
 }
