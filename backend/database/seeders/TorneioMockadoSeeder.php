@@ -67,19 +67,21 @@ class TorneioMockadoSeeder extends Seeder
 
         // ── Rodadas ────────────────────────────────────────────
 
+        // data_fechamento da rodada fica nulo: os palpites de grupos fecham por dia,
+        // 1h antes do primeiro jogo do dia (ver ServicoFechamentoApostas).
         $rodada1 = Rodada::query()->updateOrCreate(
             ['fase_id' => $faseGrupos->id, 'ordem' => 1],
-            ['nome' => 'Rodada 1', 'data_fechamento' => '2026-06-11 12:00:00'],
+            ['nome' => 'Rodada 1', 'data_fechamento' => null],
         );
 
         $rodada2 = Rodada::query()->updateOrCreate(
             ['fase_id' => $faseGrupos->id, 'ordem' => 2],
-            ['nome' => 'Rodada 2', 'data_fechamento' => '2026-06-18 12:00:00'],
+            ['nome' => 'Rodada 2', 'data_fechamento' => null],
         );
 
         $rodada3 = Rodada::query()->updateOrCreate(
             ['fase_id' => $faseGrupos->id, 'ordem' => 3],
-            ['nome' => 'Rodada 3', 'data_fechamento' => '2026-06-24 12:00:00'],
+            ['nome' => 'Rodada 3', 'data_fechamento' => null],
         );
 
         // ── Grupos ─────────────────────────────────────────────

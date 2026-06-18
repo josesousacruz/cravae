@@ -9,7 +9,9 @@ use App\Models\Rodada;
 use App\Models\Torneio;
 use App\Models\Usuario;
 use App\Services\ServicoBracketCupom;
+use App\Services\ServicoFechamentoApostas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -39,6 +41,43 @@ class FechamentoApostasTest extends TestCase
             ]],
         ])->assertStatus(422)
             ->assertJsonValidationErrors(['apostas']);
+    }
+
+    public function test_grupos_fecham_por_dia_uma_hora_antes_do_primeiro_jogo_do_dia(): void
+    {
+        $this->seed();
+
+        // Sem override de rodada: aplica a regra "por dia, 1h antes do primeiro jogo do dia".
+        Rodada::query()->update(['data_fechamento' => null]);
+
+        $jogos = Jogo::query()
+            ->whereHas('fase', fn ($query) => $query->where('tipo', 'grupos'))
+            ->orderBy('id')
+            ->take(2)
+            ->get();
+
+        $dia = '2026-08-01';
+        Jogo::query()->whereKey($jogos[0]->id)->update(['data_hora_inicio' => "$dia 15:00:00"]);
+        Jogo::query()->whereKey($jogos[1]->id)->update(['data_hora_inicio' => "$dia 21:00:00"]);
+
+        $servico = app(ServicoFechamentoApostas::class);
+        // Verifica o SEGUNDO jogo (21:00), que ainda nao comecou, mas deve fechar
+        // junto com o dia (1h antes do primeiro jogo do dia = 14:00).
+        $dadosSegundoJogo = ['tipo' => 'placar_jogo_grupos', 'jogo_id' => $jogos[1]->id];
+
+        Carbon::setTestNow("$dia 13:00:00");
+        $this->assertFalse(
+            $servico->prazoEncerrado($dadosSegundoJogo),
+            'A 2h do primeiro jogo do dia, os palpites do dia devem estar abertos.',
+        );
+
+        Carbon::setTestNow("$dia 14:30:00");
+        $this->assertTrue(
+            $servico->prazoEncerrado($dadosSegundoJogo),
+            'A 30min do primeiro jogo do dia, o dia inteiro (inclusive jogos posteriores) deve fechar.',
+        );
+
+        Carbon::setTestNow();
     }
 
     public function test_lote_com_jogo_fechado_inalterado_salva_os_jogos_ainda_abertos(): void
