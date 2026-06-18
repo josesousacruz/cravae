@@ -1201,6 +1201,25 @@ function montarApostasParaEnvio() {
   return apostasArr
 }
 
+// Jogos que tinham palpite salvo e foram esvaziados ("sem palpite"): precisam ser
+// removidos no backend, senao o palpite antigo continua gravado.
+function montarRemocoes(): number[] {
+  if (!torneio.value) return []
+  const remover: number[] = []
+  const jogosDoCupom: JogoCupom[] = [...jogosGruposDoTorneio.value, ...jogosEliminatoriosDoCupom.value]
+
+  for (const jogo of jogosDoCupom) {
+    if (jogoFechado(jogo)) continue
+    const tipo = jogo.fase.tipo === 'grupos' ? 'placar_jogo_grupos' : 'placar_jogo_eliminatoria'
+    if (!encontrarAposta(tipo, jogo.id)) continue
+    const p = placaresGrupos.value[jogo.id]
+    const vazio = !p || (p.placar_mandante === '' && p.placar_visitante === '')
+    if (vazio) remover.push(jogo.id)
+  }
+
+  return remover
+}
+
 async function recarregarEstadoDerivado() {
   const [rC, rA, rB] = await Promise.all([
     requisicaoApi<{ cupom: Cupom }>(`/cupons/${rota.params.id}`),
@@ -1223,13 +1242,19 @@ async function autoSalvar() {
   }
 
   const apostasArr = montarApostasParaEnvio()
-  if (!apostasArr?.length) return
+  const remocoes = montarRemocoes()
+  if (!apostasArr?.length && !remocoes.length) return
 
   salvando.value = true
   ultimoSalvo.value = false
   salvarNovamente = false
   try {
-    await requisicaoApi(`/cupons/${rota.params.id}/apostas/lote`, { metodo: 'POST', corpo: { apostas: apostasArr } })
+    if (apostasArr?.length) {
+      await requisicaoApi(`/cupons/${rota.params.id}/apostas/lote`, { metodo: 'POST', corpo: { apostas: apostasArr } })
+    }
+    if (remocoes.length) {
+      await requisicaoApi(`/cupons/${rota.params.id}/apostas/remover`, { metodo: 'POST', corpo: { jogos: remocoes } })
+    }
     await recarregarEstadoDerivado()
     ultimoSalvo.value = true
     setTimeout(() => { ultimoSalvo.value = false }, 3000)

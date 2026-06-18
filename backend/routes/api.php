@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cupons/{cupom}/bracket', [CupomController::class, 'bracket']);
     Route::get('/cupons/{cupom}/apostas', [ApostaController::class, 'index']);
     Route::post('/cupons/{cupom}/apostas/lote', [ApostaController::class, 'salvarLote']);
+    Route::post('/cupons/{cupom}/apostas/remover', [ApostaController::class, 'removerLote']);
     Route::post('/pedidos-checkout', [PedidoCheckoutController::class, 'store']);
     Route::get('/pedidos-checkout/{pedidoCheckout}', [PedidoCheckoutController::class, 'show']);
     Route::post('/pedidos-checkout/{pedidoCheckout}/confirmar-sandbox', [PedidoCheckoutController::class, 'confirmarSandbox']);

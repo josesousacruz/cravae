@@ -37,4 +37,21 @@ class ApostaController extends Controller
             'cupom' => $cupom->fresh(['pontuacao']),
         ]);
     }
+
+    public function removerLote(Request $request, Cupom $cupom): JsonResponse
+    {
+        abort_unless($cupom->usuario_id === $request->user()->id, 403);
+
+        $dados = $request->validate([
+            'jogos' => ['required', 'array', 'min:1'],
+            'jogos.*' => ['integer', 'exists:jogos,id'],
+        ]);
+
+        $this->servicoApostas->removerLote($cupom, $request->user(), $dados['jogos']);
+        $this->servicoPontuacao->recalcularCupom($cupom->fresh('apostas'));
+
+        return response()->json([
+            'cupom' => $cupom->fresh(['pontuacao']),
+        ]);
+    }
 }

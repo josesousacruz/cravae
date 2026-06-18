@@ -77,6 +77,52 @@ class ServicoApostas
     }
 
     /**
+     * Remove (limpa) os palpites dos jogos informados, respeitando o prazo de cada um.
+     *
+     * @param array<int, int> $jogoIds
+     */
+    public function removerLote(Cupom $cupom, Usuario $usuario, array $jogoIds): void
+    {
+        $jogoIds = array_values(array_unique(array_map('intval', $jogoIds)));
+
+        if ($jogoIds === []) {
+            return;
+        }
+
+        DB::transaction(function () use ($cupom, $usuario, $jogoIds) {
+            $apostas = Aposta::query()
+                ->where('cupom_id', $cupom->id)
+                ->whereIn('tipo', ['placar_jogo_grupos', 'placar_jogo_eliminatoria'])
+                ->whereIn('jogo_id', $jogoIds)
+                ->get();
+
+            foreach ($apostas as $aposta) {
+                if ($this->servicoFechamentoApostas->prazoEncerrado([
+                    'tipo' => $aposta->tipo,
+                    'jogo_id' => $aposta->jogo_id,
+                    'torneio_id' => $aposta->torneio_id,
+                ])) {
+                    throw ValidationException::withMessages([
+                        'apostas' => 'O prazo desta aposta ja foi encerrado.',
+                    ]);
+                }
+
+                $conteudoAnterior = $aposta->conteudo;
+                $aposta->delete();
+
+                LogAposta::query()->create([
+                    'cupom_id' => $cupom->id,
+                    'aposta_id' => null,
+                    'usuario_id' => $usuario->id,
+                    'acao' => 'removida',
+                    'conteudo_anterior' => $conteudoAnterior,
+                    'conteudo_novo' => null,
+                ]);
+            }
+        });
+    }
+
+    /**
      * @param array<string, mixed> $item
      * @return array<string, mixed>|null Null quando o item deve ser ignorado no lote
      *                                   (confronto do mata-mata ainda sem participantes).
@@ -95,6 +141,11 @@ class ServicoApostas
             $selecaoClassificadaId = null;
 
             if ($tipo === 'placar_jogo_eliminatoria') {
+                // O bracket deriva os participantes a partir das apostas ja gravadas. Dentro de
+                // um mesmo lote, as apostas das fases anteriores recem-criadas precisam estar
+                // visiveis; sem isso o relacionamento fica num snapshot defasado e as fases
+                // profundas (ex.: a final) nunca resolvem os participantes em um unico save.
+                $cupom->unsetRelation('apostas');
                 $participantes = $this->servicoBracketCupom->participantesDoJogo($cupom, $jogo);
 
                 if (! $participantes['mandante'] || ! $participantes['visitante']) {
