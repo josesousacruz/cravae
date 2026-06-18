@@ -36,7 +36,8 @@ class MvpFluxoApiTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $pedido = $this->postJson('/api/pedidos-checkout', [])
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
+        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])
             ->assertCreated()
             ->json('pedido');
 
@@ -44,7 +45,6 @@ class MvpFluxoApiTest extends TestCase
             ->assertOk()
             ->json('cupom');
 
-        $torneio = Torneio::query()->firstOrFail();
         $grupoA = $torneio->grupos()->where('nome', 'Grupo A')->firstOrFail();
         $jogoGrupoA = Jogo::query()->where('grupo_id', $grupoA->id)->firstOrFail();
         $jogoEliminatoria = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'round_of_32'))->firstOrFail();
@@ -192,7 +192,8 @@ class MvpFluxoApiTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $pedido = $this->postJson('/api/pedidos-checkout', [])
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
+        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])
             ->assertCreated()
             ->json('pedido');
 
@@ -287,7 +288,8 @@ class MvpFluxoApiTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $pedido = $this->postJson('/api/pedidos-checkout', [])->json('pedido');
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
+        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->json('pedido');
         $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])->json('cupom');
 
         $jogo = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))->firstOrFail();

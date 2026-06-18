@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Exceptions\ExcecaoAsaas;
 use App\Models\Cupom;
 use App\Models\PedidoCheckout;
+use App\Models\Torneio;
 use App\Models\Usuario;
 use App\Services\ServicoAsaas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,7 +22,8 @@ class AsaasCheckoutTest extends TestCase
         $usuario = Usuario::factory()->create();
         Sanctum::actingAs($usuario);
 
-        $response = $this->postJson('/api/pedidos-checkout');
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
+        $response = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id]);
 
         $response
             ->assertCreated()
@@ -39,7 +41,8 @@ class AsaasCheckoutTest extends TestCase
         $usuario = Usuario::factory()->create();
         Sanctum::actingAs($usuario);
 
-        $this->postJson('/api/pedidos-checkout')
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
+        $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])
             ->assertStatus(503)
             ->assertJsonPath('message', 'Integracao Asaas nao configurada.');
     }
@@ -109,7 +112,8 @@ class AsaasCheckoutTest extends TestCase
         $usuario = Usuario::factory()->create();
         Sanctum::actingAs($usuario);
 
-        $pedido = $this->postJson('/api/pedidos-checkout')->assertCreated()->json('pedido');
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
+        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->assertCreated()->json('pedido');
 
         $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox")
             ->assertOk()

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Aposta;
 use App\Models\Cupom;
 use App\Models\Jogo;
+use App\Models\Torneio;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -140,7 +141,8 @@ class BracketCupomApiTest extends TestCase
         ]);
 
         Sanctum::actingAs($usuario);
-        $pedido = $this->postJson('/api/pedidos-checkout', [])->assertCreated()->json('pedido');
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
+        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->assertCreated()->json('pedido');
         $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])->assertOk()->json('cupom');
 
         return [$usuario, Cupom::query()->findOrFail($cupom['id'])];
