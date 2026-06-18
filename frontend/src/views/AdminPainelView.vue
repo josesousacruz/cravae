@@ -10,6 +10,29 @@
       <p class="mt-1 text-sm text-text-secondary">Lance resultados por fase e acompanhe o reprocessamento em segundo plano.</p>
       <p v-if="mensagem" class="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">{{ mensagem }}</p>
       <p v-if="erro" class="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{{ erro }}</p>
+
+      <div class="mt-4 flex items-center justify-between gap-4 rounded-xl border border-border bg-bg-input px-4 py-3">
+        <div>
+          <p class="text-sm font-semibold">Compra de cupons</p>
+          <p class="text-xs text-text-muted">
+            {{ torneio.compras_abertas ? 'Aberta — participantes podem comprar cupons.' : 'Fechada — a compra esta bloqueada.' }}
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          :aria-checked="torneio.compras_abertas"
+          :disabled="salvandoCompras"
+          class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full transition disabled:opacity-50"
+          :class="torneio.compras_abertas ? 'bg-primary' : 'bg-border'"
+          @click="alternarCompras"
+        >
+          <span
+            class="inline-block h-5 w-5 transform rounded-full bg-white transition"
+            :class="torneio.compras_abertas ? 'translate-x-6' : 'translate-x-1'"
+          />
+        </button>
+      </div>
     </section>
 
     <div class="flex overflow-x-auto border-b border-border">
@@ -289,6 +312,7 @@ const salvandoRegraId = ref<number | null>(null)
 const excluindoRegraId = ref<number | null>(null)
 const adicionandoRegra = ref(false)
 const salvandoResultadoTorneio = ref(false)
+const salvandoCompras = ref(false)
 const chavesDisponiveis = ref<{ chave: string; label: string }[]>([])
 const novaRegra = ref({ chave: '', fase_id: '', nome: '', descricao: '', pontos: '0' })
 
@@ -472,6 +496,28 @@ async function carregarDados() {
   torneio.value = resposta.torneio
   chavesDisponiveis.value = resposta.chaves_disponiveis ?? []
   preencherFormulario()
+}
+
+async function alternarCompras() {
+  if (!torneio.value || salvandoCompras.value) return
+  salvandoCompras.value = true
+  mensagem.value = ''
+  erro.value = ''
+  try {
+    const novoEstado = !torneio.value.compras_abertas
+    const resposta = await requisicaoApi<{ torneio: Torneio }>(`/admin/torneios/${torneio.value.id}/compras`, {
+      metodo: 'PUT',
+      corpo: { compras_abertas: novoEstado },
+    })
+    torneio.value.compras_abertas = resposta.torneio.compras_abertas
+    mensagem.value = torneio.value.compras_abertas
+      ? 'Compra de cupons aberta para os participantes.'
+      : 'Compra de cupons encerrada.'
+  } catch (e) {
+    erro.value = e instanceof Error ? e.message : 'Falha ao atualizar a compra de cupons.'
+  } finally {
+    salvandoCompras.value = false
+  }
 }
 
 async function executarAcao(acao: () => Promise<void>, mensagemSucesso = 'Salvo com sucesso. Recalculo enviado para processamento.') {
