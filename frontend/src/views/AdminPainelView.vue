@@ -8,6 +8,19 @@
       <p class="mb-2 text-xs uppercase tracking-wider text-text-muted">Administracao</p>
       <h1 class="text-lg font-bold">{{ torneio.nome }} {{ torneio.edicao }}</h1>
       <p class="mt-1 text-sm text-text-secondary">Lance resultados por fase e acompanhe o reprocessamento em segundo plano.</p>
+
+      <div v-if="boloes.length > 1" class="mt-3">
+        <label class="mb-1 block text-xs font-medium text-text-muted">Bolão</label>
+        <select
+          class="rounded-lg border border-border bg-bg-input px-3 py-2 text-sm text-text"
+          :value="torneioSelecionadoId ?? ''"
+          @change="trocarBolao(Number(($event.target as HTMLSelectElement).value))"
+        >
+          <option v-for="b in boloes" :key="b.id" :value="b.id">
+            {{ b.nome }} {{ b.edicao }}{{ b.status === 'encerrado' ? ' (encerrado)' : '' }}
+          </option>
+        </select>
+      </div>
       <p v-if="mensagem" class="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">{{ mensagem }}</p>
       <p v-if="erro" class="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{{ erro }}</p>
 
@@ -309,7 +322,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { requisicaoApi } from '../services/api'
-import type { Torneio } from '../tipos'
+import type { Torneio, Bolao } from '../tipos'
 
 const torneio = ref<Torneio | null>(null)
 const mensagem = ref('')
@@ -325,6 +338,8 @@ const adicionandoRegra = ref(false)
 const salvandoResultadoTorneio = ref(false)
 const salvandoCompras = ref(false)
 const chavesDisponiveis = ref<{ chave: string; label: string }[]>([])
+const boloes = ref<Bolao[]>([])
+const torneioSelecionadoId = ref<number | null>(null)
 const novaRegra = ref({ chave: '', fase_id: '', nome: '', descricao: '', pontos: '0' })
 
 const tabs = [
@@ -502,11 +517,26 @@ function preencherFormulario() {
   }
 }
 
-async function carregarDados() {
-  const resposta = await requisicaoApi<{ torneio: Torneio; chaves_disponiveis: { chave: string; label: string }[] }>('/admin/dados')
+async function carregarDados(torneioId?: number) {
+  const caminho = torneioId ? `/admin/dados?torneio_id=${torneioId}` : '/admin/dados'
+  const resposta = await requisicaoApi<{ torneio: Torneio; chaves_disponiveis: { chave: string; label: string }[] }>(caminho)
   torneio.value = resposta.torneio
+  torneioSelecionadoId.value = resposta.torneio.id
   chavesDisponiveis.value = resposta.chaves_disponiveis ?? []
   preencherFormulario()
+}
+
+async function carregarBoloes() {
+  try {
+    const r = await requisicaoApi<{ ativos: Bolao[]; encerrados: Bolao[] }>('/boloes')
+    boloes.value = [...r.ativos, ...r.encerrados]
+  } catch {
+    boloes.value = []
+  }
+}
+
+async function trocarBolao(torneioId: number) {
+  await carregarDados(torneioId)
 }
 
 async function alternarCompras() {
@@ -620,7 +650,7 @@ async function salvarResultadoTorneioFn() {
   salvandoResultadoTorneio.value = false
 }
 
-onMounted(() => {
-  void carregarDados()
+onMounted(async () => {
+  await Promise.all([carregarDados(), carregarBoloes()])
 })
 </script>
