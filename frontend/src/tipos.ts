@@ -112,7 +112,7 @@ export type Jogo = {
 
 export type BracketJogoCupom = {
   id: number
-  jogo_base_id: number
+  jogo_base_id?: number
   fase_id: number
   rodada_id: number | null
   grupo_id: number | null
@@ -127,12 +127,30 @@ export type BracketJogoCupom = {
   resultado?: ResultadoJogo | null
   bloqueado: boolean
   motivo_bloqueio: string | null
+  palpite?: {
+    placar_mandante: number | null
+    placar_visitante: number | null
+    penal_mandante: number | null
+    penal_visitante: number | null
+    selecao_classificada_id: number | null
+  } | null
 }
 
 export type ResumoBracketCupom = {
   campeao_selecao_id: number | null
   vice_campeao_selecao_id: number | null
   terceiro_colocado_selecao_id: number | null
+}
+
+export type PodioIds = {
+  campeao: number | null
+  vice: number | null
+  terceiro: number | null
+}
+
+export type ResumoBracketReal = {
+  podio_palpite: PodioIds
+  podio_real: PodioIds
 }
 
 export type RegraPontuacao = {
