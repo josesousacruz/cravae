@@ -79,4 +79,22 @@ class MultiBolaoTest extends TestCase
             ->assertJsonPath('pedido.valor', '25.00')
             ->assertJsonPath('pedido.torneio_id', $torneio->id);
     }
+
+    public function test_lista_boloes_separa_ativos_e_encerrados(): void
+    {
+        $this->seed();
+        \App\Models\Torneio::query()->create([
+            'nome' => 'Bolao Encerrado',
+            'edicao' => '2025',
+            'status' => 'encerrado',
+            'valor_cupom' => 10.00,
+            'compras_abertas' => false,
+        ]);
+
+        $resp = $this->getJson('/api/boloes')->assertOk();
+
+        $resp->assertJsonPath('ativos.0.status', 'publicado');
+        $this->assertNotEmpty($resp->json('ativos'));
+        $this->assertSame('encerrado', $resp->json('encerrados.0.status'));
+    }
 }
