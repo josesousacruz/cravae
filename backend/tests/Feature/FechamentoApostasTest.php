@@ -5,11 +5,12 @@ namespace Tests\Feature;
 use App\Models\Cupom;
 use App\Models\Grupo;
 use App\Models\Jogo;
+use App\Models\ResultadoJogo;
 use App\Models\Rodada;
 use App\Models\Torneio;
 use App\Models\Usuario;
-use App\Services\ServicoBracketCupom;
 use App\Services\ServicoFechamentoApostas;
+use App\Services\ServicoResultadosTorneio;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
@@ -240,8 +241,21 @@ class FechamentoApostasTest extends TestCase
         $this->seed();
 
         [$usuario, $cupom] = $this->criarUsuarioComCupom('mata-fechado@teste.local');
-        $this->preencherTodosOsJogosDeGrupos($cupom);
-        $jogo = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'round_of_32'))->firstOrFail();
+        $torneio = Torneio::query()->firstOrFail();
+
+        // Para o palpite de mata-mata chegar ao prazo (em vez de ser ignorado por falta
+        // de participantes reais), os participantes REAIS do jogo precisam existir ->
+        // lancamos os resultados reais de todos os jogos de grupos.
+        $this->lancarResultadosDeGrupos($torneio);
+
+        $participantes = app(ServicoResultadosTorneio::class)->participantesPorJogo($torneio);
+        $jogo = Jogo::query()
+            ->whereHas('fase', fn ($query) => $query->where('slug', 'round_of_32'))
+            ->get()
+            ->first(fn (Jogo $j) => ($participantes[$j->id]['mandante'] ?? null) && ($participantes[$j->id]['visitante'] ?? null));
+        $this->assertNotNull($jogo, 'Round of 32 deve ter participantes reais apos lancar os grupos.');
+
+        // No horario de inicio do proprio jogo: o prazo do mata-mata ja se encerrou.
         $jogo->update(['data_hora_inicio' => now()->subMinute()]);
 
         Sanctum::actingAs($usuario);
@@ -291,8 +305,8 @@ class FechamentoApostasTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        // Confronto sem participantes resolviveis (grupos incompletos): o item e ignorado
-        // em vez de derrubar o lote inteiro, mas nao deve ser persistido.
+        // Confronto sem participantes reais (resultados de grupos ainda nao lancados):
+        // o item e ignorado em vez de derrubar o lote, mas nao deve ser persistido.
         $this->postJson("/api/cupons/{$cupom->id}/apostas/lote", [
             'apostas' => [[
                 'tipo' => 'placar_jogo_eliminatoria',
@@ -309,15 +323,27 @@ class FechamentoApostasTest extends TestCase
         ]);
     }
 
-    public function test_backend_libera_proxima_fase_quando_a_fase_anterior_esta_completa_no_cupom(): void
+    public function test_backend_libera_proxima_fase_quando_os_participantes_reais_existem(): void
     {
         $this->seed();
 
         [$usuario, $cupom] = $this->criarUsuarioComCupom('fase-liberada@teste.local');
-        $this->preencherTodosOsJogosDeGrupos($cupom);
-        $this->preencherTodosOsJogosDaFaseEliminatoria($cupom, 'round_of_32');
+        $torneio = Torneio::query()->firstOrFail();
 
-        $jogoOitavas = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'oitavas_de_final'))->firstOrFail();
+        // Realidade: oitavas so abre quando os participantes reais existem -> derivam
+        // dos resultados reais dos grupos E do round_of_32.
+        $this->lancarResultadosDeGrupos($torneio);
+        $this->lancarResultadosDaFase($torneio, 'round_of_32');
+
+        $participantes = app(ServicoResultadosTorneio::class)->participantesPorJogo(Torneio::query()->findOrFail($torneio->id));
+        $jogoOitavas = Jogo::query()
+            ->whereHas('fase', fn ($query) => $query->where('slug', 'oitavas_de_final'))
+            ->get()
+            ->first(fn (Jogo $j) => ($participantes[$j->id]['mandante'] ?? null) && ($participantes[$j->id]['visitante'] ?? null));
+        $this->assertNotNull($jogoOitavas, 'Oitavas deve ter participantes reais apos lancar round_of_32.');
+
+        // Garante prazo aberto para o palpite de oitavas.
+        $jogoOitavas->update(['data_hora_inicio' => now()->addDay()]);
 
         Sanctum::actingAs($usuario);
 
@@ -329,57 +355,52 @@ class FechamentoApostasTest extends TestCase
                 'placar_visitante' => 1,
             ]],
         ])->assertOk();
+
+        $this->assertDatabaseHas('apostas', [
+            'cupom_id' => $cupom->id,
+            'tipo' => 'placar_jogo_eliminatoria',
+            'jogo_id' => $jogoOitavas->id,
+        ]);
     }
 
-    private function preencherTodosOsJogosDeGrupos(Cupom $cupom): void
+    private function lancarResultadosDeGrupos(Torneio $torneio): void
     {
-        foreach (Jogo::query()->whereHas('fase', fn ($query) => $query->where('tipo', 'grupos'))->get() as $jogo) {
-            $cupom->apostas()->create([
-                'tipo' => 'placar_jogo_grupos',
-                'torneio_id' => $jogo->torneio_id,
-                'fase_id' => $jogo->fase_id,
-                'rodada_id' => $jogo->rodada_id,
-                'grupo_id' => $jogo->grupo_id,
-                'jogo_id' => $jogo->id,
-                'selecao_id' => null,
-                'jogador_id' => null,
-                'conteudo' => [
-                    'placar_mandante' => 1,
-                    'placar_visitante' => 0,
-                    'penal_mandante' => null,
-                    'penal_visitante' => null,
-                    'selecao_classificada_id' => null,
-                ],
-            ]);
+        $jogos = Jogo::query()
+            ->where('torneio_id', $torneio->id)
+            ->whereHas('fase', fn ($q) => $q->where('tipo', 'grupos'))
+            ->whereNotNull('selecao_mandante_id')->whereNotNull('selecao_visitante_id')->get();
+
+        foreach ($jogos as $i => $jogo) {
+            ResultadoJogo::query()->updateOrCreate(
+                ['jogo_id' => $jogo->id],
+                ['placar_mandante' => ($i % 3) + 1, 'placar_visitante' => 0, 'selecao_classificada_id' => null, 'encerrado_at' => now()],
+            );
+            $jogo->update(['status' => 'encerrado']);
         }
     }
 
-    private function preencherTodosOsJogosDaFaseEliminatoria(Cupom $cupom, string $slugFase): void
+    private function lancarResultadosDaFase(Torneio $torneio, string $slugFase): void
     {
-        $participantesPorJogo = collect(app(ServicoBracketCupom::class)->gerar($cupom))
-            ->keyBy('id');
+        $participantes = app(ServicoResultadosTorneio::class)->participantesPorJogo(Torneio::query()->findOrFail($torneio->id));
 
-        foreach (Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', $slugFase))->get() as $jogo) {
-            $partida = $participantesPorJogo->get($jogo->id);
-            $classificadoId = $partida['selecao_mandante']['id'] ?? $jogo->selecao_mandante_id;
+        $jogos = Jogo::query()
+            ->where('torneio_id', $torneio->id)
+            ->whereHas('fase', fn ($q) => $q->where('slug', $slugFase))
+            ->get();
 
-            $cupom->apostas()->create([
-                'tipo' => 'placar_jogo_eliminatoria',
-                'torneio_id' => $jogo->torneio_id,
-                'fase_id' => $jogo->fase_id,
-                'rodada_id' => null,
-                'grupo_id' => null,
-                'jogo_id' => $jogo->id,
-                'selecao_id' => null,
-                'jogador_id' => null,
-                'conteudo' => [
-                    'placar_mandante' => 1,
-                    'placar_visitante' => 0,
-                    'penal_mandante' => null,
-                    'penal_visitante' => null,
-                    'selecao_classificada_id' => $classificadoId,
-                ],
-            ]);
+        foreach ($jogos as $jogo) {
+            $mandante = $participantes[$jogo->id]['mandante'] ?? null;
+
+            if (! $mandante) {
+                continue;
+            }
+
+            // Mandante vence: vira o classificado real desse confronto.
+            ResultadoJogo::query()->updateOrCreate(
+                ['jogo_id' => $jogo->id],
+                ['placar_mandante' => 2, 'placar_visitante' => 1, 'selecao_classificada_id' => $mandante->id, 'encerrado_at' => now()],
+            );
+            $jogo->update(['status' => 'encerrado']);
         }
     }
 
