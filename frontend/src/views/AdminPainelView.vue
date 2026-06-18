@@ -84,10 +84,31 @@
             {{ fase.nome }}
           </button>
         </div>
+
+        <!-- Seletor de dia dentro da fase (espelha os palpites do cupom) -->
+        <div v-if="diasComJogosAdmin.length" class="mt-4 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          <button
+            v-for="dia in diasComJogosAdmin"
+            :key="dia.data"
+            type="button"
+            class="relative flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-center transition"
+            :class="diaSelecionadoAdmin === dia.data
+              ? 'bg-primary text-bg'
+              : dia.pendentes > 0
+                ? 'bg-bg-input border border-warning/50 text-text-muted'
+                : 'bg-bg-input border border-border text-text-muted hover:border-primary/40'"
+            @click="diaSelecionadoAdmin = dia.data"
+          >
+            <span v-if="dia.pendentes > 0 && diaSelecionadoAdmin !== dia.data" class="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-warning" />
+            <span class="text-[10px] font-medium uppercase">{{ dia.diaSemana }}</span>
+            <span class="text-sm font-bold">{{ dia.diaNumero }}</span>
+            <span class="text-[10px] opacity-70"><sup>({{ dia.totalJogos }})</sup></span>
+          </button>
+        </div>
       </div>
 
       <div class="grid gap-4">
-        <div v-for="jogo in jogosFiltrados" :key="jogo.id" class="rounded-2xl border border-border bg-bg-card p-5">
+        <div v-for="jogo in jogosDoDiaAdmin" :key="jogo.id" class="rounded-2xl border border-border bg-bg-card p-5">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-primary">
@@ -447,6 +468,41 @@ const jogosFiltrados = computed(() => {
     .filter((jogo) => jogo.fase_id === faseSelecionadaId.value)
     .sort((a, b) => a.ordem_na_fase - b.ordem_na_fase)
 })
+
+// Agrupamento por dia dentro da fase selecionada (espelha a tela de palpites do cupom).
+const diasSemanaAdmin = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB']
+const diaSelecionadoAdmin = ref('')
+
+const diasComJogosAdmin = computed(() => {
+  const map = new Map<string, { data: string; diaSemana: string; diaNumero: number; totalJogos: number; pendentes: number }>()
+  for (const jogo of jogosFiltrados.value) {
+    if (!jogo.data_hora_inicio) continue
+    const d = new Date(jogo.data_hora_inicio)
+    const key = jogo.data_hora_inicio.substring(0, 10)
+    if (!map.has(key)) {
+      map.set(key, { data: key, diaSemana: diasSemanaAdmin[d.getDay()], diaNumero: d.getDate(), totalJogos: 0, pendentes: 0 })
+    }
+    const entry = map.get(key)!
+    entry.totalJogos++
+    if (!jogo.resultado) entry.pendentes++
+  }
+  return [...map.values()].sort((a, b) => a.data.localeCompare(b.data))
+})
+
+const jogosDoDiaAdmin = computed(() => {
+  if (!diaSelecionadoAdmin.value) return jogosFiltrados.value
+  return jogosFiltrados.value.filter((jogo) => (jogo.data_hora_inicio ?? '').startsWith(diaSelecionadoAdmin.value))
+})
+
+watch([faseSelecionadaId, diasComJogosAdmin], () => {
+  if (!diasComJogosAdmin.value.length) {
+    diaSelecionadoAdmin.value = ''
+    return
+  }
+  if (!diasComJogosAdmin.value.some((dia) => dia.data === diaSelecionadoAdmin.value)) {
+    diaSelecionadoAdmin.value = diasComJogosAdmin.value[0].data
+  }
+}, { immediate: true })
 const podioDerivado = computed(() => {
   if (!torneio.value) {
     return { campeao: null, vice: null, terceiro: null }
