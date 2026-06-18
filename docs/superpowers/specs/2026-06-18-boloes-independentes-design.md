@@ -262,6 +262,9 @@ palpita os placares. O bônus campeão/vice/3º é opcional por bolão.
 | Mata-mata: bônus           | Palpite de campeão+vice+3º, fecha junto com os grupos         |
 | Mata-mata: chaveamento     | Aba vira bracket REAL preenchendo por fase; some o de fantasia |
 | Bug do resultado de grupo  | Resolvido pela mudança de regra (sem regeneração de bracket)  |
+| Mata-mata: motor real      | `ServicoResultadosTorneio::participantesDoJogo(Jogo)` já entrega os times reais; substitui a fantasia |
+| Bônus: armazenamento       | Uma aposta `tipo='podio'` (conteudo: campeao/vice/terceiro selecao_id); fecha em `data_inicio - 1h` |
+| Grupos × mata-mata         | Desacoplados: mata-mata abre pela realidade, sem exigir palpites de grupo do usuário |
 
 ---
 
