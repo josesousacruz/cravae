@@ -46,7 +46,7 @@ class ServicoFechamentoApostas
 
         $torneio = Torneio::query()->with('fases')->findOrFail($dados['torneio_id']);
 
-        if ($tipo === 'artilheiro') {
+        if (in_array($tipo, ['artilheiro', 'podio'], true)) {
             return $torneio->data_inicio?->copy()->subHour();
         }
 
