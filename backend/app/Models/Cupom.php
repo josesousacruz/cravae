@@ -13,6 +13,7 @@ class Cupom extends Model
 
     protected $fillable = [
         'usuario_id',
+        'torneio_id',
         'pedido_checkout_id',
         'codigo',
         'status',
@@ -21,6 +22,11 @@ class Cupom extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'usuario_id');
+    }
+
+    public function torneio(): BelongsTo
+    {
+        return $this->belongsTo(Torneio::class, 'torneio_id');
     }
 
     public function pedidoCheckout(): BelongsTo
