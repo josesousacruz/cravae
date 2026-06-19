@@ -192,10 +192,16 @@
                 <!-- Top row: palpite status + quem palpitou + group -->
                 <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
                   <div class="flex min-w-0 flex-wrap items-center gap-2">
-                    <span v-if="jogoSemConfronto(jogo)" class="inline-flex items-center gap-1 rounded-full bg-text-muted/15 px-2 py-0.5 text-[10px] font-medium text-text-muted">
-                      <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      Aguardando confronto
-                    </span>
+                    <template v-if="jogoSemConfronto(jogo)">
+                      <span class="inline-flex items-center gap-1 rounded-full bg-text-muted/15 px-2 py-0.5 text-[10px] font-medium text-text-muted">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Aguardando confronto
+                      </span>
+                      <span v-if="jogoRepalpitePendente(jogo)" class="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                        Repalpite necessário
+                      </span>
+                    </template>
                     <span v-else-if="jogoCompleto(jogo)" class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                       <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                       Com palpite
@@ -746,6 +752,13 @@ function apostaEliminatoriaObsoleta(jogo: JogoCupom, aposta?: Aposta): boolean {
 
 function jogoRepalpiteNecessario(jogo: JogoCupom): boolean {
   return apostaEliminatoriaObsoleta(jogo, encontrarAposta('placar_jogo_eliminatoria', jogo.id))
+}
+
+// Mata-mata ainda sem confronto real, mas com um palpite salvo (do chaveamento): o
+// palpite precisara ser refeito quando os times reais forem definidos. Sinalizamos isso
+// junto do selo "Aguardando confronto" para o usuario nao esquecer de revisar.
+function jogoRepalpitePendente(jogo: JogoCupom): boolean {
+  return jogoSemConfronto(jogo) && !!encontrarAposta('placar_jogo_eliminatoria', jogo.id)
 }
 
 // FIFA code → ISO 2-letter for flags
