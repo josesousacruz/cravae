@@ -9,3 +9,8 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('asaas:sincronizar-pagamentos')->everyMinute();
+
+// Copa: puxa placares encerrados da TheSportsDB e dispara a pontuação.
+Schedule::command('jogos:sincronizar-resultados')->everyMinute()->withoutOverlapping();
+// Casa jogos novos a eventos (calendário publicado aos poucos + mata-mata definido).
+Schedule::command('jogos:vincular-eventos')->hourly()->withoutOverlapping();

@@ -21,6 +21,7 @@ class Jogo extends Model
         'data_hora_inicio',
         'ordem_na_fase',
         'status',
+        'id_evento_externo',
     ];
 
     protected function casts(): array

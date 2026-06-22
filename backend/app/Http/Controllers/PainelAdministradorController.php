@@ -13,13 +13,13 @@ use App\Models\Fase;
 use App\Models\Grupo;
 use App\Models\Jogo;
 use App\Models\RegraPontuacao;
-use App\Models\ResultadoJogo;
 use App\Models\ResultadoTorneio;
 use App\Models\Selecao;
 use App\Models\Torneio;
 use App\Models\Usuario;
 use App\Services\ServicoCheckout;
 use App\Services\ServicoResultadosTorneio;
+use App\Services\ServicoSincronizacaoResultados;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -48,6 +48,7 @@ class PainelAdministradorController extends Controller
     public function __construct(
         private readonly ServicoResultadosTorneio $servicoResultadosTorneio,
         private readonly ServicoCheckout $servicoCheckout,
+        private readonly ServicoSincronizacaoResultados $servicoSincronizacao,
     ) {
     }
 
@@ -165,20 +166,13 @@ class PainelAdministradorController extends Controller
     public function salvarResultadoJogo(SalvarResultadoJogoRequest $request, Jogo $jogo): JsonResponse
     {
         $jogo->loadMissing('fase', 'torneio');
-        $resultado = ResultadoJogo::query()->updateOrCreate(
-            ['jogo_id' => $jogo->id],
-            [
-                'placar_mandante' => $request->integer('placar_mandante'),
-                'placar_visitante' => $request->integer('placar_visitante'),
-                'selecao_classificada_id' => $this->resolverClassificadoResultado($request, $jogo),
-                'encerrado_at' => now(),
-            ],
-        );
 
-        $jogo->forceFill(['status' => 'encerrado'])->save();
-        $torneio = $jogo->torneio()->firstOrFail();
-        $this->sincronizarResultadoTorneio($torneio);
-        RecalcularPontuacaoTorneioJob::dispatchAfterResponse($torneio->id);
+        $resultado = $this->servicoSincronizacao->aplicarResultado(
+            $jogo,
+            $request->integer('placar_mandante'),
+            $request->integer('placar_visitante'),
+            $this->resolverClassificadoResultado($request, $jogo),
+        );
 
         return response()->json([
             'resultado' => $resultado,
@@ -187,17 +181,28 @@ class PainelAdministradorController extends Controller
 
     public function limparResultadoJogo(Jogo $jogo): JsonResponse
     {
-        $jogo->loadMissing('torneio');
-
-        ResultadoJogo::query()->where('jogo_id', $jogo->id)->delete();
-        $jogo->forceFill(['status' => 'agendado'])->save();
-
-        $torneio = $jogo->torneio()->firstOrFail();
-        $this->sincronizarResultadoTorneio($torneio);
-        RecalcularPontuacaoTorneioJob::dispatchAfterResponse($torneio->id);
+        $this->servicoSincronizacao->limparResultado($jogo);
 
         return response()->json([
             'mensagem' => 'Resultado removido. Recalculo enviado para processamento.',
+        ]);
+    }
+
+    public function vincularEventoJogo(Request $request, Jogo $jogo): JsonResponse
+    {
+        $validado = $request->validate([
+            'id_evento_externo' => [
+                'present',
+                'nullable',
+                'integer',
+                Rule::unique('jogos', 'id_evento_externo')->ignore($jogo->id),
+            ],
+        ]);
+
+        $jogo->forceFill(['id_evento_externo' => $validado['id_evento_externo']])->save();
+
+        return response()->json([
+            'jogo' => $jogo->only('id', 'id_evento_externo'),
         ]);
     }
 
@@ -328,22 +333,6 @@ class PainelAdministradorController extends Controller
         return response()->json([
             'cupom' => $cupom->load(['usuario:id,nome,email,telefone', 'pedidoCheckout:id,valor,status']),
         ]);
-    }
-
-    private function sincronizarResultadoTorneio(Torneio $torneio): void
-    {
-        $torneio->loadMissing(['jogos.fase', 'jogos.resultado', 'resultadoTorneio']);
-        $podio = $this->servicoResultadosTorneio->resolverPodio($torneio);
-
-        ResultadoTorneio::query()->updateOrCreate(
-            ['torneio_id' => $torneio->id],
-            [
-                'campeao_selecao_id' => $podio['campeao_selecao_id'],
-                'vice_campeao_selecao_id' => $podio['vice_campeao_selecao_id'],
-                'terceiro_colocado_selecao_id' => $podio['terceiro_colocado_selecao_id'],
-                'artilheiro_jogador_id' => $torneio->resultadoTorneio?->artilheiro_jogador_id,
-            ],
-        );
     }
 
     /**

@@ -108,6 +108,7 @@ export type Jogo = {
   selecao_visitante: Selecao | null
   participantes_admin?: Selecao[]
   resultado?: ResultadoJogo | null
+  id_evento_externo?: number | null
 }
 
 export type BracketJogoCupom = {

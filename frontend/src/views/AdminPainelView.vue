@@ -203,6 +203,34 @@
               </select>
             </label>
           </div>
+
+          <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+            <span class="text-xs text-text-muted">Evento TheSportsDB</span>
+            <span
+              v-if="jogo.id_evento_externo"
+              class="rounded-md bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success"
+            >
+              vinculado #{{ jogo.id_evento_externo }}
+            </span>
+            <span v-else class="rounded-md bg-bg-input px-2 py-0.5 text-[11px] text-text-muted">
+              sem vinculo
+            </span>
+            <input
+              v-model="vinculosEvento[jogo.id]"
+              type="number"
+              min="0"
+              placeholder="idEvent"
+              class="!w-28 text-center"
+            />
+            <button
+              type="button"
+              class="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary transition hover:text-text disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="vinculandoJogoId === jogo.id"
+              @click="vincularEvento(jogo.id)"
+            >
+              {{ vinculandoJogoId === jogo.id ? 'Salvando...' : 'Vincular' }}
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -384,6 +412,8 @@ const faseSelecionadaId = ref<number | null>(null)
 const pontosRegras = ref<Record<number, string>>({})
 const resultadosJogos = ref<Record<number, { placar_mandante: string; placar_visitante: string; selecao_classificada_id: string }>>({})
 const salvandoJogoId = ref<number | null>(null)
+const vinculosEvento = ref<Record<number, string>>({})
+const vinculandoJogoId = ref<number | null>(null)
 const salvandoRegraId = ref<number | null>(null)
 const excluindoRegraId = ref<number | null>(null)
 const adicionandoRegra = ref(false)
@@ -601,6 +631,7 @@ function preencherFormulario() {
       placar_visitante: String(jogo.resultado?.placar_visitante ?? ''),
       selecao_classificada_id: String(jogo.resultado?.selecao_classificada_id ?? ''),
     }
+    vinculosEvento.value[jogo.id] = jogo.id_evento_externo != null ? String(jogo.id_evento_externo) : ''
   }
 
   if (!faseSelecionadaId.value || !fasesComJogos.value.some((fase) => fase.id === faseSelecionadaId.value)) {
@@ -789,6 +820,18 @@ async function limparResultadoJogo(jogoId: number) {
     await requisicaoApi(`/admin/jogos/${jogoId}/resultado`, { metodo: 'DELETE' })
   }, 'Resultado removido. Recalculo enviado para processamento.')
   salvandoJogoId.value = null
+}
+
+async function vincularEvento(jogoId: number) {
+  vinculandoJogoId.value = jogoId
+  const valor = (vinculosEvento.value[jogoId] ?? '').trim()
+  await executarAcao(async () => {
+    await requisicaoApi(`/admin/jogos/${jogoId}/evento-externo`, {
+      metodo: 'PUT',
+      corpo: { id_evento_externo: valor ? Number(valor) : null },
+    })
+  }, valor ? 'Evento vinculado.' : 'Vinculo removido.')
+  vinculandoJogoId.value = null
 }
 
 async function salvarResultadoTorneioFn() {
