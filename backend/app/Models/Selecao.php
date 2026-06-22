@@ -15,6 +15,7 @@ class Selecao extends Model
         'grupo_id',
         'nome',
         'sigla',
+        'id_externo',
         'slug',
         'ativo',
     ];

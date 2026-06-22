@@ -91,11 +91,11 @@ class TorneioMockadoSeeder extends Seeder
                 ['nome' => 'Mexico', 'sigla' => 'MEX'],
                 ['nome' => 'Africa do Sul', 'sigla' => 'RSA'],
                 ['nome' => 'Coreia do Sul', 'sigla' => 'KOR'],
-                ['nome' => 'A Definir (Repescagem UEFA D)', 'sigla' => 'UD4'],
+                ['nome' => 'Tchequia', 'sigla' => 'CZE'], // Repescagem UEFA Path D
             ],
             'B' => [
                 ['nome' => 'Canada', 'sigla' => 'CAN'],
-                ['nome' => 'A Definir (Repescagem UEFA A)', 'sigla' => 'UA1'],
+                ['nome' => 'Bosnia e Herzegovina', 'sigla' => 'BIH'], // Repescagem UEFA Path A
                 ['nome' => 'Qatar', 'sigla' => 'QAT'],
                 ['nome' => 'Suica', 'sigla' => 'SUI'],
             ],
@@ -109,7 +109,7 @@ class TorneioMockadoSeeder extends Seeder
                 ['nome' => 'Estados Unidos', 'sigla' => 'USA'],
                 ['nome' => 'Paraguai', 'sigla' => 'PAR'],
                 ['nome' => 'Australia', 'sigla' => 'AUS'],
-                ['nome' => 'A Definir (Repescagem UEFA C)', 'sigla' => 'UC3'],
+                ['nome' => 'Turquia', 'sigla' => 'TUR'], // Repescagem UEFA Path C
             ],
             'E' => [
                 ['nome' => 'Alemanha', 'sigla' => 'GER'],
@@ -120,7 +120,7 @@ class TorneioMockadoSeeder extends Seeder
             'F' => [
                 ['nome' => 'Holanda', 'sigla' => 'NED'],
                 ['nome' => 'Japao', 'sigla' => 'JPN'],
-                ['nome' => 'A Definir (Repescagem UEFA B)', 'sigla' => 'UB2'],
+                ['nome' => 'Suecia', 'sigla' => 'SWE'], // Repescagem UEFA Path B
                 ['nome' => 'Tunisia', 'sigla' => 'TUN'],
             ],
             'G' => [
@@ -138,7 +138,7 @@ class TorneioMockadoSeeder extends Seeder
             'I' => [
                 ['nome' => 'Franca', 'sigla' => 'FRA'],
                 ['nome' => 'Senegal', 'sigla' => 'SEN'],
-                ['nome' => 'A Definir (Intercontinental 2)', 'sigla' => 'IC2'],
+                ['nome' => 'Iraque', 'sigla' => 'IRQ'], // Repescagem Intercontinental 2
                 ['nome' => 'Noruega', 'sigla' => 'NOR'],
             ],
             'J' => [
@@ -149,7 +149,7 @@ class TorneioMockadoSeeder extends Seeder
             ],
             'K' => [
                 ['nome' => 'Portugal', 'sigla' => 'POR'],
-                ['nome' => 'A Definir (Intercontinental 1)', 'sigla' => 'IC1'],
+                ['nome' => 'RD Congo', 'sigla' => 'COD'], // Repescagem Intercontinental 1
                 ['nome' => 'Uzbequistao', 'sigla' => 'UZB'],
                 ['nome' => 'Colombia', 'sigla' => 'COL'],
             ],
@@ -178,6 +178,7 @@ class TorneioMockadoSeeder extends Seeder
                     [
                         'grupo_id' => $grupo->id,
                         'nome' => $time['nome'],
+                        'id_externo' => config('thesportsdb.selecoes')[$time['sigla']] ?? null,
                         'slug' => Str::slug($time['nome']),
                         'ativo' => true,
                     ],
