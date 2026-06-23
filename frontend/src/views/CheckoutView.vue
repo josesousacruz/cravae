@@ -43,6 +43,16 @@
           {{ processando ? 'Gerando Pix...' : 'Gerar Pix' }}
         </button>
 
+        <button
+          v-if="!pedido"
+          type="button"
+          class="mt-3 w-full rounded-xl border border-primary/40 bg-primary/5 py-3 font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="processandoDireto"
+          @click="gerarPixDireto"
+        >
+          {{ processandoDireto ? 'Gerando...' : 'Pagar com Pix direto (confirmacao manual)' }}
+        </button>
+
         <RouterLink
           v-if="!autenticacao.cpfCnpj"
           to="/perfil"
@@ -93,6 +103,13 @@
         </div>
       </section>
     </div>
+
+    <ModalPixPagamento
+      :aberto="modalPixAberto"
+      :cupom-codigo="cupomDireto?.codigo ?? ''"
+      :valor="torneio?.valor_cupom ?? null"
+      @fechar="fecharModalDireto"
+    />
   </div>
 </template>
 
@@ -102,6 +119,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { useToast } from '../composables/useToast'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
+import ModalPixPagamento from '../components/ModalPixPagamento.vue'
 import type { Cupom, PedidoCheckout, Torneio } from '../tipos'
 
 type RespostaPedidoCheckout = {
@@ -119,6 +137,9 @@ const torneio = ref<Torneio | null>(null)
 const pedido = ref<PedidoCheckout | null>(null)
 const carregando = ref(true)
 const processando = ref(false)
+const processandoDireto = ref(false)
+const modalPixAberto = ref(false)
+const cupomDireto = ref<Cupom | null>(null)
 const sincronizacaoErro = ref<string | null>(null)
 let intervaloConsulta: number | null = null
 
@@ -189,6 +210,33 @@ async function gerarPagamento() {
   } finally {
     processando.value = false
   }
+}
+
+async function gerarPixDireto() {
+  processandoDireto.value = true
+  try {
+    const torneioId = torneio.value?.id
+    if (!torneioId) {
+      mostrar('erro', 'Bolão não encontrado para o checkout.')
+      return
+    }
+    const resposta = await requisicaoApi<RespostaPedidoCheckout>('/pedidos-checkout', {
+      metodo: 'POST',
+      corpo: { torneio_id: torneioId, forma_pagamento: 'pix_direto' },
+    })
+    cupomDireto.value = resposta.cupom ?? null
+    modalPixAberto.value = true
+  } catch (error) {
+    mostrar('erro', error instanceof Error ? error.message : 'Nao foi possivel gerar o Pix direto.')
+  } finally {
+    processandoDireto.value = false
+  }
+}
+
+function fecharModalDireto() {
+  modalPixAberto.value = false
+  mostrar('sucesso', 'Cupom criado. Ele sera liberado apos a confirmacao do pagamento.')
+  router.push({ name: 'painel' })
 }
 
 function iniciarConsulta() {

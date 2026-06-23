@@ -47,6 +47,47 @@ class ServicoCheckout
         return $this->prepararPagamentoPix($pedido);
     }
 
+    /**
+     * Cria pedido + cupom para pagamento via Pix direto (chave fixa, confirmação
+     * manual). NÃO toca no Asaas e não exige CPF/CNPJ. Idempotente: reutiliza um
+     * cupom pendente de pix_direto do mesmo usuário+torneio, se houver.
+     */
+    public function criarPedidoPixDireto(Usuario $usuario, Torneio $torneio): Cupom
+    {
+        return DB::transaction(function () use ($usuario, $torneio) {
+            $cupomPendente = Cupom::query()
+                ->where('usuario_id', $usuario->id)
+                ->where('torneio_id', $torneio->id)
+                ->where('status', 'aguardando_pagamento')
+                ->whereHas('pedidoCheckout', fn ($q) => $q
+                    ->where('forma_pagamento', 'pix_direto')
+                    ->where('status', 'pendente'))
+                ->latest('id')
+                ->first();
+
+            if ($cupomPendente) {
+                return $cupomPendente;
+            }
+
+            $pedido = PedidoCheckout::query()->create([
+                'usuario_id' => $usuario->id,
+                'torneio_id' => $torneio->id,
+                'valor' => $torneio->valor_cupom ?? 10,
+                'status' => 'pendente',
+                'forma_pagamento' => 'pix_direto',
+                'referencia_checkout' => (string) Str::uuid(),
+            ]);
+
+            return Cupom::query()->create([
+                'usuario_id' => $usuario->id,
+                'torneio_id' => $torneio->id,
+                'pedido_checkout_id' => $pedido->id,
+                'codigo' => $this->gerarCodigoCupom(),
+                'status' => 'aguardando_pagamento',
+            ]);
+        });
+    }
+
     public function prepararPagamentoPix(PedidoCheckout $pedido): PedidoCheckout
     {
         $pedido->loadMissing('usuario');

@@ -21,6 +21,7 @@ class CriarPedidoCheckoutRequest extends FormRequest
             'valor' => ['prohibited'],
             'torneio_id' => ['required', 'integer', 'exists:torneios,id'],
             'cupom_id' => ['nullable', 'integer', 'exists:cupons,id'],
+            'forma_pagamento' => ['sometimes', 'in:pix,pix_direto'],
         ];
     }
 }

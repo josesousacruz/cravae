@@ -26,6 +26,15 @@ class PedidoCheckoutController extends Controller
         $torneio = Torneio::query()->findOrFail($request->integer('torneio_id'));
         $this->garantirComprasAbertas($torneio);
 
+        if ($request->input('forma_pagamento') === 'pix_direto') {
+            $cupomDireto = $this->servicoCheckout->criarPedidoPixDireto($request->user(), $torneio);
+
+            return response()->json([
+                'pedido' => $cupomDireto->pedidoCheckout()->first()?->loadMissing('cupons'),
+                'cupom' => $cupomDireto,
+            ], 201);
+        }
+
         $cupom = $request->filled('cupom_id')
             ? Cupom::query()->findOrFail($request->integer('cupom_id'))
             : null;
