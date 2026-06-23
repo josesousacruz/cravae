@@ -10,7 +10,7 @@
       </div>
     </div>
 
-    <div v-else class="grid w-full gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+    <div v-else class="w-full" :class="asaasAtivo ? 'grid gap-5 lg:grid-cols-[0.9fr_1.1fr]' : 'mx-auto max-w-md'">
       <section class="rounded-2xl border border-border bg-bg-card p-6 sm:p-8">
         <p class="text-xs font-semibold uppercase tracking-wider text-primary">Pagamento Pix</p>
         <h1 class="mt-3 text-2xl font-bold text-text">Comprar cupom</h1>
@@ -18,7 +18,7 @@
 
         <p class="my-6 text-4xl font-bold text-primary">{{ valorCupomFormatado }}</p>
 
-        <div class="space-y-3 rounded-xl border border-border bg-bg-input p-4 text-sm text-text-secondary">
+        <div v-if="asaasAtivo" class="space-y-3 rounded-xl border border-border bg-bg-input p-4 text-sm text-text-secondary">
           <div class="flex items-center justify-between gap-3">
             <span>Status</span>
             <strong class="text-text">{{ statusPagamento }}</strong>
@@ -29,12 +29,12 @@
           </div>
         </div>
 
-        <p v-if="sincronizacaoErro" class="mt-3 text-xs text-warning">
+        <p v-if="asaasAtivo && sincronizacaoErro" class="mt-3 text-xs text-warning">
           Nao foi possivel confirmar no Asaas agora. Vamos tentar novamente automaticamente.
         </p>
 
         <button
-          v-if="!pedido"
+          v-if="asaasAtivo && !pedido"
           type="button"
           class="mt-6 w-full rounded-xl bg-primary py-3 font-semibold text-bg transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
           :disabled="processando"
@@ -46,15 +46,18 @@
         <button
           v-if="!pedido"
           type="button"
-          class="mt-3 w-full rounded-xl border border-primary/40 bg-primary/5 py-3 font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
+          class="w-full rounded-xl py-3 font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          :class="asaasAtivo
+            ? 'mt-3 border border-primary/40 bg-primary/5 text-primary hover:bg-primary/10'
+            : 'mt-6 bg-primary text-bg hover:bg-primary-hover'"
           :disabled="processandoDireto"
           @click="gerarPixDireto"
         >
-          {{ processandoDireto ? 'Gerando...' : 'Pagar com Pix direto (confirmacao manual)' }}
+          {{ processandoDireto ? 'Gerando...' : 'Pagar com Pix (confirmacao manual)' }}
         </button>
 
         <RouterLink
-          v-if="!autenticacao.cpfCnpj"
+          v-if="asaasAtivo && !autenticacao.cpfCnpj"
           to="/perfil"
           class="mt-3 flex w-full items-center justify-center rounded-xl border border-warning/40 bg-warning/10 py-3 text-sm font-semibold text-warning transition-colors hover:bg-warning/15"
         >
@@ -66,7 +69,7 @@
         </RouterLink>
       </section>
 
-      <section class="rounded-2xl border border-border bg-bg-card p-6 sm:p-8">
+      <section v-if="asaasAtivo" class="rounded-2xl border border-border bg-bg-card p-6 sm:p-8">
         <div v-if="pedido?.pix_qr_code_base64 && pedido.pix_copia_cola" class="grid gap-6 md:grid-cols-[220px_1fr]">
           <div class="rounded-xl bg-white p-3">
             <img :src="`data:image/png;base64,${pedido.pix_qr_code_base64}`" alt="QR Code Pix" class="h-full w-full" />
@@ -135,6 +138,11 @@ const autenticacao = usarAutenticacaoStore()
 
 const torneio = ref<Torneio | null>(null)
 const pedido = ref<PedidoCheckout | null>(null)
+// Asaas desativado: somente Pix com confirmacao manual fica ativo no checkout.
+// Todo o fluxo Asaas (backend + frontend) segue intacto; para reativar, basta
+// voltar esta flag para true.
+const asaasAtivo = false
+
 const carregando = ref(true)
 const processando = ref(false)
 const processandoDireto = ref(false)
