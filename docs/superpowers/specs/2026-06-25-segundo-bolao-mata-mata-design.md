@@ -9,6 +9,8 @@ Criar um **segundo bolão independente**, focado **exclusivamente na fase de mat
 
 Diferença conceitual central: no bolão atual cada cupom tem **seu próprio** chaveamento, derivado dos palpites do usuário na fase de grupos. No bolão mata-mata **não há fase de grupos** — existe **um único chaveamento real e compartilhado por todos**, que vai sendo preenchido com os times reais conforme a fase de grupos da Copa é decidida e a API publica os confrontos. Todos apostam nos mesmos jogos reais.
 
+**Inclui também (escopo ampliado):** o **bolão atual** já tem 32 jogos reais de mata-mata como placeholders, mas seus **resultados não são sincronizados da API hoje** (a config cobre só as rodadas 1–3 de grupos) — o admin lança manualmente. O sync de knockout que este design introduz é uma **capacidade genérica por torneio** e fecha esse gap nos **dois** bolões.
+
 ### Decisões travadas
 
 | Tema | Decisão |
@@ -51,7 +53,10 @@ O banco **já é multi-torneio** (todas as tabelas relevantes têm `torneio_id`)
    - esqueleto de jogos placeholder (times nulos) cobrindo o bracket inteiro;
    - regras de pontuação só de knockout: `classificado_mata_mata`, `classificado_e_placar_mata_mata`, `campeao`, `vice_campeao`, `terceiro_colocado`. **`artilheiro` fica de fora** por padrão (é um palpite que abrange o torneio inteiro, incluindo a fase de grupos, que este bolão não acompanha).
 
-2. **Sync de knockout** — estende a config de rodadas e a lógica de casamento para preencher times + resultado dos jogos de mata-mata. O `jogos:vincular-eventos` atual casa por **par de times** e não serve com times nulos; o novo casamento usa **rodada + ordem/data** do evento da API para identificar o jogo-placeholder correto, atribui os times (via `id_externo`) e, quando o evento encerra, grava o resultado.
+2. **Sync de knockout (genérico, serve os dois bolões)** — estende a config de rodadas e a lógica de casamento para os jogos de mata-mata. O `jogos:vincular-eventos` atual casa por **par de times** e cobre só rodadas 1–3. O sync de knockout precisa lidar com **duas estratégias de descoberta de participantes**, conforme o torneio:
+   - **Torneio com fase de grupos (bolão atual):** os participantes reais já são **derivados internamente** por `ServicoResultadosTorneio` (classificação dos grupos + vencedores anteriores). O sync **consulta esses participantes derivados** e casa o jogo ao evento da API **por par de times**, trazendo apenas o **resultado**. Não precisa inventar quem joga.
+   - **Torneio mata-mata puro (2º bolão):** sem fase de grupos, **quem joga vem da API** — o sync casa o evento ao jogo-placeholder por **rodada + ordem/data**, atribui os times (via `id_externo`) e, quando encerra, grava o resultado.
+   - Em ambos, ao gravar resultado, dispara `RecalcularPontuacaoTorneioJob`.
 
 3. **Trava de aposta por jogo** — `ServicoApostas` só aceita aposta num jogo quando **ambos os times estão definidos** e o prazo (kickoff) ainda não passou. Caso contrário, jogo bloqueado / rótulo "A definir".
 
@@ -62,8 +67,12 @@ O banco **já é multi-torneio** (todas as tabelas relevantes têm `torneio_id`)
 - **Round codes** da TheSportsDB para o knockout 2026 (32avos→final) no free tier — confirmar quais `intRound`/endpoints retornam os confrontos eliminatórios (usuário relatou que 32avos já saiu na API).
 - Estratégia exata de casamento evento↔placeholder (por `intRound` + ordenação por data/idEvent vs. `ordem_na_fase`).
 - Confirmar que `ServicoPontuacao` calcula corretamente um torneio **sem** fase de grupos.
+- **Decidir entre duas estratégias ou unificá-las:** manter o casamento por par de times (consultando `ServicoResultadosTorneio`) para o bolão atual e por rodada+ordem para o 2º bolão, **ou** unificar persistindo os participantes derivados na linha do jogo (`selecao_*_id`) para que ambos usem o mesmo casamento por `id_externo`. Avaliar o risco de mexer na derivação dinâmica atual do bolão de grupos.
+- Confirmar que casar por par de times funciona com os participantes **derivados dinamicamente** do bolão atual (não persistidos na linha do jogo).
 
-## 3. Fluxo de preenchimento (Approach A)
+## 3. Fluxo de preenchimento
+
+### 3.1 — 2º bolão (mata-mata puro, Approach A)
 
 1. Seed cria o bolão com bracket vazio (32 jogos placeholder) e 48 seleções com `id_externo`.
 2. Cron roda o sync de knockout: busca eventos eliminatórios na TheSportsDB.
@@ -71,6 +80,13 @@ O banco **já é multi-torneio** (todas as tabelas relevantes têm `torneio_id`)
 4. Ao setar os times, a aposta daquele jogo **abre** (prazo até o kickoff).
 5. Quando o evento encerra, o sync grava `resultados_jogos`, marca o jogo como encerrado e dispara `RecalcularPontuacaoTorneioJob`.
 6. **Rede de segurança:** quando a API atrasa ou não entrega o classificado (decisão por pênaltis), o admin usa os endpoints já existentes — vincular evento, salvar/limpar resultado — para corrigir manualmente.
+
+### 3.2 — Bolão atual (grupos + mata-mata)
+
+1. Os participantes reais de cada jogo de knockout já são **derivados** por `ServicoResultadosTorneio` à medida que os resultados de grupos/fases anteriores chegam.
+2. Cron roda o sync de knockout: para cada jogo de mata-mata, consulta os participantes derivados e casa com o evento da API **por par de times**.
+3. Quando o evento encerra, grava `resultados_jogos` (placar + classificado), marca como encerrado e dispara o recálculo — eliminando o lançamento manual de hoje.
+4. Mesma rede de segurança manual do admin permanece disponível.
 
 ## 4. UX / UI
 
@@ -102,7 +118,8 @@ O banco **já é multi-torneio** (todas as tabelas relevantes têm `torneio_id`)
 ## 6. Testes
 
 - **Seeder**: cria 1 torneio mata-mata, 48 seleções com `id_externo`, 32 jogos placeholder e regras de knockout.
-- **Sync de knockout**: dado payload da API com confronto definido, o jogo-placeholder correto recebe os times; com placar final, grava resultado e dispara recálculo.
+- **Sync de knockout (2º bolão)**: dado payload da API com confronto definido, o jogo-placeholder correto recebe os times; com placar final, grava resultado e dispara recálculo.
+- **Sync de knockout (bolão atual)**: dado um jogo de mata-mata com participantes derivados e um evento da API correspondente encerrado, grava `resultados_jogos` (placar + classificado) e dispara recálculo, sem lançamento manual.
 - **Trava de aposta**: rejeita aposta em jogo sem times definidos e após o kickoff; aceita quando válido.
 - **Pontuação**: motor calcula corretamente num torneio só de mata-mata.
 - **Escopo por torneio**: operações de admin afetam apenas o `torneio_id` em contexto; cupons/ranking não vazam entre bolões.
