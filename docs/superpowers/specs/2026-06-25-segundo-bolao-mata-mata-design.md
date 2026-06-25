@@ -65,8 +65,8 @@ O banco **já é multi-torneio** (todas as tabelas relevantes têm `torneio_id`)
 
 ### 2.3 Pesquisa pendente (resolver na fase de planejamento)
 
-- **Round codes** da TheSportsDB para o knockout 2026 (32avos→final) no free tier — confirmar quais `intRound`/endpoints retornam os confrontos eliminatórios (usuário relatou que 32avos já saiu na API).
-- Estratégia exata de casamento evento↔placeholder (por `intRound` + ordenação por data/idEvent vs. `ordem_na_fase`).
+- **Round codes (investigado em 2026-06-25):** a doc da TheSportsDB define `intRound` 125=Quartas, 150=Semi, 200=Final, **mas não há código para Round of 32/16**; e o free tier ainda **não expõe** os confrontos de knockout da Copa 2026 (consultas por rodada de mata-mata voltaram vazias; `eventsseason` só traz a rodada 1 de grupos). **Decisão:** o sync de knockout **não depende de código de rodada** — usa os endpoints de liga `eventspastleague`/`eventsnextleague` (sem teto de rodada) e casa por **par de times**. Códigos de rodada, se necessários, ficam como **config ajustável**.
+- **Bolão atual:** casamento por par de times funciona de imediato (participantes derivados). **2º bolão:** enquanto a API não publica os confrontos com times, o admin **vincula evento/define times** (rede de segurança); quando a API publicar, o casamento por par de times passa a funcionar automaticamente.
 - Confirmar que `ServicoPontuacao` calcula corretamente um torneio **sem** fase de grupos.
 - **Impacto no bolão atual ao trocar o bracket real (derivado) por API:** mapear todos os consumidores de `ServicoResultadosTorneio` (participantes reais derivados) e garantir que passar a popular `selecao_*_id` na linha do jogo pela API não quebre exibição, pódio nem pontuação. Decidir se `ServicoResultadosTorneio` é **substituído**, vira **fallback** (quando a API ainda não publicou o confronto) ou é **mantido só para o bracket previsto por cupom**.
 - Garantir que o **bracket previsto por cupom** (derivado dos palpites na fase de grupos) permanece intacto e independente do bracket real vindo da API.
