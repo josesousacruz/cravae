@@ -26,6 +26,15 @@ return [
     'rodadas' => [1, 2, 3],
 
     /*
+    | Rodadas de mata-mata (eventsround, sem teto no plano free).
+    | Convencao "times restantes": Round of 32 = 32 (CONFIRMADO 2026-06-26),
+    | Round of 16 = 16, Quartas = 8, Semi = 4, Final = 2. Ajuste conforme a API
+    | publicar as fases. r=2 colide com a rodada 2 de grupos, mas o casamento e
+    | por par de times — sem efeito colateral.
+    */
+    'rodadas_mata_mata' => [32, 16, 8, 4, 2],
+
+    /*
     |--------------------------------------------------------------------------
     | De-para de seleções (Nível 1)
     |--------------------------------------------------------------------------

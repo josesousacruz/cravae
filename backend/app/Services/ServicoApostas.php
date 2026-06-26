@@ -126,7 +126,7 @@ class ServicoApostas
         $tipo = $item['tipo'];
 
         if (in_array($tipo, ['placar_jogo_grupos', 'placar_jogo_eliminatoria'], true)) {
-            $jogo = Jogo::query()->with(['fase', 'rodada'])->findOrFail($item['jogo_id']);
+            $jogo = Jogo::query()->with(['fase', 'rodada', 'selecaoMandante', 'selecaoVisitante'])->findOrFail($item['jogo_id']);
             $placarMandante = (int) $item['placar_mandante'];
             $placarVisitante = (int) $item['placar_visitante'];
             $penalMandante = isset($item['penal_mandante']) ? (int) $item['penal_mandante'] : null;
@@ -135,16 +135,25 @@ class ServicoApostas
             $selecaoClassificadaId = null;
 
             if ($tipo === 'placar_jogo_eliminatoria') {
-                $participantes = $this->servicoResultadosTorneio->participantesDoJogo($jogo);
+                // Preferir os times persistidos no jogo (2º bolão espelha a API);
+                // cai na derivação só quando o jogo ainda não tem times definidos.
+                $mandante = $jogo->selecaoMandante;
+                $visitante = $jogo->selecaoVisitante;
 
-                if (! $participantes['mandante'] || ! $participantes['visitante']) {
+                if (! $mandante || ! $visitante) {
+                    $participantes = $this->servicoResultadosTorneio->participantesDoJogo($jogo);
+                    $mandante = $participantes['mandante'];
+                    $visitante = $participantes['visitante'];
+                }
+
+                if (! $mandante || ! $visitante) {
                     // Participantes reais ainda nao definidos: ignora o item no lote.
                     return null;
                 }
 
                 $selecaoClassificadaId = $this->resolverClassificadoEliminatoria(
-                    $participantes['mandante'],
-                    $participantes['visitante'],
+                    $mandante,
+                    $visitante,
                     $placarMandante,
                     $placarVisitante,
                     $penalMandante,

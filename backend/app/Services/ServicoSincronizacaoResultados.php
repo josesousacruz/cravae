@@ -95,9 +95,16 @@ class ServicoSincronizacaoResultados
             return ['ok' => true, 'classificado' => null];
         }
 
-        $participantes = $this->servicoResultadosTorneio->participantesDoJogo($jogo);
-        $mandante = $participantes['mandante']?->id;
-        $visitante = $participantes['visitante']?->id;
+        // Preferir os times persistidos no jogo (2º bolão espelha a API direto na
+        // linha do jogo). Cai na derivação só quando o jogo ainda não tem times.
+        $mandante = $jogo->selecao_mandante_id;
+        $visitante = $jogo->selecao_visitante_id;
+
+        if (! $mandante || ! $visitante) {
+            $participantes = $this->servicoResultadosTorneio->participantesDoJogo($jogo);
+            $mandante = $participantes['mandante']?->id;
+            $visitante = $participantes['visitante']?->id;
+        }
 
         if (! $mandante || ! $visitante) {
             return ['ok' => false, 'classificado' => null];

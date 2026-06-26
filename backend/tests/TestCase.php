@@ -8,6 +8,14 @@ use Illuminate\Support\Facades\Http;
 
 abstract class TestCase extends BaseTestCase
 {
+    /**
+     * Eventos da TheSportsDB por código de rodada (intRound), usados pelo fake de
+     * HTTP. Os testes de sync sobrescrevem isto antes de exercitar os comandos.
+     *
+     * @var array<int, array<int, array<string, mixed>>>
+     */
+    protected array $eventosTheSportsDb = [];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -50,6 +58,15 @@ abstract class TestCase extends BaseTestCase
                     'id' => basename(dirname($url)),
                     'status' => 'RECEIVED',
                 ], 200);
+            }
+
+            // TheSportsDB (eventsround): responde com os eventos da rodada definidos
+            // pelo teste em $this->eventosTheSportsDb (vazio por padrão).
+            if (str_contains($url, 'thesportsdb.com')) {
+                parse_str((string) parse_url($url, PHP_URL_QUERY), $q);
+                $rodada = (int) ($q['r'] ?? 0);
+
+                return Http::response(['events' => $this->eventosTheSportsDb[$rodada] ?? []], 200);
             }
 
             return Http::response([], 404);

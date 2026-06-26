@@ -80,12 +80,13 @@ class ServicoTheSportsDb
      *
      * @return array<int,array<string,mixed>>
      */
-    public function eventosDaRodada(int $rodada, ?string $temporada = null): array
+    public function eventosDaRodada(int $rodada, ?string $temporada = null, ?int $idLiga = null): array
     {
         $temporada ??= (string) config('thesportsdb.temporada_copa');
+        $idLiga ??= $this->idLigaCopa();
 
         $resposta = $this->clienteHttp()->get('/eventsround.php', [
-            'id' => $this->idLigaCopa(),
+            'id' => $idLiga,
             'r' => $rodada,
             's' => $temporada,
         ]);
@@ -99,12 +100,12 @@ class ServicoTheSportsDb
      * @param  array<int,int>  $rodadas
      * @return array<int,array<string,mixed>>
      */
-    public function eventosDasRodadas(array $rodadas, ?string $temporada = null): array
+    public function eventosDasRodadas(array $rodadas, ?string $temporada = null, ?int $idLiga = null): array
     {
         $porId = [];
 
         foreach (array_unique($rodadas) as $rodada) {
-            foreach ($this->eventosDaRodada((int) $rodada, $temporada) as $evento) {
+            foreach ($this->eventosDaRodada((int) $rodada, $temporada, $idLiga) as $evento) {
                 $id = (int) ($evento['idEvent'] ?? 0);
                 if ($id !== 0) {
                     $porId[$id] = $evento;
@@ -113,5 +114,17 @@ class ServicoTheSportsDb
         }
 
         return array_values($porId);
+    }
+
+    /**
+     * Eventos de mata-mata via eventsround (sem teto no free tier), usando os
+     * códigos de rodada do knockout (config rodadas_mata_mata). Round of 32 = 32
+     * (confirmado 2026-06-26). Dedup por idEvent.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function eventosDeMataMata(?string $temporada = null, ?int $idLiga = null): array
+    {
+        return $this->eventosDasRodadas((array) config('thesportsdb.rodadas_mata_mata', []), $temporada, $idLiga);
     }
 }

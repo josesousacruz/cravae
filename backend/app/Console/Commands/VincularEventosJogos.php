@@ -3,19 +3,23 @@
 namespace App\Console\Commands;
 
 use App\Models\Jogo;
+use App\Models\Torneio;
 use App\Services\ServicoTheSportsDb;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 
 /**
- * Nível 2 — casa cada Jogo com o idEvent da TheSportsDB.
+ * Nível 2 — casa cada Jogo com o idEvent da TheSportsDB, escopado por torneio.
  *
  * Chave de casamento: o par de seleções (por id_externo, independente de quem é
- * mandante/visitante) + a data mais próxima. Como toda seleção já tem id_externo
- * (Nível 1), o casamento é determinístico — sem comparar nomes.
+ * mandante/visitante) + a data mais próxima. Itera os torneios que têm referência
+ * externa (liga_externa_id) e usa a liga/temporada de cada um. O conjunto de
+ * eventos já usados é por torneio (o mesmo idEvent pode valer em bolões distintos
+ * que apontam para a mesma Copa).
  *
  * Jogos de mata-mata sem seleções definidas (id_externo nulo) são ignorados;
- * serão casados em execuções futuras, assim que os classificados entrarem.
+ * serão casados em execuções futuras, assim que os classificados entrarem
+ * (ver jogos:resolver-mata-mata).
  *
  *   php artisan jogos:vincular-eventos
  *   php artisan jogos:vincular-eventos --revincular   (refaz todos)
@@ -29,85 +33,110 @@ class VincularEventosJogos extends Command
 
     public function handle(ServicoTheSportsDb $api): int
     {
-        $jogos = Jogo::query()
-            ->with(['selecaoMandante', 'selecaoVisitante'])
-            ->when(! $this->option('revincular'), fn ($q) => $q->whereNull('id_evento_externo'))
-            ->get();
+        $torneios = Torneio::query()->whereNotNull('liga_externa_id')->get();
 
-        // Busca por RODADA (eventsround) — único endpoint sem teto no plano free.
-        $eventos = $api->eventosDasRodadas(config('thesportsdb.rodadas', []));
+        if ($torneios->isEmpty()) {
+            $this->warn('Nenhum torneio com referência externa (liga_externa_id). Nada a fazer.');
 
-        if ($eventos === []) {
-            $this->error('Nenhum evento retornado pela API (rate-limit/rodadas vazias?). Abortando.');
-
-            return self::FAILURE;
+            return self::SUCCESS;
         }
 
-        // Índice: "menorIdTeam-maiorIdTeam" => lista de eventos com data.
-        $indice = [];
-        foreach ($eventos as $evento) {
-            $casa = (int) ($evento['idHomeTeam'] ?? 0);
-            $fora = (int) ($evento['idAwayTeam'] ?? 0);
-            if ($casa === 0 || $fora === 0) {
-                continue;
-            }
-            $indice[$this->chavePar($casa, $fora)][] = $evento;
-        }
+        $total = ['vinculados' => 0, 'sem_evento' => 0, 'sem_selecoes' => 0, 'ja_usado' => 0];
 
-        $usados = Jogo::query()->whereNotNull('id_evento_externo')->pluck('id_evento_externo')
-            ->map(fn ($id) => (int) $id)->all();
-        $usados = array_flip($usados);
+        foreach ($torneios as $torneio) {
+            $idLiga = (int) $torneio->liga_externa_id;
+            $temporada = $torneio->temporada_externa;
 
-        $resumo = ['vinculados' => 0, 'sem_evento' => 0, 'sem_selecoes' => 0, 'ja_usado' => 0];
+            $jogos = Jogo::query()
+                ->where('torneio_id', $torneio->id)
+                ->with(['selecaoMandante', 'selecaoVisitante'])
+                ->when(! $this->option('revincular'), fn ($q) => $q->whereNull('id_evento_externo'))
+                ->get();
 
-        foreach ($jogos as $jogo) {
-            $idCasa = $jogo->selecaoMandante?->id_externo;
-            $idFora = $jogo->selecaoVisitante?->id_externo;
-
-            if (! $idCasa || ! $idFora) {
-                $resumo['sem_selecoes']++;
-
+            if ($jogos->isEmpty()) {
                 continue;
             }
 
-            $candidatos = $indice[$this->chavePar((int) $idCasa, (int) $idFora)] ?? [];
-            $evento = $this->melhorCandidato($candidatos, $jogo->data_hora_inicio);
+            // Pool de eventos: rodadas de grupos + rodadas de mata-mata da liga/temporada do torneio.
+            $eventos = [
+                ...$api->eventosDasRodadas(config('thesportsdb.rodadas', []), $temporada, $idLiga),
+                ...$api->eventosDeMataMata($temporada, $idLiga),
+            ];
 
-            if ($evento === null) {
-                $resumo['sem_evento']++;
-
+            if ($eventos === []) {
                 continue;
             }
 
-            $idEvento = (int) $evento['idEvent'];
-
-            if (isset($usados[$idEvento]) && (int) $jogo->id_evento_externo !== $idEvento) {
-                $resumo['ja_usado']++;
-                $this->warn("Jogo {$jogo->id}: evento {$idEvento} já usado por outro jogo.");
-
-                continue;
+            // Índice: "menorIdTeam-maiorIdTeam" => lista de eventos com data.
+            $indice = [];
+            foreach ($eventos as $evento) {
+                $casa = (int) ($evento['idHomeTeam'] ?? 0);
+                $fora = (int) ($evento['idAwayTeam'] ?? 0);
+                if ($casa === 0 || $fora === 0) {
+                    continue;
+                }
+                $indice[$this->chavePar($casa, $fora)][] = $evento;
             }
 
-            $jogo->forceFill(['id_evento_externo' => $idEvento])->save();
-            $usados[$idEvento] = true;
-            $resumo['vinculados']++;
+            // Eventos já usados NESTE torneio (índice único composto torneio_id+id_evento_externo).
+            $usados = Jogo::query()
+                ->where('torneio_id', $torneio->id)
+                ->whereNotNull('id_evento_externo')
+                ->pluck('id_evento_externo')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+            $usados = array_flip($usados);
 
-            $this->line(sprintf(
-                '  Jogo %d: %s x %s -> evento %d (%s)',
-                $jogo->id,
-                $jogo->selecaoMandante->sigla,
-                $jogo->selecaoVisitante->sigla,
-                $idEvento,
-                $evento['dateEvent'] ?? '?',
-            ));
+            foreach ($jogos as $jogo) {
+                $idCasa = $jogo->selecaoMandante?->id_externo;
+                $idFora = $jogo->selecaoVisitante?->id_externo;
+
+                if (! $idCasa || ! $idFora) {
+                    $total['sem_selecoes']++;
+
+                    continue;
+                }
+
+                $candidatos = $indice[$this->chavePar((int) $idCasa, (int) $idFora)] ?? [];
+                $evento = $this->melhorCandidato($candidatos, $jogo->data_hora_inicio);
+
+                if ($evento === null) {
+                    $total['sem_evento']++;
+
+                    continue;
+                }
+
+                $idEvento = (int) $evento['idEvent'];
+
+                if (isset($usados[$idEvento]) && (int) $jogo->id_evento_externo !== $idEvento) {
+                    $total['ja_usado']++;
+                    $this->warn("Torneio {$torneio->id} / Jogo {$jogo->id}: evento {$idEvento} já usado por outro jogo.");
+
+                    continue;
+                }
+
+                $jogo->forceFill(['id_evento_externo' => $idEvento])->save();
+                $usados[$idEvento] = true;
+                $total['vinculados']++;
+
+                $this->line(sprintf(
+                    '  [T%d] Jogo %d: %s x %s -> evento %d (%s)',
+                    $torneio->id,
+                    $jogo->id,
+                    $jogo->selecaoMandante->sigla,
+                    $jogo->selecaoVisitante->sigla,
+                    $idEvento,
+                    $evento['dateEvent'] ?? '?',
+                ));
+            }
         }
 
         $this->info(sprintf(
             'Vinculados: %d | Sem evento na API: %d | Sem seleções definidas: %d | Evento já usado: %d',
-            $resumo['vinculados'],
-            $resumo['sem_evento'],
-            $resumo['sem_selecoes'],
-            $resumo['ja_usado'],
+            $total['vinculados'],
+            $total['sem_evento'],
+            $total['sem_selecoes'],
+            $total['ja_usado'],
         ));
 
         return self::SUCCESS;
