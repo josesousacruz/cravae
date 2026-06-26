@@ -122,6 +122,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { useToast } from '../composables/useToast'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
+import { usarBolaoAtivoStore } from '../stores/bolaoAtivo'
 import ModalPixPagamento from '../components/ModalPixPagamento.vue'
 import type { Cupom, PedidoCheckout, Torneio } from '../tipos'
 
@@ -135,6 +136,7 @@ const router = useRouter()
 const route = useRoute()
 const { mostrar } = useToast()
 const autenticacao = usarAutenticacaoStore()
+const bolao = usarBolaoAtivoStore()
 
 const torneio = ref<Torneio | null>(null)
 const pedido = ref<PedidoCheckout | null>(null)
@@ -243,6 +245,8 @@ async function gerarPixDireto() {
 
 function fecharModalDireto() {
   modalPixAberto.value = false
+  // Garante que o painel mostre o cupom recém-criado (escopo pelo bolão ativo).
+  if (torneio.value) bolao.definirAtivo(torneio.value.id)
   mostrar('sucesso', 'Cupom criado. Ele sera liberado apos a confirmacao do pagamento.')
   router.push({ name: 'painel' })
 }
@@ -269,6 +273,7 @@ async function consultarPedido() {
 
     if (resposta.pedido.status === 'pago') {
       pararConsulta()
+      if (torneio.value) bolao.definirAtivo(torneio.value.id)
       mostrar('sucesso', 'Cupom liberado com sucesso!')
       router.push({ name: 'painel' })
       return
