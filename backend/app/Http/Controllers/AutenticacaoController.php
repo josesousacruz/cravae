@@ -107,13 +107,14 @@ class AutenticacaoController extends Controller
 
         $usuario = $request->user();
 
-        if ($usuario->foto && Storage::disk('public')->exists($usuario->foto)) {
-            Storage::disk('public')->delete($usuario->foto);
+        if ($usuario->foto && Storage::disk('uploads')->exists($usuario->foto)) {
+            Storage::disk('uploads')->delete($usuario->foto);
         }
 
         // Nome aleatorio + extensao derivada do tipo real detectado (nunca do nome
         // enviado): impede .php, path traversal e sobrescrever a foto de outro usuario.
-        $caminho = $arquivo->storeAs('avatares', Str::random(40).'.'.$extensoes[$info[2]], 'public');
+        // Disco "uploads" = public/uploads, servido direto (sem symlink storage:link).
+        $caminho = $arquivo->storeAs('avatares', Str::random(40).'.'.$extensoes[$info[2]], 'uploads');
 
         $usuario->forceFill(['foto' => $caminho])->save();
 

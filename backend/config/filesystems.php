@@ -47,6 +47,18 @@ return [
             'report' => false,
         ],
 
+        // Uploads servidos DIRETO de public/ (sem symlink storage:link).
+        // Em produção containerizada, monte um volume persistente em
+        // public/uploads para os arquivos sobreviverem aos redeploys.
+        'uploads' => [
+            'driver' => 'local',
+            'root' => public_path('uploads'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/uploads',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

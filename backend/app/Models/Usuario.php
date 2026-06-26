@@ -48,9 +48,10 @@ class Usuario extends Authenticatable
 
     protected function fotoUrl(): Attribute
     {
-        // Caminho relativo (ex.: /storage/avatares/x.jpg); o frontend prefixa com a origem do backend.
+        // Servido direto de public/uploads (sem symlink). Caminho relativo
+        // (ex.: /uploads/avatares/x.jpg); o frontend prefixa com a origem do backend.
         return Attribute::get(fn (): ?string => $this->foto
-            ? '/storage/'.ltrim($this->foto, '/')
+            ? '/uploads/'.ltrim($this->foto, '/')
             : null);
     }
 
