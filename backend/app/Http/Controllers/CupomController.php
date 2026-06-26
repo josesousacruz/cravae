@@ -17,7 +17,7 @@ class CupomController extends Controller
     public function index(Request $request): JsonResponse
     {
         $cupons = Cupom::query()
-            ->with(['pedidoCheckout', 'pontuacao'])
+            ->with(['pedidoCheckout', 'pontuacao', 'torneio:id,nome,edicao,valor_cupom'])
             ->where('usuario_id', $request->user()->id)
             ->latest('id')
             ->get();

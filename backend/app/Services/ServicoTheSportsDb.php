@@ -127,4 +127,24 @@ class ServicoTheSportsDb
     {
         return $this->eventosDasRodadas((array) config('thesportsdb.rodadas_mata_mata', []), $temporada, $idLiga);
     }
+
+    /**
+     * Imagem da liga (banner/poster/badge), para usar como capa do bolão.
+     */
+    public function imagemDaLiga(?int $idLiga = null): ?string
+    {
+        $idLiga ??= $this->idLigaCopa();
+
+        $resposta = $this->clienteHttp()->get('/lookupleague.php', ['id' => $idLiga]);
+        $liga = $resposta->json('leagues.0') ?? [];
+
+        foreach (['strBanner', 'strPoster', 'strBadge', 'strLogo'] as $campo) {
+            $url = $liga[$campo] ?? null;
+            if (is_string($url) && $url !== '') {
+                return $url;
+            }
+        }
+
+        return null;
+    }
 }

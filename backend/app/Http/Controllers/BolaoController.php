@@ -12,7 +12,7 @@ class BolaoController extends Controller
         $boloes = Torneio::query()
             ->whereIn('status', ['publicado', 'encerrado'])
             ->orderByDesc('id')
-            ->get(['id', 'nome', 'edicao', 'status', 'valor_cupom', 'compras_abertas', 'data_inicio', 'data_fim']);
+            ->get(['id', 'nome', 'edicao', 'status', 'valor_cupom', 'compras_abertas', 'imagem_url', 'data_inicio', 'data_fim']);
 
         return response()->json([
             'ativos' => $boloes->where('status', 'publicado')->values(),

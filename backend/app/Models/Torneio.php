@@ -15,6 +15,7 @@ class Torneio extends Model
         'edicao',
         'liga_externa_id',
         'temporada_externa',
+        'imagem_url',
         'status',
         'data_inicio',
         'data_fim',

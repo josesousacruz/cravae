@@ -18,3 +18,5 @@ Schedule::command('jogos:resolver-mata-mata')->everyFifteenMinutes()->withoutOve
 Schedule::command('jogos:vincular-eventos')->everyFifteenMinutes()->withoutOverlapping();
 // 3) Puxa placares encerrados da TheSportsDB e dispara a pontuação.
 Schedule::command('jogos:sincronizar-resultados')->everyMinute()->withoutOverlapping();
+// Imagem (capa) dos torneios — muda raramente, basta 1x/dia.
+Schedule::command('torneios:sincronizar-imagem')->daily()->withoutOverlapping();

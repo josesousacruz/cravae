@@ -39,12 +39,20 @@ export type PontuacaoCupom = {
 export type Cupom = {
   id: number
   torneio_id?: number
+  torneio?: CupomTorneio | null
   codigo: string
   status: string
   pedido_checkout_id: number | null
   pedido_checkout?: PedidoCheckout | null
   pontuacao?: PontuacaoCupom | null
   eventos_pontuacao?: EventoPontuacao[]
+}
+
+export type CupomTorneio = {
+  id: number
+  nome: string
+  edicao: string
+  valor_cupom: number
 }
 
 export type Jogador = {
@@ -249,6 +257,7 @@ export type Bolao = {
   status: string
   valor_cupom: number
   compras_abertas: boolean
+  imagem_url?: string | null
   data_inicio: string | null
   data_fim: string | null
 }

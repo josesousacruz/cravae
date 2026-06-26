@@ -11,10 +11,9 @@
 
       <div class="min-w-0 flex-1">
         <div class="flex items-start justify-between gap-2">
-          <div>
-            <h3 class="text-base font-bold text-text">Inter</h3>
-            <p class="text-sm text-text-secondary">Copa do mundo <span class="text-xs text-text-muted">2026</span></p>
-            <p class="mt-0.5 text-xs text-text-muted">Pontuacao padrao</p>
+          <div class="min-w-0">
+            <h3 class="line-clamp-2 text-base font-bold leading-tight text-text">{{ nomeBolao }}</h3>
+            <p class="mt-0.5 text-xs text-text-muted">Copa do Mundo 2026 · Pontuacao padrao</p>
           </div>
           <button
             v-if="cupom.status !== 'ativo'"
@@ -39,7 +38,7 @@
         <p class="text-[10px] uppercase tracking-wider text-text-muted">Pontos</p>
       </div>
       <div class="flex-1 rounded-lg bg-bg-input px-3 py-2.5 text-center">
-        <p class="text-lg font-bold text-primary">R$ 10,00</p>
+        <p class="text-lg font-bold text-primary">{{ valorBolao }}</p>
         <p class="text-[10px] uppercase tracking-wider text-text-muted">Por pessoa</p>
       </div>
       <div class="flex-1 rounded-lg bg-bg-input px-3 py-2.5 text-center">
@@ -55,11 +54,11 @@
 
     <!-- Bottom row -->
     <div class="mt-3 flex items-center justify-between">
-      <div class="flex items-center gap-1.5 text-xs text-text-muted">
+      <div class="flex items-center gap-1.5 text-xs font-semibold" :class="ehMataMata ? 'text-amber-400' : 'text-primary'">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172" />
         </svg>
-        <span>Campeonato Inteiro</span>
+        <span>{{ tipoBolao }}</span>
       </div>
       <span class="text-xs font-mono text-text-muted">{{ cupom.codigo }}</span>
     </div>
@@ -110,6 +109,22 @@ const props = defineProps<{
 }>()
 
 const modalAberto = ref(false)
+
+const nomeBolao = computed(() => props.cupom.torneio?.nome ?? 'Inter World Cup')
+
+const ehMataMata = computed(() => {
+  const t = props.cupom.torneio
+  return /mata/i.test(t?.nome ?? '') || (t?.edicao ?? '').toUpperCase().includes('MM')
+})
+
+const tipoBolao = computed(() => (ehMataMata.value ? 'Só mata-mata' : 'Campeonato completo'))
+
+const valorBolao = computed(() => {
+  const v = Number(props.cupom.torneio?.valor_cupom ?? props.cupom.pedido_checkout?.valor)
+  return Number.isFinite(v) && v > 0
+    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
+    : 'R$ 10,00'
+})
 
 const valorFormatado = computed(() => {
   const numero = Number(props.cupom.pedido_checkout?.valor)
