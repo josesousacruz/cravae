@@ -31,7 +31,9 @@ class LimparResultadoJogoTest extends TestCase
         $admin = Usuario::query()->where('perfil', 'administrador')->firstOrFail();
         Sanctum::actingAs($admin);
 
-        $dados = $this->getJson('/api/admin/dados')->assertOk()->json('torneio');
+        // Multi-bolão: aponta explicitamente para o torneio principal (com grupos).
+        $torneioId = \App\Models\Torneio::query()->where('edicao', '2026')->value('id');
+        $dados = $this->getJson("/api/admin/dados?torneio_id={$torneioId}")->assertOk()->json('torneio');
         $r32 = collect($dados['jogos'])->first(fn ($j) => ($j['fase']['slug'] ?? null) === 'round_of_32'
             && count($j['participantes_admin'] ?? []) === 2);
         $this->assertNotNull($r32, 'esperava um R32 com participantes definidos');

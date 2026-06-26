@@ -13,6 +13,8 @@ class Torneio extends Model
     protected $fillable = [
         'nome',
         'edicao',
+        'liga_externa_id',
+        'temporada_externa',
         'status',
         'data_inicio',
         'data_fim',

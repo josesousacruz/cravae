@@ -21,6 +21,8 @@ class TorneioMockadoSeeder extends Seeder
         $torneio = Torneio::query()->updateOrCreate(
             ['nome' => 'Inter World Cup', 'edicao' => '2026'],
             [
+                'liga_externa_id' => 4429,
+                'temporada_externa' => '2026',
                 'status' => 'publicado',
                 'data_inicio' => '2026-06-11',
                 'data_fim' => '2026-07-19',
@@ -293,14 +295,22 @@ class TorneioMockadoSeeder extends Seeder
         $rodadas = [1 => $rodada1, 2 => $rodada2, 3 => $rodada3];
         $ordemJogo = 1;
 
+        // O calendário usa siglas-placeholder das repescagens (definidas após o
+        // sorteio); aqui mapeamos para as seleções já resolvidas e seedadas.
+        $aliasRepescagem = [
+            'UD4' => 'CZE', 'UA1' => 'BIH', 'UC3' => 'TUR',
+            'UB2' => 'SWE', 'IC1' => 'COD', 'IC2' => 'IRQ',
+        ];
+        $resolverSelecao = fn (string $sigla) => $selecoes[$aliasRepescagem[$sigla] ?? $sigla];
+
         foreach ($jogosGrupos as $jogo) {
             Jogo::query()->updateOrCreate(
                 ['torneio_id' => $torneio->id, 'fase_id' => $faseGrupos->id, 'ordem_na_fase' => $ordemJogo],
                 [
                     'rodada_id' => $rodadas[$jogo['rodada']]->id,
                     'grupo_id' => $grupos[$jogo['grupo']]->id,
-                    'selecao_mandante_id' => $selecoes[$jogo['mandante']]->id,
-                    'selecao_visitante_id' => $selecoes[$jogo['visitante']]->id,
+                    'selecao_mandante_id' => $resolverSelecao($jogo['mandante'])->id,
+                    'selecao_visitante_id' => $resolverSelecao($jogo['visitante'])->id,
                     'data_hora_inicio' => $jogo['data'],
                     'status' => 'agendado',
                 ],
