@@ -43,6 +43,8 @@
             Admin
           </RouterLink>
 
+          <SeletorBolao class="ml-1" />
+
           <!-- User dropdown -->
           <div class="relative ml-2">
             <button
@@ -139,6 +141,7 @@ import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
 import AvatarIniciais from './AvatarIniciais.vue'
+import SeletorBolao from './SeletorBolao.vue'
 
 defineEmits<{
   abrirModalAuth: [tab: 'entrar' | 'cadastro']

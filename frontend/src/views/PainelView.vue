@@ -136,6 +136,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { requisicaoApi } from '../services/api'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
 import { usarTorneioStore } from '../stores/torneio'
+import { usarBolaoAtivoStore } from '../stores/bolaoAtivo'
 import type { Cupom } from '../tipos'
 import SkeletonCard from '../components/SkeletonCard.vue'
 import CupomCard from '../components/CupomCard.vue'
@@ -143,8 +144,13 @@ import InfoTorneio from '../components/InfoTorneio.vue'
 
 const autenticacao = usarAutenticacaoStore()
 const torneioStore = usarTorneioStore()
+const bolao = usarBolaoAtivoStore()
 const comprasAbertas = computed(() => torneioStore.torneio?.compras_abertas === true)
-const cupons = ref<Cupom[]>([])
+const todosCupons = ref<Cupom[]>([])
+// Mostra apenas os cupons do bolão ativo (quando há um selecionado).
+const cupons = computed(() =>
+  bolao.ativoId ? todosCupons.value.filter((c) => c.torneio_id === bolao.ativoId) : todosCupons.value,
+)
 const carregando = ref(true)
 const carouselRef = ref<HTMLElement | null>(null)
 const cupomAtualIndex = ref(0)
@@ -166,7 +172,7 @@ async function carregarCupons() {
   carregando.value = true
   try {
     const resposta = await requisicaoApi<{ cupons: Cupom[] }>('/cupons')
-    cupons.value = resposta.cupons
+    todosCupons.value = resposta.cupons
   } catch {
     // Erro silencioso
   } finally {
@@ -177,6 +183,7 @@ async function carregarCupons() {
 onMounted(() => {
   carregarCupons()
   torneioStore.carregar()
+  if (bolao.lista.length === 0) bolao.carregar()
   carouselRef.value?.addEventListener('scroll', onCarouselScroll, { passive: true })
 })
 
