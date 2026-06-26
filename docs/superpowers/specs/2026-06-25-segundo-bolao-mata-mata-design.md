@@ -1,7 +1,21 @@
 # Design — Segundo Bolão: Mata-Mata da Copa 2026
 
-**Data:** 2026-06-25
-**Status:** Aprovação pendente do usuário
+**Data:** 2026-06-25 (atualizado 2026-06-26)
+**Status:** Aprovado — em implementação
+
+## 0. Atualização 2026-06-26 — Bolão definido por torneio TheSportsDB (design v3)
+
+Decisões que prevalecem sobre o texto abaixo onde houver conflito:
+
+1. **Cada bolão guarda sua referência externa.** Novas colunas em `torneios`: `liga_externa_id` (int, nullable) e `temporada_externa` (string, nullable). A config global `id_liga_copa`/`temporada_copa` deixa de ser a fonte; vira apenas default. Bolão atual e 2º bolão são linkados a **liga 4429 / temporada 2026** (mesma Copa real).
+2. **Sync escopado por torneio.** Como os dois bolões apontam para a mesma Copa, o mesmo `idEvent` aparece nos dois. Portanto: (a) o índice único de `jogos.id_evento_externo` muda de **único global** para **único composto `(torneio_id, id_evento_externo)`** (migration); (b) os comandos de sync iteram torneios e escopam o pool de eventos, o conjunto de "eventos usados" e a query de jogos **por torneio**.
+3. **Um único motor de sync, dois modos** (decididos pela presença de fase de grupos no torneio): **completo** (bolão atual) → participantes do mata-mata por derivação (slot-aligned) + resultado da API por par de times; **mata-mata puro** (2º bolão) → espelho da API por rodada (`rodadas_mata_mata = [32, 16, 8, 4]`), mapeando `idTeam`→`id_externo`. **Validado ao vivo em 2026-06-26:** `r=32` traz os 32avos reais (RSA×CAN, BRA×JPN, NED×MAR, USA×BIH). **NÃO** incluir 1/2/3 (colidem com rodadas de grupos — `r=2` traria a rodada 2 de grupos no slot da Final). Final/3º lugar: código ainda não observado → admin define manualmente até confirmarmos um código não-colidente.
+4. **Aproveitar o chaveamento existente.** A estrutura (fases + jogos placeholder) já criada por seeder é **reutilizada** — o sync só preenche times/resultados; não recria.
+5. **Fasagem.** *Agora:* migration de ref externa + índice composto, linkar os dois bolões, sync por torneio preenchendo o chaveamento, scheduler contínuo. *Fase 2:* tela admin "novo bolão por torneio" criando a estrutura de uma liga/temporada qualquer com o mesmo motor (fonte de times via `eventsround`).
+
+---
+
+**Data original:** 2026-06-25
 
 ## 1. Visão e escopo
 

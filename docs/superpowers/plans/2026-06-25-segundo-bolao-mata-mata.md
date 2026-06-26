@@ -17,7 +17,8 @@
 ## Mapa de arquivos
 
 **Criar (backend):**
-- `backend/database/seeders/BolaoMataMataSeeder.php` — cria o torneio mata-mata.
+- `backend/database/migrations/2026_06_26_000000_add_liga_externa_to_torneios_e_indice_composto_evento.php` — `torneios.liga_externa_id` + `torneios.temporada_externa`; troca o índice único de `jogos.id_evento_externo` para composto `(torneio_id, id_evento_externo)`.
+- `backend/database/seeders/BolaoMataMataSeeder.php` — cria o torneio mata-mata (linkado a 4429/2026).
 - `backend/app/Services/ServicoMataMata.php` — persiste participantes reais nas linhas de `Jogo` de mata-mata (origem: evento da API casado por par de times; fallback: derivação `ServicoResultadosTorneio`).
 - `backend/app/Console/Commands/ResolverMataMata.php` — command `jogos:resolver-mata-mata` que chama o serviço por torneio.
 - `backend/tests/Feature/BolaoMataMataSeederTest.php`
