@@ -23,9 +23,14 @@ export const usarBolaoAtivoStore = defineStore('bolaoAtivo', () => {
     try {
       const resp = await requisicaoApi<RespostaBoloes>('/boloes')
       lista.value = [...resp.ativos, ...resp.encerrados]
-      // Default: primeiro ativo, se ainda não houver seleção válida.
+      // Default: o bolão principal (id mais antigo entre os ativos) quando ainda
+      // não houver seleção válida — assim quem já tem cupom no bolão completo cai
+      // direto nele. A preferência do usuário (localStorage) sempre prevalece.
       const valido = lista.value.some((b) => b.id === ativoId.value)
-      if (!valido) definirAtivo(resp.ativos[0]?.id ?? lista.value[0]?.id ?? null)
+      if (!valido) {
+        const principal = [...resp.ativos].sort((a, b) => a.id - b.id)[0]
+        definirAtivo(principal?.id ?? lista.value[0]?.id ?? null)
+      }
     } finally {
       carregando.value = false
     }

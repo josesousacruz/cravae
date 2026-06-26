@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -14,6 +15,15 @@ return new class extends Migration
             $table->unsignedBigInteger('liga_externa_id')->nullable()->after('edicao');
             $table->string('temporada_externa')->nullable()->after('liga_externa_id');
         });
+
+        // Backfill: vincula os torneios já existentes à Copa (config global), para
+        // que o sync por-torneio continue funcionando após o deploy sem passo manual.
+        // No momento da migration só existe o bolão principal; o 2º bolão é criado
+        // depois (seeder), com sua própria referência.
+        DB::table('torneios')->whereNull('liga_externa_id')->update([
+            'liga_externa_id' => config('thesportsdb.id_liga_copa'),
+            'temporada_externa' => config('thesportsdb.temporada_copa'),
+        ]);
 
         Schema::table('jogos', function (Blueprint $table) {
             // Dois bolões podem apontar para a mesma Copa real, então o mesmo idEvent
