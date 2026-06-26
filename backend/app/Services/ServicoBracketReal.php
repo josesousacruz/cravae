@@ -22,6 +22,8 @@ class ServicoBracketReal
             'jogos' => fn ($q) => $q->orderBy('ordem_na_fase'),
             'jogos.fase',
             'jogos.resultado',
+            'jogos.selecaoMandante',
+            'jogos.selecaoVisitante',
         ])->first();
 
         if (! $torneio) {
@@ -57,8 +59,10 @@ class ServicoBracketReal
                     'rodada' => null,
                     'grupo' => null,
                     'data_hora_inicio' => $jogo->data_hora_inicio,
-                    'selecao_mandante' => $par['mandante'],
-                    'selecao_visitante' => $par['visitante'],
+                    // Prefere os times persistidos no jogo (mata-mata espelhado da API);
+                    // cai nos participantes derivados quando o jogo não tem times.
+                    'selecao_mandante' => $jogo->selecaoMandante ?? $par['mandante'],
+                    'selecao_visitante' => $jogo->selecaoVisitante ?? $par['visitante'],
                     'resultado' => $jogo->resultado,
                     'bloqueado' => false,
                     'motivo_bloqueio' => null,
