@@ -13,7 +13,12 @@
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0">
             <h3 class="line-clamp-2 text-base font-bold leading-tight text-text">{{ nomeBolao }}</h3>
-            <p class="mt-0.5 text-xs text-text-muted">Copa do Mundo 2026 · Pontuacao padrao</p>
+            <span
+              class="mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+              :class="ehMataMata ? 'bg-amber-500/15 text-amber-400' : 'bg-primary/15 text-primary'"
+            >
+              {{ tipoBolao }}
+            </span>
           </div>
           <button
             v-if="cupom.status !== 'ativo'"
@@ -54,12 +59,7 @@
 
     <!-- Bottom row -->
     <div class="mt-3 flex items-center justify-between">
-      <div class="flex items-center gap-1.5 text-xs font-semibold" :class="ehMataMata ? 'text-amber-400' : 'text-primary'">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172" />
-        </svg>
-        <span>{{ tipoBolao }}</span>
-      </div>
+      <span class="text-xs text-text-muted">Cupom</span>
       <span class="text-xs font-mono text-text-muted">{{ cupom.codigo }}</span>
     </div>
 
@@ -134,8 +134,8 @@ const valorFormatado = computed(() => {
 })
 
 const rotuloStatus = computed(() => {
-  if (props.cupom.status === 'ativo') return 'Cupom ativo'
-  if (props.cupom.status === 'aguardando_pagamento') return 'Aguardando pagamento'
+  if (props.cupom.status === 'ativo') return 'Ativo'
+  if (props.cupom.status === 'aguardando_pagamento') return 'A pagar'
   return props.cupom.status
 })
 </script>
