@@ -26,7 +26,8 @@
 - `backend/tests/Feature/TravaApostaMataMataTest.php`
 
 **Modificar (backend):**
-- `backend/app/Services/ServicoTheSportsDb.php` — novo método `eventosDeMataMata()` (merge past+next da liga, dedup por idEvent).
+- `backend/config/thesportsdb.php` — nova chave `rodadas_mata_mata` = `[32, 16, 8, 4, 2]` (R32 confirmado em 2026-06-26; demais ajustáveis).
+- `backend/app/Services/ServicoTheSportsDb.php` — novo método `eventosDeMataMata()` (via `eventsround` com os códigos de knockout, dedup por idEvent).
 - `backend/app/Console/Commands/VincularEventosJogos.php` — incluir `eventosDeMataMata()` no pool de eventos.
 - `backend/app/Console/Commands/SincronizarResultadosJogos.php` — incluir `eventosDeMataMata()` no pool de eventos.
 - `backend/routes/console.php` — agendar `jogos:resolver-mata-mata`.
@@ -284,13 +285,29 @@ cd "C:/Projetos/Bolão Copa 2026" && git add backend/database/seeders/BolaoMataM
 
 # PARTE B — Backend: sync de mata-mata (participantes + resultado via API)
 
-### Task B1: `ServicoTheSportsDb::eventosDeMataMata()`
+### Task B1: config `rodadas_mata_mata` + `ServicoTheSportsDb::eventosDeMataMata()`
 
 **Files:**
+- Modify: `backend/config/thesportsdb.php`
 - Modify: `backend/app/Services/ServicoTheSportsDb.php`
 - Create: `backend/tests/Feature/EventosMataMataTest.php`
 
-- [ ] **Step 1: Teste que falha**
+- [ ] **Step 1: Adicionar a config dos códigos de rodada de knockout**
+
+Em `backend/config/thesportsdb.php`, após a chave `'rodadas' => [1, 2, 3],`, adicione:
+
+```php
+    /*
+    | Rodadas de mata-mata (eventsround, sem teto no free tier).
+    | Convenção "times restantes": Round of 32 = 32 (CONFIRMADO 2026-06-26),
+    | Round of 16 = 16, Quartas = 8, Semi = 4, Final = 2. Ajuste conforme a API
+    | publicar as fases. r=2 colide com a rodada 2 de grupos, mas o casamento é
+    | por par de times — sem efeito colateral.
+    */
+    'rodadas_mata_mata' => [32, 16, 8, 4, 2],
+```
+
+- [ ] **Step 2: Teste que falha**
 
 Crie `backend/tests/Feature/EventosMataMataTest.php`:
 
@@ -305,15 +322,16 @@ use Tests\TestCase;
 
 class EventosMataMataTest extends TestCase
 {
-    public function test_une_e_deduplica_eventos_de_past_e_next_da_liga(): void
+    public function test_busca_e_deduplica_eventos_das_rodadas_de_knockout(): void
     {
+        config(['thesportsdb.rodadas_mata_mata' => [32, 16]]);
+
         Http::fake([
-            '*eventspastleague.php*' => Http::response(['events' => [
-                ['idEvent' => '111', 'idHomeTeam' => '134496', 'idAwayTeam' => '133913'],
+            '*eventsround.php?id=4429&r=32*' => Http::response(['events' => [
+                ['idEvent' => '111', 'idHomeTeam' => '136482', 'idAwayTeam' => '140073', 'dateEvent' => '2026-06-28'],
             ]]),
-            '*eventsnextleague.php*' => Http::response(['events' => [
-                ['idEvent' => '111', 'idHomeTeam' => '134496', 'idAwayTeam' => '133913'],
-                ['idEvent' => '222', 'idHomeTeam' => '133909', 'idAwayTeam' => '134509'],
+            '*eventsround.php?id=4429&r=16*' => Http::response(['events' => [
+                ['idEvent' => '222', 'idHomeTeam' => '134496', 'idAwayTeam' => '134503', 'dateEvent' => '2026-07-06'],
             ]]),
         ]);
 
@@ -326,47 +344,38 @@ class EventosMataMataTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Rodar e confirmar falha**
+- [ ] **Step 3: Rodar e confirmar falha**
 
 Run: `cd backend && php artisan test --filter EventosMataMataTest`
 Expected: FAIL — `Call to undefined method ...::eventosDeMataMata()`.
 
-- [ ] **Step 3: Implementar o método**
+- [ ] **Step 4: Implementar o método**
 
 Em `backend/app/Services/ServicoTheSportsDb.php`, adicione (após `eventosDasRodadas`):
 
 ```php
     /**
-     * Eventos de mata-mata: junta os jogos passados e futuros da liga (endpoints
-     * sem teto de rodada), deduplicando por idEvent. Independe de código de rodada
-     * — a TheSportsDB não define intRound para Round of 32/16 da Copa.
+     * Eventos de mata-mata via eventsround (sem teto no free tier), usando os
+     * códigos de rodada do knockout (config rodadas_mata_mata). Round of 32 = 32
+     * (confirmado 2026-06-26). Dedup por idEvent.
      *
      * @return array<int,array<string,mixed>>
      */
     public function eventosDeMataMata(): array
     {
-        $porId = [];
-
-        foreach ([...$this->eventosPassadosDaLiga(), ...$this->eventosFuturosDaLiga()] as $evento) {
-            $id = (int) ($evento['idEvent'] ?? 0);
-            if ($id !== 0) {
-                $porId[$id] = $evento;
-            }
-        }
-
-        return array_values($porId);
+        return $this->eventosDasRodadas((array) config('thesportsdb.rodadas_mata_mata', []));
     }
 ```
 
-- [ ] **Step 4: Rodar e confirmar PASS**
+- [ ] **Step 5: Rodar e confirmar PASS**
 
 Run: `cd backend && php artisan test --filter EventosMataMataTest`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-cd "C:/Projetos/Bolão Copa 2026" && git add backend/app/Services/ServicoTheSportsDb.php backend/tests/Feature/EventosMataMataTest.php && git commit -m "feat(copa): eventos de mata-mata via endpoints de liga"
+cd "C:/Projetos/Bolão Copa 2026" && git add backend/config/thesportsdb.php backend/app/Services/ServicoTheSportsDb.php backend/tests/Feature/EventosMataMataTest.php && git commit -m "feat(copa): eventos de mata-mata via eventsround (r=32 confirmado)"
 ```
 
 ### Task B2: `ServicoMataMata` — persistir participantes reais na linha do Jogo
@@ -433,6 +442,35 @@ class ResolverMataMataTest extends TestCase
             'ao menos um jogo do Round of 32 deve ter participantes persistidos'
         );
     }
+
+    public function test_2o_bolao_preenche_confrontos_direto_da_api_por_rodada(): void
+    {
+        config(['thesportsdb.rodadas_mata_mata' => [32]]);
+        $this->seed(\Database\Seeders\BolaoMataMataSeeder::class);
+        $torneio = Torneio::query()->where('edicao', '2026-MM')->firstOrFail();
+
+        // r=32: Brazil (134496) x Japan (134503), confronto real publicado pela API.
+        \Illuminate\Support\Facades\Http::fake([
+            '*eventsround.php?id=4429&r=32*' => \Illuminate\Support\Facades\Http::response(['events' => [
+                ['idEvent' => '900100', 'idHomeTeam' => '134496', 'idAwayTeam' => '134503', 'dateEvent' => '2026-06-29'],
+            ]]),
+            '*eventsround.php*' => \Illuminate\Support\Facades\Http::response(['events' => []]),
+        ]);
+
+        app(ServicoMataMata::class)->persistirParticipantes($torneio->fresh());
+
+        $bra = \App\Models\Selecao::query()->where('torneio_id', $torneio->id)->where('sigla', 'BRA')->firstOrFail();
+        $jpn = \App\Models\Selecao::query()->where('torneio_id', $torneio->id)->where('sigla', 'JPN')->firstOrFail();
+        $r32 = Fase::query()->where('torneio_id', $torneio->id)->where('slug', 'round_of_32')->firstOrFail();
+
+        $this->assertTrue(
+            Jogo::query()->where('fase_id', $r32->id)
+                ->where('selecao_mandante_id', $bra->id)
+                ->where('selecao_visitante_id', $jpn->id)
+                ->exists(),
+            'o confronto BRA x JPN do R32 deve ser preenchido a partir da API'
+        );
+    }
 }
 ```
 
@@ -443,7 +481,7 @@ Expected: FAIL — `Class "App\Services\ServicoMataMata" not found`.
 
 - [ ] **Step 3: Implementar o serviço**
 
-Crie `backend/app/Services/ServicoMataMata.php`:
+Crie `backend/app/Services/ServicoMataMata.php`. Dois caminhos: **derivação** (torneio com fase de grupos = bolão atual) e **espelho da API por rodada** (torneio mata-mata puro = 2º bolão).
 
 ```php
 <?php
@@ -451,62 +489,127 @@ Crie `backend/app/Services/ServicoMataMata.php`:
 namespace App\Services;
 
 use App\Models\Jogo;
+use App\Models\Selecao;
 use App\Models\Torneio;
 
 /**
- * Persiste os participantes reais dos jogos de mata-mata nas próprias linhas de
- * Jogo (selecao_mandante_id / selecao_visitante_id). A origem dos participantes é
- * a derivação real (ServicoResultadosTorneio), que os calcula a partir dos
- * resultados reais já lançados/sincronizados. Com os times persistidos, o pipeline
- * de vinculação/sincronização casa o jogo ao evento da TheSportsDB por par de times.
+ * Persiste os participantes reais dos jogos de mata-mata nas linhas de Jogo
+ * (selecao_mandante_id / selecao_visitante_id). Com os times persistidos, o
+ * pipeline de vinculação/sincronização casa cada jogo ao evento da TheSportsDB
+ * por par de times e traz o resultado.
  *
- * É idempotente: só grava quando o par muda; nunca apaga um par já definido
- * (evita "perder" um confronto se a derivação ficar temporariamente indefinida).
+ * Duas origens conforme o torneio:
+ *  - COM fase de grupos (bolão atual): participantes derivados dos resultados
+ *    reais (ServicoResultadosTorneio).
+ *  - SEM fase de grupos (2º bolão, mata-mata puro): confrontos espelhados direto
+ *    da API, fase a fase (eventsround por código de rodada), mapeando idTeam->
+ *    id_externo, ordenando por data.
+ *
+ * Idempotente: só grava quando o par muda; nunca apaga um par já definido.
  */
 class ServicoMataMata
 {
+    /** fase.slug => código de rodada da TheSportsDB (mata-mata). */
+    private const CODIGO_RODADA_POR_FASE = [
+        'round_of_32' => 32,
+        'oitavas_de_final' => 16,
+        'quartas_de_final' => 8,
+        'semifinais' => 4,
+        'final' => 2,
+        // 'terceiro_lugar': sem código confiável ainda — fica para o admin.
+    ];
+
     public function __construct(
         private readonly ServicoResultadosTorneio $servicoResultadosTorneio,
+        private readonly ServicoTheSportsDb $api,
     ) {
     }
 
     public function persistirParticipantes(Torneio $torneio): int
     {
+        $torneio->loadMissing('fases', 'jogos.fase');
+
+        $temGrupos = $torneio->fases->contains(fn ($f) => $f->tipo === 'grupos');
+
+        return $temGrupos
+            ? $this->persistirPorDerivacao($torneio)
+            : $this->persistirPorApi($torneio);
+    }
+
+    private function persistirPorDerivacao(Torneio $torneio): int
+    {
         $participantes = $this->servicoResultadosTorneio->participantesPorJogo($torneio);
-        $jogos = $torneio->loadMissing('jogos.fase')->jogos
-            ->filter(fn (Jogo $jogo) => $jogo->fase?->tipo !== 'grupos');
+        $jogos = $torneio->jogos->filter(fn (Jogo $jogo) => $jogo->fase?->tipo !== 'grupos');
 
         $gravados = 0;
-
         foreach ($jogos as $jogo) {
             $mandante = $participantes[$jogo->id]['mandante'] ?? null;
             $visitante = $participantes[$jogo->id]['visitante'] ?? null;
-
-            if (! $mandante || ! $visitante) {
-                continue;
+            if ($mandante && $visitante && $this->gravarPar($jogo, (int) $mandante->id, (int) $visitante->id)) {
+                $gravados++;
             }
-
-            $mudou = (int) $jogo->selecao_mandante_id !== (int) $mandante->id
-                || (int) $jogo->selecao_visitante_id !== (int) $visitante->id;
-
-            if (! $mudou) {
-                continue;
-            }
-
-            $jogo->forceFill([
-                'selecao_mandante_id' => $mandante->id,
-                'selecao_visitante_id' => $visitante->id,
-            ])->save();
-
-            $gravados++;
         }
 
         return $gravados;
     }
+
+    private function persistirPorApi(Torneio $torneio): int
+    {
+        $porIdExterno = Selecao::query()
+            ->where('torneio_id', $torneio->id)
+            ->whereNotNull('id_externo')
+            ->get()
+            ->keyBy(fn (Selecao $s) => (int) $s->id_externo);
+
+        $fases = $torneio->fases->keyBy('slug');
+        $gravados = 0;
+
+        foreach (self::CODIGO_RODADA_POR_FASE as $slug => $codigoRodada) {
+            $fase = $fases->get($slug);
+            if (! $fase) {
+                continue;
+            }
+
+            $eventos = collect($this->api->eventosDaRodada($codigoRodada))
+                ->sortBy(fn ($e) => $e['dateEvent'] ?? '')
+                ->values();
+
+            $jogos = $torneio->jogos
+                ->where('fase_id', $fase->id)
+                ->sortBy('data_hora_inicio')
+                ->values();
+
+            foreach ($eventos as $i => $evento) {
+                $jogo = $jogos->get($i);
+                if (! $jogo) {
+                    break;
+                }
+                $mandante = $porIdExterno->get((int) ($evento['idHomeTeam'] ?? 0));
+                $visitante = $porIdExterno->get((int) ($evento['idAwayTeam'] ?? 0));
+                if ($mandante && $visitante && $this->gravarPar($jogo, (int) $mandante->id, (int) $visitante->id)) {
+                    $gravados++;
+                }
+            }
+        }
+
+        return $gravados;
+    }
+
+    private function gravarPar(Jogo $jogo, int $mandanteId, int $visitanteId): bool
+    {
+        $mudou = (int) $jogo->selecao_mandante_id !== $mandanteId
+            || (int) $jogo->selecao_visitante_id !== $visitanteId;
+        if (! $mudou) {
+            return false;
+        }
+        $jogo->forceFill(['selecao_mandante_id' => $mandanteId, 'selecao_visitante_id' => $visitanteId])->save();
+
+        return true;
+    }
 }
 ```
 
-> **NOTA DE INTEGRAÇÃO (ler antes de executar):** persistir os participantes nas linhas de `Jogo` altera o que `ServicoResultadosTorneio::participantesPorJogo` enxerga em execuções seguintes (ele relê `jogos.selecaoMandante`). A derivação atual **recomputa** os participantes a partir dos resultados, então persistir o mesmo valor é inócuo. Porém o **bracket previsto por cupom** (`ServicoBracketReal`) também consome `participantesPorJogo`. Antes de prosseguir para Task B5, execute Task B4 (teste de regressão do bracket previsto) — se ele acusar mudança de comportamento, ajustar `ServicoMataMata` para gravar via coluna dedicada NÃO é opção (sem mudança de schema); nesse caso, restringir a persistência ao torneio mata-mata puro (sem fase de grupos) e, para o bolão atual, manter a derivação. O teste de B4 decide.
+> **NOTA DE INTEGRAÇÃO (ler antes de executar):** no bolão atual, persistir os participantes nas linhas de `Jogo` muda o que `ServicoResultadosTorneio::participantesPorJogo` relê depois. A derivação **recomputa** os participantes a partir dos resultados, então persistir o mesmo valor é inócuo — mas o **bracket previsto por cupom** (`ServicoBracketReal`) também consome `participantesPorJogo`. **Task B4 (regressão) é o gate:** se acusar mudança, restringir `persistirPorDerivacao` a só popular jogos cujo par derivado seja estável (fase anterior encerrada) e validar novamente. O caminho `persistirPorApi` (2º bolão) não toca a derivação.
 
 - [ ] **Step 4: Rodar e confirmar PASS**
 
@@ -1191,6 +1294,6 @@ cd "C:/Projetos/Bolão Copa 2026" && git add frontend/src/views/AdminBoloesView.
 ## Notas de risco (ler antes de executar)
 
 1. **Integração `ServicoMataMata` ↔ `ServicoResultadosTorneio` (Task B2/B4):** o teste de regressão B4 é o gate. Se o bracket previsto por cupom mudar, restringir a persistência ao torneio mata-mata puro.
-2. **Round codes da API:** o sync **não** depende deles (usa endpoints de liga). Confirmar o casamento real assim que a TheSportsDB publicar os confrontos de knockout 2026.
+2. **Round codes da API:** **Round of 32 = `r=32`** confirmado em 2026-06-26 (4 jogos já publicados, `idTeam` batendo com `id_externo`). R16/Quartas/Semi/Final = `16`/`8`/`4`/`2` por convenção (ainda vazios; confirmar quando publicarem). Terceiro lugar sem código confiável → admin define. `r=2` colide com grupos rodada 2, mas o casamento por par de times anula o efeito.
 3. **`AdminPainelView` (Task E2 Step 3):** maior superfície de mudança no frontend; revisar cada operação admin após trocar a fonte do `torneio_id`.
 4. **Factories/campos de teste:** ajustar `Cupom`/`Usuario` nos testes aos campos obrigatórios reais do projeto (conferir `database/factories` e testes existentes).
