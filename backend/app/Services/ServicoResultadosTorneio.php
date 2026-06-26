@@ -119,6 +119,16 @@ class ServicoResultadosTorneio
             foreach (($porFase[$fase->slug] ?? collect())->values() as $indice => $jogo) {
                 $ordem = $indice + 1;
 
+                // Fonte da verdade = API: se o jogo já tem os times persistidos
+                // (espelho da TheSportsDB), usa-os direto, sem derivar dos grupos.
+                if ($jogo->selecaoMandante && $jogo->selecaoVisitante) {
+                    $participantes[$jogo->id] = [
+                        'mandante' => $jogo->selecaoMandante,
+                        'visitante' => $jogo->selecaoVisitante,
+                    ];
+                    continue;
+                }
+
                 if (! $faseAnteriorCompleta) {
                     $participantes[$jogo->id] = ['mandante' => null, 'visitante' => null];
                     continue;

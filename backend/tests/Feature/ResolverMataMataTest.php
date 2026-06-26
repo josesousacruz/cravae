@@ -17,29 +17,31 @@ class ResolverMataMataTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_bolao_com_grupos_persiste_participantes_por_derivacao(): void
+    public function test_bolao_principal_tambem_herda_o_mata_mata_da_api(): void
     {
+        // O bolão principal (com grupos) NÃO depende mais da derivação: o mata-mata
+        // real é espelhado da API, mesmo com a fase de grupos ainda em andamento.
+        config(['thesportsdb.rodadas_mata_mata' => [32]]);
         $this->seed(TorneioMockadoSeeder::class);
         $torneio = Torneio::query()->where('edicao', '2026')->firstOrFail();
 
-        $faseGrupos = Fase::query()->where('torneio_id', $torneio->id)->where('tipo', 'grupos')->firstOrFail();
-        foreach (Jogo::query()->where('torneio_id', $torneio->id)->where('fase_id', $faseGrupos->id)->get() as $jogo) {
-            ResultadoJogo::query()->create([
-                'jogo_id' => $jogo->id,
-                'placar_mandante' => 1,
-                'placar_visitante' => 0,
-                'selecao_classificada_id' => null,
-                'encerrado_at' => now(),
-            ]);
-        }
+        // r=32: Brasil (134496) x França (133913), ambos seleções do bolão principal.
+        $this->eventosTheSportsDb = [
+            32 => [['idEvent' => '910001', 'idHomeTeam' => '134496', 'idAwayTeam' => '133913', 'dateEvent' => '2026-06-28']],
+        ];
 
         app(ServicoMataMata::class)->persistirParticipantes($torneio->fresh());
 
+        $bra = Selecao::query()->where('torneio_id', $torneio->id)->where('sigla', 'BRA')->firstOrFail();
+        $fra = Selecao::query()->where('torneio_id', $torneio->id)->where('sigla', 'FRA')->firstOrFail();
         $r32 = Fase::query()->where('torneio_id', $torneio->id)->where('slug', 'round_of_32')->firstOrFail();
-        $jogosR32 = Jogo::query()->where('torneio_id', $torneio->id)->where('fase_id', $r32->id)->get();
+
         $this->assertTrue(
-            $jogosR32->contains(fn (Jogo $j) => $j->selecao_mandante_id !== null && $j->selecao_visitante_id !== null),
-            'ao menos um jogo do Round of 32 deve ter participantes persistidos'
+            Jogo::query()->where('fase_id', $r32->id)
+                ->where('selecao_mandante_id', $bra->id)
+                ->where('selecao_visitante_id', $fra->id)
+                ->exists(),
+            'o R32 do bolão principal deve ser preenchido a partir da API, sem grupos completos'
         );
     }
 
