@@ -28,11 +28,12 @@ return [
     /*
     | Rodadas de mata-mata (eventsround, sem teto no plano free).
     | Convencao "times restantes": Round of 32 = 32 (CONFIRMADO 2026-06-26),
-    | Round of 16 = 16, Quartas = 8, Semi = 4, Final = 2. Ajuste conforme a API
-    | publicar as fases. r=2 colide com a rodada 2 de grupos, mas o casamento e
-    | por par de times — sem efeito colateral.
+    | Round of 16 = 16, Quartas = 8, Semi = 4. NAO incluir 1/2/3: colidem com as
+    | rodadas de grupos (ex.: r=2 traria a rodada 2 de grupos no slot da Final).
+    | Final e 3o lugar: codigo ainda nao observado (fases vazias) — o admin define
+    | manualmente ate confirmarmos um codigo nao-colidente.
     */
-    'rodadas_mata_mata' => [32, 16, 8, 4, 2],
+    'rodadas_mata_mata' => [32, 16, 8, 4],
 
     /*
     |--------------------------------------------------------------------------

@@ -69,11 +69,22 @@ class ServicoMataMata
 
     private function persistirPorApi(Torneio $torneio): int
     {
+        $temporada = $torneio->temporada_externa;
+        $idLiga = $torneio->liga_externa_id ? (int) $torneio->liga_externa_id : null;
+
         $porIdExterno = Selecao::query()
             ->where('torneio_id', $torneio->id)
             ->whereNotNull('id_externo')
             ->get()
             ->keyBy(fn (Selecao $selecao) => (int) $selecao->id_externo);
+
+        // idEvents das rodadas de grupos: alguns códigos de mata-mata colidem com
+        // rodadas de grupos (ex.: r=2 = Final e também rodada 2 de grupos). Excluímos
+        // esses eventos para o espelho não pegar jogo de grupo num slot de knockout.
+        $idsGrupos = [];
+        foreach ($this->api->eventosDasRodadas((array) config('thesportsdb.rodadas', []), $temporada, $idLiga) as $evento) {
+            $idsGrupos[(int) ($evento['idEvent'] ?? 0)] = true;
+        }
 
         $fases = $torneio->fases->keyBy('slug');
         $gravados = 0;
@@ -84,11 +95,10 @@ class ServicoMataMata
                 continue;
             }
 
-            $eventos = collect($this->api->eventosDaRodada(
-                $codigoRodada,
-                $torneio->temporada_externa,
-                $torneio->liga_externa_id ? (int) $torneio->liga_externa_id : null,
-            ))->sortBy(fn ($evento) => $evento['dateEvent'] ?? '')->values();
+            $eventos = collect($this->api->eventosDaRodada($codigoRodada, $temporada, $idLiga))
+                ->reject(fn ($evento) => isset($idsGrupos[(int) ($evento['idEvent'] ?? 0)]))
+                ->sortBy(fn ($evento) => $evento['dateEvent'] ?? '')
+                ->values();
 
             $jogos = $torneio->jogos
                 ->where('fase_id', $fase->id)
