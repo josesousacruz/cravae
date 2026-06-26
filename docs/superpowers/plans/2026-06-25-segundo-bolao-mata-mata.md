@@ -869,16 +869,35 @@ class ResolverMataMata extends Command
 Run: `cd backend && php artisan test --filter ResolverMataMataTest`
 Expected: PASS (ambos os métodos).
 
-- [ ] **Step 5: Agendar no scheduler**
+- [ ] **Step 5: Agendar no scheduler (atualização contínua)**
 
-Em `backend/routes/console.php`, adicione após as linhas de `jogos:vincular-eventos`:
+O objetivo é que os bolões se atualizem sozinhos **conforme os jogos vão abrindo na API**. A cadeia tem 3 elos; cada um roda em intervalo curto para que um novo confronto publicado apareça em poucos minutos:
+
+1. `jogos:resolver-mata-mata` — preenche os times (2º bolão: espelha a API por rodada; bolão atual: deriva). 
+2. `jogos:vincular-eventos` — casa cada jogo ao evento da API por par de times.
+3. `jogos:sincronizar-resultados` — traz o placar e dispara o recálculo de pontuação.
+
+Em `backend/routes/console.php`:
+
+(a) **Modifique** a linha existente de vinculação, de `->hourly()` para `->everyFifteenMinutes()`:
 
 ```php
-// Persiste os participantes reais do mata-mata (antes de vincular eventos por par de times).
-Schedule::command('jogos:resolver-mata-mata')->hourly()->withoutOverlapping();
+// Casa jogos novos a eventos (calendário publicado aos poucos + mata-mata definido).
+Schedule::command('jogos:vincular-eventos')->everyFifteenMinutes()->withoutOverlapping();
 ```
 
-> Ordem lógica: `resolver-mata-mata` (define os times) → `vincular-eventos` (casa por par) → `sincronizar-resultados` (traz placar). Como `vincular` roda hourly e `sincronizar` everyMinute, a convergência acontece ao longo dos minutos seguintes — aceitável para a cadência de jogos.
+(b) **Adicione** logo acima dela o resolver (roda antes de vincular):
+
+```php
+// Preenche os confrontos de mata-mata (API por rodada / derivação) antes de vincular por par de times.
+Schedule::command('jogos:resolver-mata-mata')->everyFifteenMinutes()->withoutOverlapping();
+```
+
+> `sincronizar-resultados` permanece `everyMinute()`. Cadência resultante: um novo confronto publicado na API aparece nos bolões em ≤15 min; o placar de um jogo encerrado entra em ≤1 min. Os três comandos são idempotentes e usam `withoutOverlapping()`.
+>
+> **PRÉ-CONDIÇÃO OPERACIONAL (verificar no deploy):** a atualização automática só ocorre se o **scheduler do Laravel estiver rodando em produção** — ou seja, um cron `* * * * * cd /caminho && php artisan schedule:run >> /dev/null 2>&1`, ou a "Scheduled Task" equivalente no Coolify. O projeto já agenda `asaas:sincronizar-pagamentos` e `jogos:sincronizar-resultados` `everyMinute`, então provavelmente já existe — **confirmar** que está ativo. Sem o `schedule:run` ativo, nada atualiza sozinho.
+>
+> **Rate limit (free tier `THESPORTSDB_KEY=123`):** `resolver-mata-mata` faz 1 chamada por código de rodada de knockout por torneio mata-mata (5 chamadas/execução). A cada 15 min é folgado. Se trocar para muitos torneios mata-mata, reavaliar.
 
 - [ ] **Step 6: Commit**
 
