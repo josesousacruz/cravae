@@ -543,7 +543,8 @@ const diasComJogosAdmin = computed(() => {
     const d = new Date(jogo.data_hora_inicio)
     const key = jogo.data_hora_inicio.substring(0, 10)
     if (!map.has(key)) {
-      map.set(key, { data: key, diaSemana: diasSemanaAdmin[d.getDay()], diaNumero: d.getDate(), totalJogos: 0, pendentes: 0 })
+      // getUTC* para casar com o prefixo YYYY-MM-DD (dia civil em Brasília, valor naive).
+      map.set(key, { data: key, diaSemana: diasSemanaAdmin[d.getUTCDay()], diaNumero: d.getUTCDate(), totalJogos: 0, pendentes: 0 })
     }
     const entry = map.get(key)!
     entry.totalJogos++
@@ -681,20 +682,22 @@ async function trocarBolao(torneioId: number) {
   await carregarDados(torneioId)
 }
 
-// App roda em UTC; o input datetime-local opera em horario LOCAL sem timezone.
-// Converte o ISO (UTC) vindo da API para o formato do input (local).
+// Convenção do app: datas são wall-clock de Brasília armazenadas naive (serializadas
+// com Z). O input datetime-local deve mostrar/gravar esses dígitos VERBATIM, então
+// operamos no frame UTC dos dois lados (sem aplicar o fuso do navegador).
 function isoParaInputLocal(iso: string | null): string {
   if (!iso) return ''
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
 }
 
-// Converte o valor local do input para ISO UTC (ou null se vazio) para enviar ao backend.
+// Converte o valor do input (interpretado como wall-clock de Brasília) para o ISO
+// naive-com-Z esperado pelo backend, preservando os dígitos.
 function inputLocalParaIso(local: string): string | null {
   if (!local) return null
-  const d = new Date(local) // interpretado como horario local do navegador
+  const d = new Date(`${local}:00.000Z`) // força leitura no frame UTC = dígitos do input
   return Number.isNaN(d.getTime()) ? null : d.toISOString()
 }
 

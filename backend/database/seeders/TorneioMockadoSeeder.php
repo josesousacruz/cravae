@@ -37,34 +37,36 @@ class TorneioMockadoSeeder extends Seeder
             ['nome' => 'Fase de Grupos', 'ordem' => 1, 'tipo' => 'grupos', 'data_fechamento' => '2026-06-11 12:00:00'],
         );
 
+        $fechamentoFase = config('calendario_mata_mata.fechamento_fase');
+
         $roundOf32 = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'round_of_32'],
-            ['nome' => 'Round of 32', 'ordem' => 2, 'tipo' => 'eliminatoria', 'data_fechamento' => '2026-06-28 12:00:00'],
+            ['nome' => 'Round of 32', 'ordem' => 2, 'tipo' => 'eliminatoria', 'data_fechamento' => $fechamentoFase['round_of_32']],
         );
 
         $oitavas = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'oitavas_de_final'],
-            ['nome' => 'Oitavas de Final', 'ordem' => 3, 'tipo' => 'eliminatoria', 'data_fechamento' => '2026-07-03 12:00:00'],
+            ['nome' => 'Oitavas de Final', 'ordem' => 3, 'tipo' => 'eliminatoria', 'data_fechamento' => $fechamentoFase['oitavas_de_final']],
         );
 
         $quartas = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'quartas_de_final'],
-            ['nome' => 'Quartas de Final', 'ordem' => 4, 'tipo' => 'eliminatoria', 'data_fechamento' => '2026-07-09 12:00:00'],
+            ['nome' => 'Quartas de Final', 'ordem' => 4, 'tipo' => 'eliminatoria', 'data_fechamento' => $fechamentoFase['quartas_de_final']],
         );
 
         $semifinais = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'semifinais'],
-            ['nome' => 'Semifinais', 'ordem' => 5, 'tipo' => 'eliminatoria', 'data_fechamento' => '2026-07-14 12:00:00'],
+            ['nome' => 'Semifinais', 'ordem' => 5, 'tipo' => 'eliminatoria', 'data_fechamento' => $fechamentoFase['semifinais']],
         );
 
         $terceiroLugar = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'terceiro_lugar'],
-            ['nome' => 'Terceiro Lugar', 'ordem' => 6, 'tipo' => 'final', 'data_fechamento' => '2026-07-18 12:00:00'],
+            ['nome' => 'Terceiro Lugar', 'ordem' => 6, 'tipo' => 'final', 'data_fechamento' => $fechamentoFase['terceiro_lugar']],
         );
 
         $final = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'final'],
-            ['nome' => 'Final', 'ordem' => 7, 'tipo' => 'final', 'data_fechamento' => '2026-07-19 12:00:00'],
+            ['nome' => 'Final', 'ordem' => 7, 'tipo' => 'final', 'data_fechamento' => $fechamentoFase['final']],
         );
 
         // ── Rodadas ────────────────────────────────────────────
@@ -318,44 +320,23 @@ class TorneioMockadoSeeder extends Seeder
             $ordemJogo++;
         }
 
-        $jogosEliminatorios = [
-            ['fase' => $roundOf32, 'data' => '2026-06-28 16:00', 'ordem' => 1],
-            ['fase' => $roundOf32, 'data' => '2026-06-28 20:00', 'ordem' => 2],
-            ['fase' => $roundOf32, 'data' => '2026-06-29 16:00', 'ordem' => 3],
-            ['fase' => $roundOf32, 'data' => '2026-06-29 20:00', 'ordem' => 4],
-            ['fase' => $roundOf32, 'data' => '2026-06-30 16:00', 'ordem' => 5],
-            ['fase' => $roundOf32, 'data' => '2026-06-30 20:00', 'ordem' => 6],
-            ['fase' => $roundOf32, 'data' => '2026-07-01 16:00', 'ordem' => 7],
-            ['fase' => $roundOf32, 'data' => '2026-07-01 20:00', 'ordem' => 8],
-            ['fase' => $roundOf32, 'data' => '2026-07-02 16:00', 'ordem' => 9],
-            ['fase' => $roundOf32, 'data' => '2026-07-02 20:00', 'ordem' => 10],
-            ['fase' => $roundOf32, 'data' => '2026-07-03 16:00', 'ordem' => 11],
-            ['fase' => $roundOf32, 'data' => '2026-07-03 20:00', 'ordem' => 12],
-            ['fase' => $roundOf32, 'data' => '2026-07-04 16:00', 'ordem' => 13],
-            ['fase' => $roundOf32, 'data' => '2026-07-04 20:00', 'ordem' => 14],
-            ['fase' => $roundOf32, 'data' => '2026-07-05 16:00', 'ordem' => 15],
-            ['fase' => $roundOf32, 'data' => '2026-07-05 20:00', 'ordem' => 16],
-
-            ['fase' => $oitavas, 'data' => '2026-07-06 16:00', 'ordem' => 1],
-            ['fase' => $oitavas, 'data' => '2026-07-06 20:00', 'ordem' => 2],
-            ['fase' => $oitavas, 'data' => '2026-07-07 16:00', 'ordem' => 3],
-            ['fase' => $oitavas, 'data' => '2026-07-07 20:00', 'ordem' => 4],
-            ['fase' => $oitavas, 'data' => '2026-07-08 16:00', 'ordem' => 5],
-            ['fase' => $oitavas, 'data' => '2026-07-08 20:00', 'ordem' => 6],
-            ['fase' => $oitavas, 'data' => '2026-07-09 16:00', 'ordem' => 7],
-            ['fase' => $oitavas, 'data' => '2026-07-09 20:00', 'ordem' => 8],
-
-            ['fase' => $quartas, 'data' => '2026-07-10 16:00', 'ordem' => 1],
-            ['fase' => $quartas, 'data' => '2026-07-10 20:00', 'ordem' => 2],
-            ['fase' => $quartas, 'data' => '2026-07-11 16:00', 'ordem' => 3],
-            ['fase' => $quartas, 'data' => '2026-07-11 20:00', 'ordem' => 4],
-
-            ['fase' => $semifinais, 'data' => '2026-07-14 16:00', 'ordem' => 1],
-            ['fase' => $semifinais, 'data' => '2026-07-15 16:00', 'ordem' => 2],
-
-            ['fase' => $terceiroLugar, 'data' => '2026-07-18 15:00', 'ordem' => 1],
-            ['fase' => $final, 'data' => '2026-07-19 16:00', 'ordem' => 1],
+        // Datas/horários do mata-mata vêm do calendário oficial (fonte única).
+        $calendario = config('calendario_mata_mata.jogos');
+        $fasesPorSlug = [
+            'round_of_32' => $roundOf32,
+            'oitavas_de_final' => $oitavas,
+            'quartas_de_final' => $quartas,
+            'semifinais' => $semifinais,
+            'terceiro_lugar' => $terceiroLugar,
+            'final' => $final,
         ];
+
+        $jogosEliminatorios = [];
+        foreach ($fasesPorSlug as $slug => $fase) {
+            foreach ($calendario[$slug] as $i => $data) {
+                $jogosEliminatorios[] = ['fase' => $fase, 'data' => $data, 'ordem' => $i + 1];
+            }
+        }
 
         foreach ($jogosEliminatorios as $jogo) {
             Jogo::query()->updateOrCreate(

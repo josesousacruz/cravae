@@ -115,7 +115,15 @@ class VincularEventosJogos extends Command
                     continue;
                 }
 
-                $jogo->forceFill(['id_evento_externo' => $idEvento])->save();
+                $atualizacao = ['id_evento_externo' => $idEvento];
+
+                // Sincroniza a data real do evento (UTC) como wall-clock de Brasília,
+                // convenção usada em todo o app (ver config/calendario_mata_mata.php).
+                if ($dataBrt = $this->dataBrtDoEvento($evento)) {
+                    $atualizacao['data_hora_inicio'] = $dataBrt;
+                }
+
+                $jogo->forceFill($atualizacao)->save();
                 $usados[$idEvento] = true;
                 $total['vinculados']++;
 
@@ -145,6 +153,34 @@ class VincularEventosJogos extends Command
     private function chavePar(int $a, int $b): string
     {
         return min($a, $b).'-'.max($a, $b);
+    }
+
+    /**
+     * Converte a data do evento (TheSportsDB, em UTC) para wall-clock de Brasília
+     * (UTC-3), no formato "Y-m-d H:i:s" gravado naive em data_hora_inicio.
+     * Usa strTimestamp quando disponível; senão dateEvent + strTime.
+     *
+     * @param  array<string,mixed>  $evento
+     */
+    private function dataBrtDoEvento(array $evento): ?string
+    {
+        $iso = $evento['strTimestamp'] ?? null;
+
+        if (! $iso) {
+            $dia = $evento['dateEvent'] ?? null;
+            if (! $dia) {
+                return null;
+            }
+            $iso = trim($dia.' '.($evento['strTime'] ?? '00:00:00'));
+        }
+
+        try {
+            return Carbon::parse($iso, 'UTC')
+                ->setTimezone('America/Sao_Paulo')
+                ->format('Y-m-d H:i:s');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

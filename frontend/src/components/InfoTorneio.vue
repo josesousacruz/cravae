@@ -33,7 +33,7 @@
       </div>
 
       <p v-if="torneioStore.torneio.data_inicio" class="mt-2 text-sm text-text-secondary">
-        Inicio: {{ new Date(torneioStore.torneio.data_inicio).toLocaleDateString('pt-BR') }}
+        Inicio: {{ new Date(torneioStore.torneio.data_inicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) }}
       </p>
     </template>
 

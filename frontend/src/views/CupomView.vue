@@ -1057,7 +1057,8 @@ const diasComJogos = computed(() => {
     const d = new Date(jogo.data_hora_inicio)
     const key = jogo.data_hora_inicio.substring(0, 10)
     if (!map.has(key)) {
-      map.set(key, { data: key, diaSemana: diasSemana[d.getDay()], diaNumero: d.getDate(), totalJogos: 0, semPalpite: false })
+      // getUTC* para casar com o prefixo YYYY-MM-DD (dia civil em Brasília, valor naive).
+      map.set(key, { data: key, diaSemana: diasSemana[d.getUTCDay()], diaNumero: d.getUTCDate(), totalJogos: 0, semPalpite: false })
     }
     const entry = map.get(key)!
     entry.totalJogos++
@@ -1300,7 +1301,9 @@ async function autoSalvar() {
 }
 
 function formatarHora(dataHora: string) {
-  return new Date(dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  // data_hora_inicio é wall-clock de Brasília armazenado naive (serializado com Z).
+  // Exibimos verbatim com timeZone UTC para não aplicar o deslocamento do navegador.
+  return new Date(dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
 }
 
 // Jogo que originou um evento de pontuacao (vazio para artilheiro/podio).

@@ -34,29 +34,31 @@ class BolaoMataMataSeeder extends Seeder
         );
 
         // ── Fases (só mata-mata) ───────────────────────────────
+        $fechamentoFase = config('calendario_mata_mata.fechamento_fase');
+
         $roundOf32 = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'round_of_32'],
-            ['nome' => 'Round of 32', 'ordem' => 1, 'tipo' => 'eliminatoria', 'data_fechamento' => '2026-06-28 12:00:00'],
+            ['nome' => 'Round of 32', 'ordem' => 1, 'tipo' => 'eliminatoria', 'data_fechamento' => $fechamentoFase['round_of_32']],
         );
         $oitavas = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'oitavas_de_final'],
-            ['nome' => 'Oitavas de Final', 'ordem' => 2, 'tipo' => 'eliminatoria', 'data_fechamento' => '2026-07-03 12:00:00'],
+            ['nome' => 'Oitavas de Final', 'ordem' => 2, 'tipo' => 'eliminatoria', 'data_fechamento' => $fechamentoFase['oitavas_de_final']],
         );
         $quartas = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'quartas_de_final'],
-            ['nome' => 'Quartas de Final', 'ordem' => 3, 'tipo' => 'eliminatoria', 'data_fechamento' => '2026-07-09 12:00:00'],
+            ['nome' => 'Quartas de Final', 'ordem' => 3, 'tipo' => 'eliminatoria', 'data_fechamento' => $fechamentoFase['quartas_de_final']],
         );
         $semifinais = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'semifinais'],
-            ['nome' => 'Semifinais', 'ordem' => 4, 'tipo' => 'eliminatoria', 'data_fechamento' => '2026-07-14 12:00:00'],
+            ['nome' => 'Semifinais', 'ordem' => 4, 'tipo' => 'eliminatoria', 'data_fechamento' => $fechamentoFase['semifinais']],
         );
         $terceiroLugar = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'terceiro_lugar'],
-            ['nome' => 'Terceiro Lugar', 'ordem' => 5, 'tipo' => 'final', 'data_fechamento' => '2026-07-18 12:00:00'],
+            ['nome' => 'Terceiro Lugar', 'ordem' => 5, 'tipo' => 'final', 'data_fechamento' => $fechamentoFase['terceiro_lugar']],
         );
         $final = Fase::query()->updateOrCreate(
             ['torneio_id' => $torneio->id, 'slug' => 'final'],
-            ['nome' => 'Final', 'ordem' => 6, 'tipo' => 'final', 'data_fechamento' => '2026-07-19 12:00:00'],
+            ['nome' => 'Final', 'ordem' => 6, 'tipo' => 'final', 'data_fechamento' => $fechamentoFase['final']],
         );
 
         // ── 48 seleções (sem grupo, com id_externo) ────────────
@@ -75,37 +77,31 @@ class BolaoMataMataSeeder extends Seeder
             );
         }
 
-        // ── 32 jogos placeholder (times nulos) ─────────────────
-        $jogos = [];
-        foreach (range(1, 16) as $i) {
-            $jogos[] = ['fase' => $roundOf32, 'ordem' => $i];
-        }
-        foreach (range(1, 8) as $i) {
-            $jogos[] = ['fase' => $oitavas, 'ordem' => $i];
-        }
-        foreach (range(1, 4) as $i) {
-            $jogos[] = ['fase' => $quartas, 'ordem' => $i];
-        }
-        foreach (range(1, 2) as $i) {
-            $jogos[] = ['fase' => $semifinais, 'ordem' => $i];
-        }
-        $jogos[] = ['fase' => $terceiroLugar, 'ordem' => 1];
-        $jogos[] = ['fase' => $final, 'ordem' => 1];
+        // ── 32 jogos placeholder (times nulos), datas do calendário oficial ─────
+        $calendario = config('calendario_mata_mata.jogos');
+        $fasesPorSlug = [
+            'round_of_32' => $roundOf32,
+            'oitavas_de_final' => $oitavas,
+            'quartas_de_final' => $quartas,
+            'semifinais' => $semifinais,
+            'terceiro_lugar' => $terceiroLugar,
+            'final' => $final,
+        ];
 
-        $base = strtotime('2026-06-28 16:00');
-        $passo = 0;
-        foreach ($jogos as $jogo) {
-            Jogo::query()->updateOrCreate(
-                ['torneio_id' => $torneio->id, 'fase_id' => $jogo['fase']->id, 'ordem_na_fase' => $jogo['ordem']],
-                [
-                    'rodada_id' => null,
-                    'grupo_id' => null,
-                    'selecao_mandante_id' => null,
-                    'selecao_visitante_id' => null,
-                    'data_hora_inicio' => date('Y-m-d H:i:s', $base + ($passo++ * 4 * 3600)),
-                    'status' => 'agendado',
-                ],
-            );
+        foreach ($fasesPorSlug as $slug => $fase) {
+            foreach ($calendario[$slug] as $i => $data) {
+                Jogo::query()->updateOrCreate(
+                    ['torneio_id' => $torneio->id, 'fase_id' => $fase->id, 'ordem_na_fase' => $i + 1],
+                    [
+                        'rodada_id' => null,
+                        'grupo_id' => null,
+                        'selecao_mandante_id' => null,
+                        'selecao_visitante_id' => null,
+                        'data_hora_inicio' => $data,
+                        'status' => 'agendado',
+                    ],
+                );
+            }
         }
 
         // ── Regras de pontuação (só knockout) ──────────────────
