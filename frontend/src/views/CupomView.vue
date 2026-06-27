@@ -706,11 +706,13 @@ async function togglePalpiteiros(jogoId: number, evento: MouseEvent) {
 }
 
 // Fecha o popover ao clicar fora dele ou ao rolar a página (posicao fixa fica descolada do botao).
+// Exceção: interações DENTRO do popover (clicar ou rolar a lista) não devem fechá-lo —
+// o listener de scroll é em capture, então rolar a lista interna também dispararia aqui.
 function fecharPalpiteiros(evento?: Event) {
   if (palpiteirosAberto.value === null) return
-  if (evento?.type === 'mousedown') {
+  if (evento?.type === 'mousedown' || evento?.type === 'scroll') {
     const alvo = evento.target as HTMLElement | null
-    if (alvo?.closest('[data-palpiteiros]')) return
+    if (alvo?.closest?.('[data-palpiteiros]')) return
   }
   palpiteirosAberto.value = null
 }
