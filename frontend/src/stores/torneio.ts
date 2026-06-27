@@ -7,14 +7,19 @@ export const usarTorneioStore = defineStore('torneio', () => {
   const torneio = ref<Torneio | null>(null)
   const carregando = ref(false)
   const erro = ref<string | null>(null)
+  const idCarregado = ref<number | null>(null)
 
-  async function carregar() {
-    if (torneio.value) return
+  // Carrega o torneio por id (ex.: bolão ativo). Sem id, usa o /torneio público
+  // (mais recente). Recarrega quando o id pedido muda (troca de bolão).
+  async function carregar(id?: number | null) {
+    const alvo = id ?? null
+    if (torneio.value && idCarregado.value === alvo) return
     carregando.value = true
     erro.value = null
     try {
-      const resp = await requisicaoApi<{ torneio: Torneio }>('/torneio')
+      const resp = await requisicaoApi<{ torneio: Torneio }>(alvo ? `/torneios/${alvo}` : '/torneio')
       torneio.value = resp.torneio
+      idCarregado.value = alvo
     } catch (e) {
       erro.value = e instanceof Error ? e.message : 'Erro ao carregar torneio.'
     } finally {
@@ -22,9 +27,10 @@ export const usarTorneioStore = defineStore('torneio', () => {
     }
   }
 
-  async function recarregar() {
+  async function recarregar(id?: number | null) {
     torneio.value = null
-    await carregar()
+    idCarregado.value = null
+    await carregar(id)
   }
 
   return { torneio, carregando, erro, carregar, recarregar }

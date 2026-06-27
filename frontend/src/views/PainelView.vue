@@ -132,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { requisicaoApi } from '../services/api'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
 import { usarTorneioStore } from '../stores/torneio'
@@ -185,12 +185,20 @@ async function carregarCupons() {
   }
 }
 
+async function carregarContexto() {
+  if (bolao.lista.length === 0) await bolao.carregar()
+  // Torneio (compras abertas + InfoTorneio) sempre do bolão ativo.
+  await torneioStore.carregar(bolao.ativoId)
+}
+
 onMounted(() => {
   carregarCupons()
-  torneioStore.carregar()
-  if (bolao.lista.length === 0) bolao.carregar()
+  carregarContexto()
   carouselRef.value?.addEventListener('scroll', onCarouselScroll, { passive: true })
 })
+
+// Troca de bolão no seletor → recarrega o contexto do bolão ativo.
+watch(() => bolao.ativoId, carregarContexto)
 
 onUnmounted(() => {
   carouselRef.value?.removeEventListener('scroll', onCarouselScroll)
