@@ -8,6 +8,7 @@ use App\Models\EventoPontuacao;
 use App\Models\Jogo;
 use App\Models\PontuacaoCupom;
 use App\Models\Torneio;
+use App\Services\ServicoFechamentoApostas;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
@@ -100,22 +101,38 @@ class TorneioController extends Controller
         ]);
     }
 
-    public function palpiteiros(Jogo $jogo): JsonResponse
+    public function palpiteiros(Jogo $jogo, ServicoFechamentoApostas $fechamento): JsonResponse
     {
+        // O palpite alheio só é revelado depois que o prazo de aposta do jogo fecha
+        // (kickoff no mata-mata; prazo do dia/rodada nos grupos). Trava no backend.
+        $jogo->loadMissing('fase');
+        $tipo = $jogo->fase?->tipo === 'grupos' ? 'placar_jogo_grupos' : 'placar_jogo_eliminatoria';
+        $revelar = $fechamento->prazoEncerrado(['tipo' => $tipo, 'jogo_id' => $jogo->id]);
+
         $palpiteiros = Aposta::query()
             ->where('jogo_id', $jogo->id)
             ->whereIn('tipo', ['placar_jogo_grupos', 'placar_jogo_eliminatoria'])
             ->with('cupom.usuario:id,nome')
             ->get()
-            ->map(fn (Aposta $a) => [
-                'nome' => $a->cupom?->usuario?->nome ?? 'Anonimo',
-                'cupom_codigo' => $a->cupom?->codigo,
-            ])
+            ->map(function (Aposta $a) use ($revelar) {
+                $conteudo = $a->conteudo ?? [];
+
+                return [
+                    'nome' => $a->cupom?->usuario?->nome ?? 'Anonimo',
+                    'cupom_codigo' => $a->cupom?->codigo,
+                    'palpite' => $revelar ? [
+                        'placar_mandante' => $conteudo['placar_mandante'] ?? null,
+                        'placar_visitante' => $conteudo['placar_visitante'] ?? null,
+                        'selecao_classificada_id' => $conteudo['selecao_classificada_id'] ?? null,
+                    ] : null,
+                ];
+            })
             ->unique('cupom_codigo')
             ->values();
 
         return response()->json([
             'total' => $palpiteiros->count(),
+            'revelado' => $revelar,
             'palpiteiros' => $palpiteiros,
         ]);
     }

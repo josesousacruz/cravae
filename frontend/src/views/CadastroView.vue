@@ -77,7 +77,7 @@ const autenticacao = usarAutenticacaoStore()
 async function cadastrar() {
   try {
     await autenticacao.cadastrar(nome.value, email.value, telefone.value, cpfCnpj.value, senha.value, confirmacao.value)
-    roteador.push('/painel')
+    roteador.push('/boloes')
   } catch {
     // erro tratado na store
   }

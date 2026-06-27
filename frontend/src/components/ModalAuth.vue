@@ -223,7 +223,7 @@ async function submeterEntrar() {
     await autenticacao.entrar(formEntrar.email, formEntrar.senha)
     mostrar('sucesso', 'Login realizado com sucesso.')
     emit('fechar')
-    router.push({ name: 'painel' })
+    router.push({ name: 'boloes' })
   } catch {
     mostrar('erro', autenticacao.erro || 'Email ou senha incorretos. Verifique seus dados e tente novamente.')
   } finally {
@@ -244,7 +244,7 @@ async function submeterCadastro() {
     )
     mostrar('sucesso', 'Conta criada! Bem-vindo ao Inter World Cup.')
     emit('fechar')
-    router.push({ name: 'painel' })
+    router.push({ name: 'boloes' })
   } catch {
     mostrar('erro', autenticacao.erro || 'Nao foi possivel criar a conta. Tente novamente.')
   } finally {

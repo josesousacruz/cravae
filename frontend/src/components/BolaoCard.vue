@@ -35,29 +35,23 @@
         Cupom <span class="font-bold text-text">{{ valorFormatado }}</span>
       </div>
 
-      <div class="mt-4 flex items-center gap-2">
+      <div class="mt-4 flex items-stretch gap-2">
+        <!-- Ação principal: entrar/ver o bolão -->
+        <button
+          type="button"
+          class="inline-flex flex-[2] items-center justify-center rounded-lg bg-primary px-3 py-2.5 text-sm font-bold text-bg transition hover:opacity-90"
+          @click="verBolao"
+        >
+          Ver bolão
+        </button>
+        <!-- Ação secundária: comprar cupom -->
         <RouterLink
           v-if="bolao.status === 'publicado' && bolao.compras_abertas"
           :to="{ name: 'checkout', query: { torneio: bolao.id } }"
-          class="inline-flex flex-1 items-center justify-center rounded-lg bg-primary px-3 py-2 text-xs font-bold text-bg transition hover:opacity-90"
+          class="inline-flex flex-1 items-center justify-center rounded-lg border border-border bg-bg-input px-3 py-2 text-center text-xs font-semibold text-text-secondary transition hover:border-primary/40 hover:text-text"
         >
           Comprar cupom
         </RouterLink>
-        <button
-          v-if="autenticacao.estaAutenticado"
-          type="button"
-          class="inline-flex items-center justify-center rounded-lg border border-border bg-bg-input px-3 py-2 text-xs font-semibold text-text-secondary transition hover:border-primary/40 hover:text-text"
-          :class="{ 'flex-1': !(bolao.status === 'publicado' && bolao.compras_abertas) }"
-          @click="verCupons"
-        >
-          Ver cupons
-        </button>
-        <span
-          v-if="!autenticacao.estaAutenticado && !(bolao.status === 'publicado' && bolao.compras_abertas)"
-          class="text-xs text-text-muted"
-        >
-          Indisponível
-        </span>
       </div>
     </div>
   </div>
@@ -66,14 +60,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { usarAutenticacaoStore } from '../stores/autenticacao'
 import { usarBolaoAtivoStore } from '../stores/bolaoAtivo'
 import type { Bolao } from '../tipos'
 
 const props = defineProps<{ bolao: Bolao }>()
 
 const router = useRouter()
-const autenticacao = usarAutenticacaoStore()
 const bolaoAtivo = usarBolaoAtivoStore()
 
 const ehMataMata = computed(
@@ -98,7 +90,7 @@ const badgeClasse = computed(() => {
   return props.bolao.compras_abertas ? 'bg-primary/20 text-primary' : 'bg-warning/20 text-warning'
 })
 
-function verCupons() {
+function verBolao() {
   bolaoAtivo.definirAtivo(props.bolao.id)
   router.push({ name: 'painel' })
 }

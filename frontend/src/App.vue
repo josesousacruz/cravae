@@ -24,6 +24,7 @@
       :tab-inicial="modalAuthTab"
       @fechar="modalAuthAberto = false"
     />
+    <AvisoMataMata />
   </div>
 </template>
 
@@ -35,6 +36,7 @@ import AppHeader from './components/AppHeader.vue'
 import MobileMenu from './components/MobileMenu.vue'
 import ToastContainer from './components/ToastContainer.vue'
 import ModalAuth from './components/ModalAuth.vue'
+import AvisoMataMata from './components/AvisoMataMata.vue'
 
 const autenticacao = usarAutenticacaoStore()
 const route = useRoute()

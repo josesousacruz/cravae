@@ -60,7 +60,7 @@ async function entrar() {
 
   try {
     await autenticacao.entrar(email.value, senha.value)
-    roteador.push('/painel')
+    roteador.push('/boloes')
   } catch {
     // erro tratado na store
   }

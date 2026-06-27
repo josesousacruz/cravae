@@ -263,7 +263,13 @@
                               <div class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-[9px] font-bold text-primary">
                                 {{ p.nome.charAt(0).toUpperCase() }}
                               </div>
-                              <span class="text-xs text-text-secondary truncate">{{ p.nome }}</span>
+                              <span class="min-w-0 flex-1 truncate text-xs text-text-secondary">{{ p.nome }}</span>
+                              <span
+                                v-if="p.palpite"
+                                class="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary"
+                              >
+                                {{ p.palpite.placar_mandante }} × {{ p.palpite.placar_visitante }}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -673,7 +679,8 @@ let salvarNovamente = false
 // Quem palpitou
 const palpiteirosAberto = ref<number | null>(null)
 const palpiteirosPos = ref<{ top: number; left: number }>({ top: 0, left: 0 })
-const palpiteirosCache = ref<Record<number, { total: number; palpiteiros: { nome: string; cupom_codigo: string }[] }>>({})
+type PalpiteRevelado = { placar_mandante: number | null; placar_visitante: number | null; selecao_classificada_id: number | null }
+const palpiteirosCache = ref<Record<number, { total: number; revelado?: boolean; palpiteiros: { nome: string; cupom_codigo: string; palpite?: PalpiteRevelado | null }[] }>>({})
 
 const LARGURA_POPOVER = 224 // w-56
 
