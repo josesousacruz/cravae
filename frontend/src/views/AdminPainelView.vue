@@ -796,6 +796,9 @@ async function adicionarRegra() {
     await requisicaoApi('/admin/regras-pontuacao', {
       metodo: 'POST',
       corpo: {
+        // Sem o torneio_id, o backend cai em latest('id') (o ultimo bolao) e cria/valida
+        // a regra no bolao errado. Amarra ao bolao selecionado no painel.
+        torneio_id: torneioSelecionadoId.value,
         chave: novaRegra.value.chave,
         fase_id: novaRegra.value.fase_id ? Number(novaRegra.value.fase_id) : null,
         nome: novaRegra.value.nome,
