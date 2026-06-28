@@ -56,12 +56,11 @@ class ResolverMataMataNaoSobrescreveVinculadoTest extends TestCase
             'data_hora_inicio' => '2026-06-29 16:00:00', 'status' => 'agendado',
         ]);
 
-        // API (rodada 32): por posição/data, o evento[0] (C x D) cairia no slot 1
-        // (vinculado) e o evento[1] (E x F) no slot 2 (vazio).
+        // API (rodada 32): um evento C x D (idEvent 500). O slot vinculado (999) não
+        // pode ser tocado; o evento deve cair no slot VAZIO, amarrando time+vínculo.
         $this->eventosTheSportsDb = [
             32 => [
-                ['idEvent' => '500', 'idHomeTeam' => '1003', 'idAwayTeam' => '1004', 'dateEvent' => '2026-06-28'],
-                ['idEvent' => '501', 'idHomeTeam' => '1005', 'idAwayTeam' => '1006', 'dateEvent' => '2026-06-29'],
+                ['idEvent' => '500', 'idHomeTeam' => '1003', 'idAwayTeam' => '1004', 'dateEvent' => '2026-06-29'],
             ],
         ];
 
@@ -73,9 +72,10 @@ class ResolverMataMataNaoSobrescreveVinculadoTest extends TestCase
         $this->assertSame($sel['B']->id, $jogoVinculado->selecao_visitante_id, 'slot vinculado teve o visitante sobrescrito');
         $this->assertSame(999, (int) $jogoVinculado->id_evento_externo);
 
-        // Slot vazio: PREENCHIDO com E x F (o resolver ainda faz seu trabalho legítimo).
+        // Slot vazio: PREENCHIDO com C x D E vinculado ao mesmo evento (coerência).
         $jogoVazio->refresh();
-        $this->assertSame($sel['E']->id, $jogoVazio->selecao_mandante_id);
-        $this->assertSame($sel['F']->id, $jogoVazio->selecao_visitante_id);
+        $this->assertSame($sel['C']->id, $jogoVazio->selecao_mandante_id);
+        $this->assertSame($sel['D']->id, $jogoVazio->selecao_visitante_id);
+        $this->assertSame(500, (int) $jogoVazio->id_evento_externo, 'slot vazio deveria amarrar time E vínculo do mesmo evento');
     }
 }
