@@ -1103,7 +1103,14 @@ const textoFechamento = computed(() => {
   return `Fecha em ${minutos}min`
 })
 
-const todasSelecoes = computed<Selecao[]>(() => torneio.value?.grupos.flatMap(g => g.selecoes) ?? [])
+// Lista flat de seleções do torneio (para o pódio). Usa torneio.selecoes quando
+// disponível (cobre torneios sem grupos, ex.: bolão só de mata-mata); cai para as
+// seleções dos grupos como fallback.
+const todasSelecoes = computed<Selecao[]>(() =>
+  torneio.value?.selecoes?.length
+    ? torneio.value.selecoes
+    : (torneio.value?.grupos.flatMap(g => g.selecoes) ?? []),
+)
 const podioRanking = computed(() => ranking.value.slice(0, 3))
 
 function classePosicaoRanking(indice: number) {

@@ -142,6 +142,9 @@ class TorneioController extends Controller
         return $torneio->load([
             'resultadoTorneio',
             'grupos.selecoes.jogadores',
+            // Lista flat de seleções: o pódio (campeão/vice/3º) precisa de todas as
+            // seleções mesmo em torneios sem grupos (ex.: bolão só de mata-mata).
+            'selecoes' => fn ($query) => $query->where('ativo', true)->orderBy('nome'),
             'fases' => fn ($query) => $query->orderBy('ordem'),
             'fases.rodadas' => fn ($query) => $query->orderBy('ordem'),
             'jogos' => fn ($query) => $query->orderBy('data_hora_inicio'),

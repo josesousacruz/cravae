@@ -191,6 +191,7 @@ export type Torneio = {
   valor_cupom: number
   compras_abertas: boolean
   grupos: Grupo[]
+  selecoes: Selecao[]
   fases: Fase[]
   jogos: Jogo[]
   regras_pontuacao: RegraPontuacao[]
