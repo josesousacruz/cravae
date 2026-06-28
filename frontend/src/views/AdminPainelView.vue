@@ -411,7 +411,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { requisicaoApi } from '../services/api'
+import { usarBolaoAtivoStore } from '../stores/bolaoAtivo'
 import type { Torneio, Bolao } from '../tipos'
+
+// Mesmo store do seletor de bolão da navegação (AppHeader/SeletorBolao). Sem isso, o
+// admin abria sempre o último torneio (latest id = Mata-Mata) e ignorava o seletor.
+const bolaoAtivo = usarBolaoAtivoStore()
 
 const torneio = ref<Torneio | null>(null)
 const mensagem = ref('')
@@ -688,6 +693,8 @@ async function carregarBoloes() {
 }
 
 async function trocarBolao(torneioId: number) {
+  // Mantém o seletor do admin e o seletor global (topo) em sincronia.
+  bolaoAtivo.definirAtivo(torneioId)
   await carregarDados(torneioId)
 }
 
@@ -874,7 +881,17 @@ async function salvarResultadoTorneioFn() {
   salvandoResultadoTorneio.value = false
 }
 
+// Segue o seletor global do topo: ao trocar de bolão lá, o admin recarrega.
+watch(() => bolaoAtivo.ativoId, (novoId) => {
+  if (novoId && novoId !== torneioSelecionadoId.value) {
+    carregarDados(novoId)
+  }
+})
+
 onMounted(async () => {
-  await Promise.all([carregarDados(), carregarBoloes()])
+  if (bolaoAtivo.lista.length === 0) {
+    await bolaoAtivo.carregar()
+  }
+  await Promise.all([carregarDados(bolaoAtivo.ativoId ?? undefined), carregarBoloes()])
 })
 </script>
