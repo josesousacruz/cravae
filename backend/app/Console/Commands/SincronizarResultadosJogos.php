@@ -158,11 +158,24 @@ class SincronizarResultadosJogos extends Command
             return null;
         }
 
+        $idHome = (int) ($evento['idHomeTeam'] ?? 0);
+        $idAway = (int) ($evento['idAwayTeam'] ?? 0);
+        $mandanteExterno = (int) $jogo->selecaoMandante?->id_externo;
+        $visitanteExterno = (int) $jogo->selecaoVisitante?->id_externo;
+
+        // Rede de segurança: só aplica o placar se o PAR de times do evento bate com
+        // o par do slot (independe de mando). Protege contra vínculo defasado — um slot
+        // apontando pro evento de outro confronto NÃO recebe o placar errado.
+        $parEvento = [$idHome, $idAway];
+        $parSlot = [$mandanteExterno, $visitanteExterno];
+        sort($parEvento);
+        sort($parSlot);
+        if (in_array(0, $parSlot, true) || $parEvento !== $parSlot) {
+            return null;
+        }
+
         $golsCasa = (int) $golsCasa;
         $golsFora = (int) $golsFora;
-
-        $idHome = (int) ($evento['idHomeTeam'] ?? 0);
-        $mandanteExterno = (int) $jogo->selecaoMandante?->id_externo;
 
         // Se o "home" da API é o nosso mandante, mantém; senão, inverte.
         return $idHome === $mandanteExterno

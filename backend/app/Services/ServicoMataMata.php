@@ -100,6 +100,14 @@ class ServicoMataMata
 
     private function gravarPar(Jogo $jogo, int $mandanteId, int $visitanteId): bool
     {
+        // Slot já amarrado a um evento real: os times DEVEM vir desse evento (via
+        // vincular-eventos). O espelho posicional não pode sobrescrever — senão recria
+        // a divergência time≠vínculo (mesmo confronto em 2 slots / vínculo defasado).
+        // Aqui só preenchemos slots ainda SEM vínculo.
+        if ($jogo->id_evento_externo !== null) {
+            return false;
+        }
+
         $mudou = (int) $jogo->selecao_mandante_id !== $mandanteId
             || (int) $jogo->selecao_visitante_id !== $visitanteId;
 
