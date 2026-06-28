@@ -20,8 +20,10 @@ use App\Models\Usuario;
 use App\Services\ServicoCheckout;
 use App\Services\ServicoResultadosTorneio;
 use App\Services\ServicoSincronizacaoResultados;
+use App\Services\ServicoTheSportsDb;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -49,6 +51,7 @@ class PainelAdministradorController extends Controller
         private readonly ServicoResultadosTorneio $servicoResultadosTorneio,
         private readonly ServicoCheckout $servicoCheckout,
         private readonly ServicoSincronizacaoResultados $servicoSincronizacao,
+        private readonly ServicoTheSportsDb $api,
     ) {
     }
 
@@ -195,15 +198,106 @@ class PainelAdministradorController extends Controller
                 'present',
                 'nullable',
                 'integer',
-                Rule::unique('jogos', 'id_evento_externo')->ignore($jogo->id),
+                // Unicidade POR TORNEIO (o mesmo evento da Copa é usado nos dois bolões;
+                // o índice do banco é composto torneio_id+id_evento_externo).
+                Rule::unique('jogos', 'id_evento_externo')
+                    ->where('torneio_id', $jogo->torneio_id)
+                    ->ignore($jogo->id),
             ],
         ]);
 
-        $jogo->forceFill(['id_evento_externo' => $validado['id_evento_externo']])->save();
+        $idEvento = $validado['id_evento_externo'];
+
+        // Código vazio → limpa o slot (volta a "A definir"): zera vínculo, times e o
+        // resultado (que pode ter vindo de um vínculo errado), com recálculo de pontos.
+        if ($idEvento === null) {
+            if ($jogo->resultado()->exists()) {
+                $this->servicoSincronizacao->limparResultado($jogo);
+            }
+
+            // Restaura a data-âncora da fase (config), em vez de deixar pendurada a
+            // data do evento que estava vinculado — senão o slot "limpo" fica com data
+            // de outro jogo.
+            $jogo->loadMissing('fase');
+            $ancora = config('calendario_mata_mata.jogos.'.$jogo->fase?->slug.'.'.($jogo->ordem_na_fase - 1));
+
+            $jogo->forceFill([
+                'id_evento_externo' => null,
+                'selecao_mandante_id' => null,
+                'selecao_visitante_id' => null,
+                'data_hora_inicio' => $ancora ?? $jogo->data_hora_inicio,
+            ])->save();
+
+            return response()->json([
+                'jogo' => $jogo->only('id', 'id_evento_externo', 'selecao_mandante_id', 'selecao_visitante_id', 'data_hora_inicio'),
+            ]);
+        }
+
+        // Código preenchido → o evento é a fonte da verdade: traz times + data dele,
+        // mantendo time e vínculo SEMPRE coerentes (mesma origem).
+        $evento = $this->api->lookupEvento($idEvento);
+        if ($evento === null) {
+            throw ValidationException::withMessages([
+                'id_evento_externo' => 'Evento não encontrado na TheSportsDB.',
+            ]);
+        }
+
+        $mandante = $this->selecaoPorIdExterno($jogo, $evento['idHomeTeam'] ?? null);
+        $visitante = $this->selecaoPorIdExterno($jogo, $evento['idAwayTeam'] ?? null);
+
+        // Par mudou → resultado anterior ficou obsoleto: limpa antes (recalcula pontos).
+        $mudouPar = (int) $jogo->selecao_mandante_id !== (int) $mandante?->id
+            || (int) $jogo->selecao_visitante_id !== (int) $visitante?->id;
+        if ($mudouPar && $jogo->resultado()->exists()) {
+            $this->servicoSincronizacao->limparResultado($jogo);
+        }
+
+        $jogo->forceFill([
+            'id_evento_externo' => $idEvento,
+            'selecao_mandante_id' => $mandante?->id,
+            'selecao_visitante_id' => $visitante?->id,
+            'data_hora_inicio' => $this->dataBrtDoEvento($evento) ?? $jogo->data_hora_inicio,
+        ])->save();
 
         return response()->json([
-            'jogo' => $jogo->only('id', 'id_evento_externo'),
+            'jogo' => $jogo->only('id', 'id_evento_externo', 'selecao_mandante_id', 'selecao_visitante_id', 'data_hora_inicio'),
         ]);
+    }
+
+    private function selecaoPorIdExterno(Jogo $jogo, mixed $idExterno): ?Selecao
+    {
+        if (! $idExterno) {
+            return null;
+        }
+
+        return Selecao::query()
+            ->where('torneio_id', $jogo->torneio_id)
+            ->where('id_externo', (int) $idExterno)
+            ->first();
+    }
+
+    /**
+     * Data do evento (UTC na API) → wall-clock de Brasília "Y-m-d H:i:s" (convenção
+     * de data_hora_inicio). Usa strTimestamp; senão dateEvent + strTime.
+     *
+     * @param  array<string,mixed>  $evento
+     */
+    private function dataBrtDoEvento(array $evento): ?string
+    {
+        $iso = $evento['strTimestamp'] ?? null;
+        if (! $iso) {
+            $dia = $evento['dateEvent'] ?? null;
+            if (! $dia) {
+                return null;
+            }
+            $iso = trim($dia.' '.($evento['strTime'] ?? '00:00:00'));
+        }
+
+        try {
+            return Carbon::parse($iso, 'UTC')->setTimezone('America/Sao_Paulo')->format('Y-m-d H:i:s');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function salvarResultadoTorneio(SalvarResultadoTorneioRequest $request, Torneio $torneio): JsonResponse

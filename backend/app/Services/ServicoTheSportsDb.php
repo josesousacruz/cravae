@@ -30,6 +30,19 @@ class ServicoTheSportsDb
     }
 
     /**
+     * Busca um único evento por id (lookupevent). Usado pelo admin ao vincular
+     * manualmente um slot de mata-mata: traz times/data daquele evento.
+     *
+     * @return array<string,mixed>|null
+     */
+    public function lookupEvento(int $idEvento): ?array
+    {
+        $resposta = $this->clienteHttp()->get('/lookupevent.php', ['id' => $idEvento]);
+
+        return $resposta->json('events.0');
+    }
+
+    /**
      * Calendário + resultados completos de uma temporada (1 request traz tudo).
      *
      * @return array<int,array<string,mixed>>

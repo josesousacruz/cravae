@@ -230,6 +230,15 @@
             >
               {{ vinculandoJogoId === jogo.id ? 'Salvando...' : 'Vincular' }}
             </button>
+            <button
+              v-if="jogo.id_evento_externo || jogo.selecao_mandante || jogo.selecao_visitante"
+              type="button"
+              class="rounded-lg border border-danger/40 px-3 py-1.5 text-xs font-medium text-danger transition hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="vinculandoJogoId === jogo.id"
+              @click="limparSlot(jogo.id)"
+            >
+              Desvincular e limpar
+            </button>
           </div>
         </div>
       </div>
@@ -827,13 +836,27 @@ async function limparResultadoJogo(jogoId: number) {
 
 async function vincularEvento(jogoId: number) {
   vinculandoJogoId.value = jogoId
-  const valor = (vinculosEvento.value[jogoId] ?? '').trim()
+  // input type=number pode chegar como número; coage pra string antes de .trim()
+  const valor = String(vinculosEvento.value[jogoId] ?? '').trim()
   await executarAcao(async () => {
     await requisicaoApi(`/admin/jogos/${jogoId}/evento-externo`, {
       metodo: 'PUT',
       corpo: { id_evento_externo: valor ? Number(valor) : null },
     })
-  }, valor ? 'Evento vinculado.' : 'Vinculo removido.')
+  }, valor ? 'Evento vinculado (times e data trazidos do evento).' : 'Slot limpo.')
+  vinculandoJogoId.value = null
+}
+
+// Desvincular e limpar: zera vínculo + times + resultado (volta a "A definir").
+async function limparSlot(jogoId: number) {
+  vinculandoJogoId.value = jogoId
+  vinculosEvento.value[jogoId] = ''
+  await executarAcao(async () => {
+    await requisicaoApi(`/admin/jogos/${jogoId}/evento-externo`, {
+      metodo: 'PUT',
+      corpo: { id_evento_externo: null },
+    })
+  }, 'Slot desvinculado e limpo.')
   vinculandoJogoId.value = null
 }
 
