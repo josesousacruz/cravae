@@ -1444,10 +1444,21 @@ function definirDiaInicial(): void {
   diaSelecionado.value = alvo.data_hora_inicio.substring(0, 10)
 }
 
-onMounted(async () => {
+async function recarregarTudo() {
   await carregarDados()
   definirDiaInicial()
   carregarRanking()
+}
+
+// Navegar entre cupons (mesma rota, só muda o :id) reusa o componente — sem isto, o
+// cupom novo continuaria mostrando os dados (palpites/jogos) do cupom anterior, dando
+// a impressão de "palpite repetido em outro bolão".
+watch(() => rota.params.id, () => {
+  recarregarTudo()
+})
+
+onMounted(async () => {
+  await recarregarTudo()
 })
 </script>
 

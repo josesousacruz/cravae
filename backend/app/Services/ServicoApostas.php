@@ -34,6 +34,13 @@ class ServicoApostas
                     continue;
                 }
 
+                // Defesa: o item PRECISA pertencer ao torneio do cupom. Sem isto, um request
+                // com jogo/torneio de outro bolao (ex.: UI com estado defasado) gravaria um
+                // palpite vazado entre boloes. Ignora em vez de gravar errado.
+                if ($cupom->torneio_id && (int) $normalizado['torneio_id'] !== (int) $cupom->torneio_id) {
+                    continue;
+                }
+
                 $existente = $this->localizarAposta($cupom, $normalizado);
 
                 if ($this->servicoFechamentoApostas->prazoEncerrado($normalizado)) {
