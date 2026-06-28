@@ -897,6 +897,13 @@ function jogoCompleto(jogo: JogoCupom): boolean {
   )
 }
 
+// data_hora_inicio é wall-clock de Brasília serializado com Z; new Date() lê como UTC.
+// Para o PRAZO (comparado com Date.now() real), reinterpretamos como BRT: +3h fixo
+// (o Brasil não tem horário de verão desde 2019). Sem isso, o prazo fecha ~3h cedo.
+function instanteBrt(iso: string): number {
+  return new Date(iso).getTime() + 3 * 3600000
+}
+
 // Primeiro jogo de cada (rodada, dia) em ms. Os palpites de grupos fecham por dia,
 // 1h antes do primeiro jogo daquela rodada no dia (cada rodada e independente).
 const primeiroJogoRodadaDiaMs = computed(() => {
@@ -904,7 +911,7 @@ const primeiroJogoRodadaDiaMs = computed(() => {
   for (const jogo of torneio.value?.jogos ?? []) {
     if (!jogo.data_hora_inicio) continue
     const chave = `${jogo.rodada?.id ?? 'sem-rodada'}|${jogo.data_hora_inicio.substring(0, 10)}`
-    const inicio = new Date(jogo.data_hora_inicio).getTime()
+    const inicio = instanteBrt(jogo.data_hora_inicio)
     if (!mapa.has(chave) || inicio < (mapa.get(chave) as number)) mapa.set(chave, inicio)
   }
   return mapa
@@ -919,14 +926,14 @@ function jogoFechado(jogo: JogoCupom): boolean {
   let referenciaMs: number
   if (jogo.fase.tipo === 'grupos') {
     if (jogo.rodada?.data_fechamento) {
-      referenciaMs = new Date(jogo.rodada.data_fechamento).getTime()
+      referenciaMs = instanteBrt(jogo.rodada.data_fechamento)
     } else {
       const chave = `${jogo.rodada?.id ?? 'sem-rodada'}|${jogo.data_hora_inicio.substring(0, 10)}`
-      const primeiro = primeiroJogoRodadaDiaMs.value.get(chave) ?? new Date(jogo.data_hora_inicio).getTime()
+      const primeiro = primeiroJogoRodadaDiaMs.value.get(chave) ?? instanteBrt(jogo.data_hora_inicio)
       referenciaMs = primeiro - 3600000
     }
   } else {
-    referenciaMs = new Date(jogo.data_hora_inicio).getTime()
+    referenciaMs = instanteBrt(jogo.data_hora_inicio)
   }
 
   return Date.now() >= referenciaMs
@@ -966,14 +973,14 @@ function nomeSelecaoPorId(id: number | null): string {
 const prazoPodioMs = computed<number | null>(() => {
   // Override opcional definido pelo admin tem prioridade.
   if (torneio.value?.data_fechamento_podio) {
-    return new Date(torneio.value.data_fechamento_podio).getTime()
+    return instanteBrt(torneio.value.data_fechamento_podio)
   }
   const inicios = (torneio.value?.jogos ?? [])
     .filter((jogo) => jogo.fase.tipo !== 'grupos' && jogo.data_hora_inicio)
-    .map((jogo) => new Date(jogo.data_hora_inicio).getTime())
+    .map((jogo) => instanteBrt(jogo.data_hora_inicio))
   if (inicios.length) return Math.min(...inicios) - 3600000
   const inicio = torneio.value?.data_inicio
-  return inicio ? new Date(inicio).getTime() - 3600000 : null
+  return inicio ? instanteBrt(inicio) - 3600000 : null
 })
 
 const podioFechado = computed(() => {
@@ -1080,12 +1087,12 @@ const textoFechamento = computed(() => {
   const doDia = jogosDoDia.value.filter((jogo) => jogo.data_hora_inicio)
   if (!doDia.length) return 'Sem prazo definido'
 
-  const primeiroMs = Math.min(...doDia.map((jogo) => new Date(jogo.data_hora_inicio).getTime()))
+  const primeiroMs = Math.min(...doDia.map((jogo) => instanteBrt(jogo.data_hora_inicio)))
   const override = rodadaAtual.value?.data_fechamento
 
   let referenciaMs: number
   if (override) {
-    referenciaMs = new Date(override).getTime()
+    referenciaMs = instanteBrt(override)
   } else if (faseAtual.value?.tipo === 'grupos') {
     referenciaMs = primeiroMs - 3600000
   } else {

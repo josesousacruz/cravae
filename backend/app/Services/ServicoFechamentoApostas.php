@@ -23,9 +23,23 @@ class ServicoFechamentoApostas
 
     public function prazoEncerrado(array $dados): bool
     {
-        $dataFechamento = $this->resolverDataFechamento($dados);
+        $dataFechamento = $this->comoBrt($this->resolverDataFechamento($dados));
 
         return $dataFechamento !== null && now()->greaterThanOrEqualTo($dataFechamento);
+    }
+
+    /**
+     * data_hora_inicio (e derivados) guardam wall-clock de Brasília, mas o app roda em
+     * UTC — então o cast lê os dígitos como UTC. Aqui reinterpretamos os MESMOS dígitos
+     * como America/Sao_Paulo, obtendo o instante real. Sem isso o prazo fecha ~3h cedo.
+     */
+    private function comoBrt(?Carbon $data): ?Carbon
+    {
+        if (! $data) {
+            return null;
+        }
+
+        return Carbon::createFromFormat('Y-m-d H:i:s', $data->format('Y-m-d H:i:s'), 'America/Sao_Paulo');
     }
 
     private function resolverDataFechamento(array $dados): ?Carbon

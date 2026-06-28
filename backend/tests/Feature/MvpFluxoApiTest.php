@@ -295,7 +295,8 @@ class MvpFluxoApiTest extends TestCase
         $jogo = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))->firstOrFail();
 
         Rodada::query()->whereKey($jogo->rodada_id)->update([
-            'data_fechamento' => now()->subHour(),
+            // wall-clock BRT; passado claro (>3h) garante o prazo encerrado.
+            'data_fechamento' => now()->subDay(),
         ]);
 
         // Fora do prazo: o item e ignorado (lote nao falha) e nao e persistido.

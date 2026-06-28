@@ -28,7 +28,8 @@ class FechamentoApostasTest extends TestCase
         $jogo = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))->firstOrFail();
 
         Rodada::query()->whereKey($jogo->rodada_id)->update([
-            'data_fechamento' => now()->subMinute(),
+            // data_fechamento e wall-clock BRT; usamos passado claro (>3h) p/ garantir fechado.
+            'data_fechamento' => now()->subDay(),
         ]);
 
         Sanctum::actingAs($usuario);
@@ -71,13 +72,14 @@ class FechamentoApostasTest extends TestCase
         // junto com o dia (1h antes do primeiro jogo do dia = 14:00).
         $dadosSegundoJogo = ['tipo' => 'placar_jogo_grupos', 'jogo_id' => $jogos[1]->id];
 
-        Carbon::setTestNow("$dia 13:00:00");
+        // Datas dos jogos sao wall-clock BRT; o relogio do teste tambem (mesma referencia).
+        Carbon::setTestNow(Carbon::parse("$dia 13:00:00", 'America/Sao_Paulo'));
         $this->assertFalse(
             $servico->prazoEncerrado($dadosSegundoJogo),
             'A 2h do primeiro jogo do dia, os palpites do dia devem estar abertos.',
         );
 
-        Carbon::setTestNow("$dia 14:30:00");
+        Carbon::setTestNow(Carbon::parse("$dia 14:30:00", 'America/Sao_Paulo'));
         $this->assertTrue(
             $servico->prazoEncerrado($dadosSegundoJogo),
             'A 30min do primeiro jogo do dia, o dia inteiro (inclusive jogos posteriores) deve fechar.',
@@ -103,13 +105,13 @@ class FechamentoApostasTest extends TestCase
         $servico = app(ServicoFechamentoApostas::class);
         $dadosRodada2 = ['tipo' => 'placar_jogo_grupos', 'jogo_id' => $jogoRodada2->id];
 
-        Carbon::setTestNow("$dia 16:30:00");
+        Carbon::setTestNow(Carbon::parse("$dia 16:30:00", 'America/Sao_Paulo'));
         $this->assertFalse(
             $servico->prazoEncerrado($dadosRodada2),
             'Um jogo de outra rodada no mesmo dia nao pode fechar os palpites desta rodada.',
         );
 
-        Carbon::setTestNow("$dia 17:30:00");
+        Carbon::setTestNow(Carbon::parse("$dia 17:30:00", 'America/Sao_Paulo'));
         $this->assertTrue(
             $servico->prazoEncerrado($dadosRodada2),
             'Deve fechar 1h antes do primeiro jogo DA RODADA naquele dia.',
@@ -149,7 +151,7 @@ class FechamentoApostasTest extends TestCase
             ],
         ]);
 
-        Rodada::query()->whereKey($jogoFechado->rodada_id)->update(['data_fechamento' => now()->subMinute()]);
+        Rodada::query()->whereKey($jogoFechado->rodada_id)->update(['data_fechamento' => now()->subDay()]);
         Rodada::query()->whereKey($jogoAberto->rodada_id)->update(['data_fechamento' => now()->addDay()]);
 
         Sanctum::actingAs($usuario);
@@ -187,7 +189,7 @@ class FechamentoApostasTest extends TestCase
         [$usuario, $cupom] = $this->criarUsuarioComCupom('altera-fechado@teste.local');
         $jogo = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))->firstOrFail();
 
-        Rodada::query()->whereKey($jogo->rodada_id)->update(['data_fechamento' => now()->subMinute()]);
+        Rodada::query()->whereKey($jogo->rodada_id)->update(['data_fechamento' => now()->subDay()]);
 
         Sanctum::actingAs($usuario);
 
@@ -266,7 +268,7 @@ class FechamentoApostasTest extends TestCase
         $this->assertNotNull($jogo, 'Round of 32 deve ter participantes reais apos lancar os grupos.');
 
         // No horario de inicio do proprio jogo: o prazo do mata-mata ja se encerrou.
-        $jogo->update(['data_hora_inicio' => now()->subMinute()]);
+        $jogo->update(['data_hora_inicio' => now()->subDay()]);
 
         Sanctum::actingAs($usuario);
 
@@ -298,7 +300,7 @@ class FechamentoApostasTest extends TestCase
         $grupo = Grupo::query()->firstOrFail();
 
         Torneio::query()->whereKey($torneio->id)->update([
-            'data_inicio' => now()->subMinute(),
+            'data_inicio' => now()->subDay(),
         ]);
 
         Sanctum::actingAs($usuario);
@@ -332,13 +334,13 @@ class FechamentoApostasTest extends TestCase
         $servico = app(ServicoFechamentoApostas::class);
         $dados = ['tipo' => 'podio', 'torneio_id' => $torneio->id];
 
-        Carbon::setTestNow('2026-07-01 11:00:00');
+        Carbon::setTestNow(Carbon::parse('2026-07-01 11:00:00', 'America/Sao_Paulo'));
         $this->assertFalse(
             $servico->prazoEncerrado($dados),
             '1h antes do override, o podio deve estar aberto.',
         );
 
-        Carbon::setTestNow('2026-07-01 12:30:00');
+        Carbon::setTestNow(Carbon::parse('2026-07-01 12:30:00', 'America/Sao_Paulo'));
         $this->assertTrue(
             $servico->prazoEncerrado($dados),
             'Apos o override, o podio deve estar fechado.',
@@ -369,13 +371,13 @@ class FechamentoApostasTest extends TestCase
         $servico = app(ServicoFechamentoApostas::class);
         $dados = ['tipo' => 'podio', 'torneio_id' => $torneio->id];
 
-        Carbon::setTestNow('2026-08-10 11:00:00');
+        Carbon::setTestNow(Carbon::parse('2026-08-10 11:00:00', 'America/Sao_Paulo'));
         $this->assertFalse(
             $servico->prazoEncerrado($dados),
             'Sem override, o podio segue o automatico (1h antes do 1o mata-mata).',
         );
 
-        Carbon::setTestNow('2026-08-10 12:30:00');
+        Carbon::setTestNow(Carbon::parse('2026-08-10 12:30:00', 'America/Sao_Paulo'));
         $this->assertTrue(
             $servico->prazoEncerrado($dados),
             'Sem override, fecha 1h antes do 1o jogo do mata-mata (12:00).',
