@@ -83,12 +83,19 @@ class ServicoSincronizacaoResultados
     /**
      * Decide o classificado a partir do placar (caminho automático, sem admin).
      *
+     * Em mata-mata empatado no tempo normal, usa a disputa de pênaltis quando ela
+     * vem da API (placares "extra"). Só devolve ok=false — deixando para o admin —
+     * quando nem o placar nem os pênaltis revelam o classificado.
+     *
      * @return array{ok:bool,classificado:?int}
-     *   ok=false quando é mata-mata empatado ou sem participantes definidos —
-     *   nesses casos a decisão (pênaltis) fica para o admin.
      */
-    public function resolverClassificadoPorPlacar(Jogo $jogo, int $placarMandante, int $placarVisitante): array
-    {
+    public function resolverClassificadoPorPlacar(
+        Jogo $jogo,
+        int $placarMandante,
+        int $placarVisitante,
+        ?int $penaltisMandante = null,
+        ?int $penaltisVisitante = null,
+    ): array {
         $jogo->loadMissing('fase');
 
         if ($jogo->fase?->tipo === 'grupos') {
@@ -111,7 +118,16 @@ class ServicoSincronizacaoResultados
         }
 
         if ($placarMandante === $placarVisitante) {
-            return ['ok' => false, 'classificado' => null];
+            // Empate no tempo normal/prorrogação: decide pela disputa de pênaltis
+            // (intHomeScoreExtra/intAwayScoreExtra). Sem pênaltis na API → admin decide.
+            if ($penaltisMandante === null || $penaltisVisitante === null || $penaltisMandante === $penaltisVisitante) {
+                return ['ok' => false, 'classificado' => null];
+            }
+
+            return [
+                'ok' => true,
+                'classificado' => $penaltisMandante > $penaltisVisitante ? (int) $mandante : (int) $visitante,
+            ];
         }
 
         return [

@@ -25,8 +25,8 @@ class SincronizarResultadosJogos extends Command
 
     protected $description = 'Sincroniza placares/encerramentos dos jogos vinculados a partir da TheSportsDB.';
 
-    /** Status da API considerados "jogo encerrado". */
-    private const STATUS_ENCERRADOS = ['FT', 'AET', 'PEN', 'MATCH FINISHED', 'FINISHED'];
+    /** Status da API considerados "jogo encerrado". AP = After Penalties (decidido nos pênaltis). */
+    private const STATUS_ENCERRADOS = ['FT', 'AET', 'PEN', 'AP', 'MATCH FINISHED', 'FINISHED'];
 
     public function handle(ServicoTheSportsDb $api, ServicoSincronizacaoResultados $sincronizacao): int
     {
@@ -95,7 +95,8 @@ class SincronizarResultadosJogos extends Command
                     continue;
                 }
 
-                [$placarMandante, $placarVisitante] = $placar;
+                [$placarMandante, $placarVisitante] = $placar['gols'];
+                [$penaltisMandante, $penaltisVisitante] = $placar['penaltis'];
 
                 if ($this->resultadoJaIgual($jogo, $placarMandante, $placarVisitante)) {
                     $total['sem_mudanca']++;
@@ -103,7 +104,13 @@ class SincronizarResultadosJogos extends Command
                     continue;
                 }
 
-                $classificado = $sincronizacao->resolverClassificadoPorPlacar($jogo, $placarMandante, $placarVisitante);
+                $classificado = $sincronizacao->resolverClassificadoPorPlacar(
+                    $jogo,
+                    $placarMandante,
+                    $placarVisitante,
+                    $penaltisMandante,
+                    $penaltisVisitante,
+                );
 
                 if (! $classificado['ok']) {
                     $total['mata_mata_manual']++;
@@ -141,13 +148,14 @@ class SincronizarResultadosJogos extends Command
     }
 
     /**
-     * Retorna [placarMandante, placarVisitante] orientado ao nosso jogo.
+     * Retorna o placar (gols do tempo normal/prorrogação) e os pênaltis, ambos
+     * orientados ao nosso jogo (mandante, visitante).
      *
      * O casamento foi por par de seleções, então o "home" da API pode ser o
      * nosso visitante — aqui a gente alinha pelo id_externo do mandante.
      *
      * @param  array<string,mixed>  $evento
-     * @return array{0:int,1:int}|null
+     * @return array{gols:array{0:int,1:int},penaltis:array{0:?int,1:?int}}|null
      */
     private function placaresOrientados(Jogo $jogo, array $evento): ?array
     {
@@ -174,13 +182,40 @@ class SincronizarResultadosJogos extends Command
             return null;
         }
 
-        $golsCasa = (int) $golsCasa;
-        $golsFora = (int) $golsFora;
+        // Se o "home" da API é o nosso mandante, mantém a ordem; senão, inverte.
+        $homeNoMando = $idHome === $mandanteExterno;
 
-        // Se o "home" da API é o nosso mandante, mantém; senão, inverte.
-        return $idHome === $mandanteExterno
-            ? [$golsCasa, $golsFora]
-            : [$golsFora, $golsCasa];
+        return [
+            'gols' => $this->orientar((int) $golsCasa, (int) $golsFora, $homeNoMando),
+            'penaltis' => $this->penaltisOrientados($evento, $homeNoMando),
+        ];
+    }
+
+    /**
+     * @return array{0:int,1:int}
+     */
+    private function orientar(int $casa, int $fora, bool $homeNoMando): array
+    {
+        return $homeNoMando ? [$casa, $fora] : [$fora, $casa];
+    }
+
+    /**
+     * Pênaltis (intHomeScoreExtra/intAwayScoreExtra) orientados ao mandante.
+     * Retorna [null, null] quando a API não traz a disputa (jogo sem pênaltis).
+     *
+     * @param  array<string,mixed>  $evento
+     * @return array{0:?int,1:?int}
+     */
+    private function penaltisOrientados(array $evento, bool $homeNoMando): array
+    {
+        $penCasa = $evento['intHomeScoreExtra'] ?? null;
+        $penFora = $evento['intAwayScoreExtra'] ?? null;
+
+        if ($penCasa === null || $penFora === null || $penCasa === '' || $penFora === '') {
+            return [null, null];
+        }
+
+        return $this->orientar((int) $penCasa, (int) $penFora, $homeNoMando);
     }
 
     private function resultadoJaIgual(Jogo $jogo, int $placarMandante, int $placarVisitante): bool
