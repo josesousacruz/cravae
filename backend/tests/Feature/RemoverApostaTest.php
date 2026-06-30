@@ -8,6 +8,7 @@ use App\Models\Jogo;
 use App\Models\Torneio;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -17,6 +18,10 @@ class RemoverApostaTest extends TestCase
 
     public function test_usuario_remove_palpite_de_jogo_aberto(): void
     {
+        // Ancora o relogio no meio da fase de grupos (calendario WC2026 do seed) para
+        // garantir que exista um jogo de grupo ainda aberto, independente da data real.
+        Carbon::setTestNow('2026-06-13 12:00:00');
+
         $this->seed();
 
         [$usuario, $cupom] = $this->criarUsuarioComCupom('remover@teste.local');

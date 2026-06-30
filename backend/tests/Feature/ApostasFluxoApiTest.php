@@ -13,6 +13,7 @@ use App\Models\Torneio;
 use App\Models\Usuario;
 use App\Services\ServicoResultadosTorneio;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -87,6 +88,10 @@ class ApostasFluxoApiTest extends TestCase
 
     public function test_usuario_consegue_salvar_multiplos_tipos_de_aposta_no_mesmo_cupom(): void
     {
+        // Ancora o relogio antes do mata-mata (calendario WC2026 do seed) para que o
+        // prazo do palpite de eliminatoria (Round of 32, a partir de 28/06) siga aberto.
+        Carbon::setTestNow('2026-06-20 12:00:00');
+
         $this->seed();
 
         [$usuario, $cupom] = $this->criarUsuarioComCupom('multi@teste.local');
