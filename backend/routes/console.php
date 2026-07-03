@@ -11,12 +11,17 @@ Artisan::command('inspire', function () {
 Schedule::command('asaas:sincronizar-pagamentos')->everyMinute();
 
 // Copa: atualização contínua dos bolões conforme os jogos vão abrindo na API.
-// 1) Preenche os confrontos de mata-mata (2º bolão: espelha a API por rodada;
-//    bolão atual: deriva dos resultados de grupo) antes de casar por par de times.
-Schedule::command('jogos:resolver-mata-mata')->everyFifteenMinutes()->withoutOverlapping();
-// 2) Casa jogos a eventos (calendário publicado aos poucos + mata-mata definido).
-Schedule::command('jogos:vincular-eventos')->everyFifteenMinutes()->withoutOverlapping();
-// 3) Puxa placares encerrados da TheSportsDB e dispara a pontuação.
-Schedule::command('jogos:sincronizar-resultados')->everyMinute()->withoutOverlapping();
-// Imagem (capa) dos torneios — muda raramente, basta 1x/dia.
-Schedule::command('torneios:sincronizar-imagem')->daily()->withoutOverlapping();
+// DESLIGADA por padrão (thesportsdb.sincronizacao_automatica): resultados e
+// jogos passam a ser lançados manualmente no painel admin. Para religar,
+// defina THESPORTSDB_SINCRONIZACAO_AUTOMATICA=true no ambiente (sem mexer em código).
+if (config('thesportsdb.sincronizacao_automatica')) {
+    // 1) Preenche os confrontos de mata-mata (2º bolão: espelha a API por rodada;
+    //    bolão atual: deriva dos resultados de grupo) antes de casar por par de times.
+    Schedule::command('jogos:resolver-mata-mata')->everyFifteenMinutes()->withoutOverlapping();
+    // 2) Casa jogos a eventos (calendário publicado aos poucos + mata-mata definido).
+    Schedule::command('jogos:vincular-eventos')->everyFifteenMinutes()->withoutOverlapping();
+    // 3) Puxa placares encerrados da TheSportsDB e dispara a pontuação.
+    Schedule::command('jogos:sincronizar-resultados')->everyMinute()->withoutOverlapping();
+    // Imagem (capa) dos torneios — muda raramente, basta 1x/dia.
+    Schedule::command('torneios:sincronizar-imagem')->daily()->withoutOverlapping();
+}

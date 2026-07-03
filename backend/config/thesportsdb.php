@@ -10,6 +10,15 @@ return [
     | temporada da Copa de 2026 é "2026".
     |
     */
+    /*
+    | Liga/desliga TODA a sincronizacao automatica agendada com a TheSportsDB
+    | (resolver mata-mata, vincular eventos, puxar resultados e imagem).
+    | Desligada: resultados e jogos passam a ser lancados manualmente no painel
+    | admin. As acoes manuais que usam a API (ex.: vincular evento por id)
+    | continuam funcionando. Para religar: THESPORTSDB_SINCRONIZACAO_AUTOMATICA=true.
+    */
+    'sincronizacao_automatica' => env('THESPORTSDB_SINCRONIZACAO_AUTOMATICA', false),
+
     'chave_api' => env('THESPORTSDB_KEY', '123'),
     'base_v1' => 'https://www.thesportsdb.com/api/v1/json',
     'base_v2' => 'https://www.thesportsdb.com/api/v2/json',
