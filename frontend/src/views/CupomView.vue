@@ -568,6 +568,11 @@
         <RankingConteudo :cupom-destaque="cupom.id" />
       </section>
 
+      <!-- ═══════ Tab Histórico ═══════ -->
+      <section v-if="tabAtiva === 'historico'">
+        <HistoricoPalpites :cupom-id="cupom.id" />
+      </section>
+
       <!-- ═══════ Tab Meus Resultados ═══════ -->
       <section v-if="tabAtiva === 'resultados'">
         <div v-if="cupom.eventos_pontuacao?.length" class="rounded-2xl border border-border bg-bg-card p-5">
@@ -588,7 +593,7 @@
       </section>
 
       <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg-card/95 px-2 py-2 backdrop-blur sm:hidden">
-        <div class="mx-auto grid max-w-md grid-cols-3 gap-1">
+        <div class="mx-auto grid max-w-md grid-cols-4 gap-1">
           <button
             v-for="tab in tabs"
             :key="`mobile-${tab.id}`"
@@ -615,6 +620,7 @@ import { requisicaoApi } from '../services/api'
 import { useToast } from '../composables/useToast'
 import type { Aposta, BracketJogoCupom, Cupom, RankingItem, ResumoBracketReal, Selecao, Torneio } from '../tipos'
 import tacaCopaAsset from '../assets/taca-copa-transparente.png'
+import HistoricoPalpites from '../components/HistoricoPalpites.vue'
 import ModalPixPagamento from '../components/ModalPixPagamento.vue'
 import RankingConteudo from '../components/RankingConteudo.vue'
 import { useEventosCupom } from '../composables/useEventosCupom'
@@ -648,7 +654,7 @@ const valorCupomFormatado = computed(() => {
     : ''
 })
 
-const tabAtiva = ref<'palpites' | 'ranking' | 'resultados'>('palpites')
+const tabAtiva = ref<'palpites' | 'ranking' | 'resultados' | 'historico'>('palpites')
 const subTabAtiva = ref<'jogos' | 'chaveamento'>('jogos')
 const indiceFase = ref(0)
 // Relogio reativo (atualizado a cada segundo) para o fechamento do podio e a contagem regressiva.
@@ -660,6 +666,7 @@ const tabs = [
   { id: 'palpites' as const, nome: 'Palpites', icone: 'M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125' },
   { id: 'ranking' as const, nome: 'Ranking', icone: 'M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872' },
   { id: 'resultados' as const, nome: 'Meus Resultados', icone: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z' },
+  { id: 'historico' as const, nome: 'Histórico', icone: 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z' },
 ]
 
 const subTabs = [
