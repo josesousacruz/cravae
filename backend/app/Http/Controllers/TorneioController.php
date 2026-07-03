@@ -104,7 +104,7 @@ class TorneioController extends Controller
     public function palpiteiros(Jogo $jogo, ServicoFechamentoApostas $fechamento): JsonResponse
     {
         // O palpite alheio só é revelado depois que o prazo de aposta do jogo fecha
-        // (kickoff no mata-mata; prazo do dia/rodada nos grupos). Trava no backend.
+        // (mata-mata: kickoff do primeiro jogo do dia; grupos: prazo do dia/rodada). Trava no backend.
         $jogo->loadMissing('fase');
         $tipo = $jogo->fase?->tipo === 'grupos' ? 'placar_jogo_grupos' : 'placar_jogo_eliminatoria';
         $revelar = $fechamento->prazoEncerrado(['tipo' => $tipo, 'jogo_id' => $jogo->id]);

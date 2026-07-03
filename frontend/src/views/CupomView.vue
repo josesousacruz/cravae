@@ -917,9 +917,23 @@ const primeiroJogoRodadaDiaMs = computed(() => {
   return mapa
 })
 
+// Primeiro jogo eliminatorio de cada dia em ms. No mata-mata TODOS os jogos do dia
+// fecham juntos, no inicio do primeiro jogo eliminatorio daquele dia.
+const primeiroJogoEliminatorioDiaMs = computed(() => {
+  const mapa = new Map<string, number>()
+  for (const jogo of torneio.value?.jogos ?? []) {
+    if (jogo.fase.tipo === 'grupos' || !jogo.data_hora_inicio) continue
+    const dia = jogo.data_hora_inicio.substring(0, 10)
+    const inicio = instanteBrt(jogo.data_hora_inicio)
+    if (!mapa.has(dia) || inicio < (mapa.get(dia) as number)) mapa.set(dia, inicio)
+  }
+  return mapa
+})
+
 // Espelha a regra de fechamento do backend (ServicoFechamentoApostas):
 // grupos fecham POR DIA, 1h antes do primeiro jogo da rodada naquele dia
-// (data_fechamento da rodada e um override opcional); mata-mata fecha no inicio do jogo.
+// (data_fechamento da rodada e um override opcional); mata-mata fecha POR DIA,
+// no inicio do primeiro jogo eliminatorio do dia.
 function jogoFechado(jogo: JogoCupom): boolean {
   if (!jogo.data_hora_inicio) return false
 
@@ -933,7 +947,8 @@ function jogoFechado(jogo: JogoCupom): boolean {
       referenciaMs = primeiro - 3600000
     }
   } else {
-    referenciaMs = instanteBrt(jogo.data_hora_inicio)
+    const dia = jogo.data_hora_inicio.substring(0, 10)
+    referenciaMs = primeiroJogoEliminatorioDiaMs.value.get(dia) ?? instanteBrt(jogo.data_hora_inicio)
   }
 
   return Date.now() >= referenciaMs

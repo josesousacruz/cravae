@@ -55,7 +55,9 @@ class ServicoFechamentoApostas
                 return $jogo->rodada?->data_fechamento ?? $this->fechamentoDoDia($jogo);
             }
 
-            return $jogo->data_hora_inicio;
+            // Mata-mata tambem fecha POR DIA: todos os jogos do dia fecham juntos,
+            // no horario de inicio do primeiro jogo eliminatorio daquele dia.
+            return $this->inicioDoPrimeiroJogoEliminatorioDoDia($jogo);
         }
 
         $torneio = Torneio::query()->with('fases')->findOrFail($dados['torneio_id']);
@@ -111,5 +113,24 @@ class ServicoFechamentoApostas
         $referencia = $primeiroDoDia ? Carbon::parse($primeiroDoDia) : $jogo->data_hora_inicio;
 
         return $referencia->copy()->subHour();
+    }
+
+    /**
+     * Fechamento do mata-mata por dia: o horario de inicio do primeiro jogo
+     * eliminatorio agendado para o mesmo dia (mesma data civil) do jogo informado.
+     */
+    private function inicioDoPrimeiroJogoEliminatorioDoDia(Jogo $jogo): ?Carbon
+    {
+        if (! $jogo->data_hora_inicio) {
+            return null;
+        }
+
+        $primeiroDoDia = Jogo::query()
+            ->where('torneio_id', $jogo->torneio_id)
+            ->whereDate('data_hora_inicio', $jogo->data_hora_inicio->toDateString())
+            ->whereHas('fase', fn ($query) => $query->where('tipo', '!=', 'grupos'))
+            ->min('data_hora_inicio');
+
+        return $primeiroDoDia ? Carbon::parse($primeiroDoDia) : $jogo->data_hora_inicio;
     }
 }
