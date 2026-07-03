@@ -34,4 +34,14 @@ class LogAposta extends Model
     {
         return $this->belongsTo(Cupom::class, 'cupom_id');
     }
+
+    public function usuario(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'usuario_id');
+    }
+
+    public function aposta(): BelongsTo
+    {
+        return $this->belongsTo(Aposta::class, 'aposta_id');
+    }
 }

@@ -55,6 +55,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/admin/resumo', [PainelAdministradorController::class, 'resumo']);
         Route::get('/admin/dados', [PainelAdministradorController::class, 'dados']);
         Route::get('/admin/cupons-pendentes', [PainelAdministradorController::class, 'cuponsPendentes']);
+        Route::get('/admin/usuarios', [PainelAdministradorController::class, 'usuarios']);
+        Route::get('/admin/logs-apostas', [PainelAdministradorController::class, 'logsApostas']);
         Route::get('/admin/pagamentos', [PainelAdministradorController::class, 'pagamentos']);
         Route::post('/admin/cupons/{cupom}/marcar-pago', [PainelAdministradorController::class, 'marcarCupomPago']);
         Route::post('/admin/cupons/{cupom}/marcar-nao-pago', [PainelAdministradorController::class, 'marcarCupomNaoPago']);

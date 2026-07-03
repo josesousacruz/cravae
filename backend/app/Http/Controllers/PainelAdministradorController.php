@@ -11,7 +11,9 @@ use App\Jobs\RecalcularPontuacaoTorneioJob;
 use App\Models\Cupom;
 use App\Models\Fase;
 use App\Models\Grupo;
+use App\Models\Jogador;
 use App\Models\Jogo;
+use App\Models\LogAposta;
 use App\Models\RegraPontuacao;
 use App\Models\ResultadoTorneio;
 use App\Models\Selecao;
@@ -87,6 +89,169 @@ class PainelAdministradorController extends Controller
         return response()->json([
             'cupom' => $cupom->load(['usuario:id,nome,email,telefone', 'pedidoCheckout:id,valor,status']),
         ]);
+    }
+
+    public function usuarios(): JsonResponse
+    {
+        return response()->json([
+            'usuarios' => Usuario::query()->orderBy('nome')->get(['id', 'nome', 'email']),
+        ]);
+    }
+
+    /**
+     * Relatorio de auditoria dos palpites (logs_apostas), com filtros por jogador,
+     * periodo (dia civil de Brasilia), bolao, jogo, acao e escopo. Logs "orfaos"
+     * (aposta apagada => aposta_id nulo) sao o unico rastro de palpites removidos,
+     * por isso o escopo permite isola-los.
+     */
+    public function logsApostas(Request $request): JsonResponse
+    {
+        $filtros = $request->validate([
+            'usuario_id' => ['nullable', 'integer', 'exists:usuarios,id'],
+            'torneio_id' => ['nullable', 'integer', 'exists:torneios,id'],
+            'jogo_id' => ['nullable', 'integer', 'exists:jogos,id'],
+            'acao' => ['nullable', Rule::in(['criada', 'editada', 'removida'])],
+            'escopo' => ['nullable', Rule::in(['todos', 'orfaos', 'vinculados'])],
+            'apenas_mudancas' => ['nullable', 'in:0,1'],
+            'de' => ['nullable', 'date_format:Y-m-d'],
+            'ate' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
+        $paginado = LogAposta::query()
+            ->with([
+                'usuario:id,nome,email',
+                'cupom:id,codigo,torneio_id',
+                'cupom.torneio:id,nome',
+                'aposta:id,tipo,jogo_id',
+                'aposta.jogo:id,selecao_mandante_id,selecao_visitante_id,data_hora_inicio',
+                'aposta.jogo.selecaoMandante:id,nome',
+                'aposta.jogo.selecaoVisitante:id,nome',
+            ])
+            ->when($filtros['usuario_id'] ?? null, fn ($q, $id) => $q->where('usuario_id', $id))
+            ->when($filtros['torneio_id'] ?? null, fn ($q, $id) => $q->whereHas('cupom', fn ($c) => $c->where('torneio_id', $id)))
+            ->when($filtros['jogo_id'] ?? null, fn ($q, $id) => $q->whereHas('aposta', fn ($a) => $a->where('jogo_id', $id)))
+            ->when($filtros['acao'] ?? null, fn ($q, $acao) => $q->where('acao', $acao))
+            ->when(($filtros['escopo'] ?? 'todos') === 'orfaos', fn ($q) => $q->whereNull('aposta_id'))
+            ->when(($filtros['escopo'] ?? 'todos') === 'vinculados', fn ($q) => $q->whereNotNull('aposta_id'))
+            // "Mudanca real": descarta re-saves do auto-save em que o conteudo nao mudou.
+            ->when($request->boolean('apenas_mudancas'), fn ($q) => $q->whereRaw(
+                'NOT ((conteudo_anterior IS NULL AND conteudo_novo IS NULL)'
+                .' OR (conteudo_anterior IS NOT NULL AND conteudo_novo IS NOT NULL AND conteudo_anterior = conteudo_novo))'
+            ))
+            // created_at e UTC; os filtros de dia sao no calendario de Brasilia.
+            ->when($filtros['de'] ?? null, fn ($q, $de) => $q->where(
+                'created_at', '>=', Carbon::parse($de.' 00:00:00', 'America/Sao_Paulo')->utc()
+            ))
+            ->when($filtros['ate'] ?? null, fn ($q, $ate) => $q->where(
+                'created_at', '<', Carbon::parse($ate.' 00:00:00', 'America/Sao_Paulo')->addDay()->utc()
+            ))
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate(50);
+
+        /** @var array<int, LogAposta> $itens */
+        $itens = $paginado->items();
+        $nomes = $this->nomesParaResumoDeLogs($itens);
+
+        $logs = collect($itens)->map(fn (LogAposta $log) => [
+            'id' => $log->id,
+            // O Brasil nao tem horario de verao desde 2019: UTC-3 fixo.
+            'quando_brt' => $log->created_at->clone()->subHours(3)->format('Y-m-d H:i:s'),
+            'acao' => $log->acao,
+            'orfao' => $log->aposta_id === null,
+            'mudou' => $log->conteudo_anterior != $log->conteudo_novo,
+            'usuario' => $log->usuario?->only(['id', 'nome', 'email']),
+            'cupom' => $log->cupom?->codigo,
+            'bolao' => $log->cupom?->torneio?->nome,
+            'tipo' => $log->aposta?->tipo,
+            'jogo' => $log->aposta?->jogo ? [
+                'id' => $log->aposta->jogo->id,
+                'nome' => ($log->aposta->jogo->selecaoMandante?->nome ?? 'A definir')
+                    .' x '.($log->aposta->jogo->selecaoVisitante?->nome ?? 'A definir'),
+                'data_hora_inicio' => $log->aposta->jogo->data_hora_inicio?->format('Y-m-d H:i'),
+            ] : null,
+            'resumo_antes' => $this->resumirConteudoDeLog($log->conteudo_anterior, $nomes),
+            'resumo_depois' => $this->resumirConteudoDeLog($log->conteudo_novo, $nomes),
+            'antes' => $log->conteudo_anterior,
+            'depois' => $log->conteudo_novo,
+        ]);
+
+        return response()->json([
+            'logs' => $logs,
+            'pagina' => $paginado->currentPage(),
+            'total_paginas' => $paginado->lastPage(),
+            'total' => $paginado->total(),
+        ]);
+    }
+
+    /**
+     * Nomes de selecoes/jogadores referenciados nos conteudos da pagina, para o
+     * resumo legivel (ex.: "classificado: Portugal" em vez de "#41").
+     *
+     * @param  array<int, LogAposta>  $logs
+     * @return array{selecoes: array<int, string>, jogadores: array<int, string>}
+     */
+    private function nomesParaResumoDeLogs(array $logs): array
+    {
+        $selecaoIds = [];
+        $jogadorIds = [];
+
+        foreach ($logs as $log) {
+            foreach ([$log->conteudo_anterior, $log->conteudo_novo] as $conteudo) {
+                foreach ($conteudo ?? [] as $chave => $valor) {
+                    if (! is_numeric($valor)) {
+                        continue;
+                    }
+                    if ($chave === 'selecao_classificada_id' || str_ends_with($chave, 'selecao_id')) {
+                        $selecaoIds[] = (int) $valor;
+                    } elseif ($chave === 'jogador_id') {
+                        $jogadorIds[] = (int) $valor;
+                    }
+                }
+            }
+        }
+
+        return [
+            'selecoes' => $selecaoIds
+                ? Selecao::query()->whereIn('id', array_unique($selecaoIds))->pluck('nome', 'id')->all()
+                : [],
+            'jogadores' => $jogadorIds
+                ? Jogador::query()->whereIn('id', array_unique($jogadorIds))->pluck('nome', 'id')->all()
+                : [],
+        ];
+    }
+
+    /**
+     * @param  array{selecoes: array<int, string>, jogadores: array<int, string>}  $nomes
+     */
+    private function resumirConteudoDeLog(?array $conteudo, array $nomes): ?string
+    {
+        if ($conteudo === null) {
+            return null;
+        }
+
+        if (array_key_exists('placar_mandante', $conteudo)) {
+            $resumo = ($conteudo['placar_mandante'] ?? '-').' x '.($conteudo['placar_visitante'] ?? '-');
+            if (($conteudo['penal_mandante'] ?? null) !== null || ($conteudo['penal_visitante'] ?? null) !== null) {
+                $resumo .= ' (pen. '.($conteudo['penal_mandante'] ?? '-').' x '.($conteudo['penal_visitante'] ?? '-').')';
+            }
+            $classificadaId = $conteudo['selecao_classificada_id'] ?? null;
+            if ($classificadaId) {
+                $resumo .= ' | classificado: '.($nomes['selecoes'][$classificadaId] ?? "#{$classificadaId}");
+            }
+
+            return $resumo;
+        }
+
+        return collect($conteudo)->map(function ($valor, $chave) use ($nomes) {
+            if (($chave === 'selecao_classificada_id' || str_ends_with($chave, 'selecao_id')) && isset($nomes['selecoes'][$valor])) {
+                $valor = $nomes['selecoes'][$valor];
+            } elseif ($chave === 'jogador_id' && isset($nomes['jogadores'][$valor])) {
+                $valor = $nomes['jogadores'][$valor];
+            }
+
+            return $chave.': '.(is_scalar($valor) ? $valor : json_encode($valor, JSON_UNESCAPED_UNICODE));
+        })->implode(' | ');
     }
 
     public function resumo(): JsonResponse

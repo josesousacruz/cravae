@@ -405,6 +405,183 @@
         </div>
       </div>
     </section>
+
+    <section v-if="tabAtiva === 'logs'" class="space-y-4">
+      <div class="rounded-2xl border border-border bg-bg-card p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold">Logs de Apostas</h2>
+            <p class="mt-1 text-sm text-text-secondary">
+              Auditoria de palpites: quem criou, editou ou removeu, com o conteúdo antes e depois.
+              Órfãos são o histórico de palpites apagados (sem vínculo com o jogo).
+            </p>
+          </div>
+          <span class="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
+            {{ totalLogs }} registro{{ totalLogs === 1 ? '' : 's' }}
+          </span>
+        </div>
+
+        <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label class="block">
+            <span class="mb-1 block text-xs text-text-muted">Jogador</span>
+            <select v-model="filtrosLogs.usuario_id" class="w-full">
+              <option value="">Todos</option>
+              <option v-for="usuario in usuariosFiltroLogs" :key="usuario.id" :value="String(usuario.id)">
+                {{ usuario.nome }} ({{ usuario.email }})
+              </option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-xs text-text-muted">Bolão</span>
+            <select v-model="filtrosLogs.torneio_id" class="w-full">
+              <option value="">Todos</option>
+              <option v-for="bolao in boloes" :key="bolao.id" :value="String(bolao.id)">{{ bolao.nome }} {{ bolao.edicao }}</option>
+            </select>
+          </label>
+          <label class="block lg:col-span-2">
+            <span class="mb-1 block text-xs text-text-muted">Jogo (do bolão selecionado no topo)</span>
+            <select v-model="filtrosLogs.jogo_id" class="w-full">
+              <option value="">Todos</option>
+              <option v-for="jogo in jogosParaFiltroLogs" :key="jogo.id" :value="String(jogo.id)">{{ rotuloJogoLogs(jogo) }}</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-xs text-text-muted">De (dia, Brasília)</span>
+            <input v-model="filtrosLogs.de" type="date" class="w-full [color-scheme:dark]" />
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-xs text-text-muted">Até (dia, Brasília)</span>
+            <input v-model="filtrosLogs.ate" type="date" class="w-full [color-scheme:dark]" />
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-xs text-text-muted">Ação</span>
+            <select v-model="filtrosLogs.acao" class="w-full">
+              <option value="">Todas</option>
+              <option value="criada">Criada</option>
+              <option value="editada">Editada</option>
+              <option value="removida">Removida</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-xs text-text-muted">Escopo</span>
+            <select v-model="filtrosLogs.escopo" class="w-full">
+              <option value="todos">Todos</option>
+              <option value="orfaos">Só órfãos (palpites apagados)</option>
+              <option value="vinculados">Só vinculados a jogo</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          <label class="flex cursor-pointer items-center gap-2 text-sm text-text-secondary">
+            <input v-model="filtrosLogs.apenas_mudancas" type="checkbox" class="!w-auto" />
+            Somente mudanças reais (esconde re-saves do auto-save)
+          </label>
+          <div class="ml-auto flex gap-2">
+            <button
+              type="button"
+              class="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary transition hover:text-text"
+              @click="limparFiltrosLogs"
+            >
+              Limpar filtros
+            </button>
+            <button
+              type="button"
+              class="rounded-lg border border-primary/40 px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/10 disabled:opacity-50"
+              :disabled="exportandoLogs || carregandoLogs"
+              @click="exportarCsvLogs"
+            >
+              {{ exportandoLogs ? 'Exportando...' : 'Exportar CSV' }}
+            </button>
+            <button
+              type="button"
+              class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-bg transition hover:bg-primary-hover disabled:opacity-50"
+              :disabled="carregandoLogs"
+              @click="buscarLogs()"
+            >
+              {{ carregandoLogs ? 'Buscando...' : 'Buscar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="carregandoLogs" class="rounded-2xl border border-border bg-bg-card py-10 text-center text-sm text-text-muted">
+        Carregando...
+      </div>
+      <div v-else-if="!logsApostas.length" class="rounded-2xl border border-dashed border-border bg-bg-card py-10 text-center text-sm text-text-muted">
+        Nenhum log encontrado para os filtros.
+      </div>
+      <div v-else class="overflow-x-auto rounded-2xl border border-border bg-bg-card">
+        <table class="w-full min-w-[900px] text-left text-sm">
+          <thead>
+            <tr class="border-b border-border text-xs uppercase tracking-wider text-text-muted">
+              <th class="px-4 py-3">Quando (BRT)</th>
+              <th class="px-4 py-3">Jogador</th>
+              <th class="px-4 py-3">Bolão / Cupom</th>
+              <th class="px-4 py-3">Jogo</th>
+              <th class="px-4 py-3">Ação</th>
+              <th class="px-4 py-3">Antes → Depois</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="log in logsApostas" :key="log.id" class="border-b border-border/50 align-top" :class="log.mudou ? '' : 'opacity-50'">
+              <td class="whitespace-nowrap px-4 py-3 font-mono text-xs">{{ log.quando_brt }}</td>
+              <td class="px-4 py-3">
+                <p class="font-medium">{{ log.usuario?.nome ?? '—' }}</p>
+                <p class="text-xs text-text-muted">{{ log.usuario?.email }}</p>
+              </td>
+              <td class="px-4 py-3">
+                <p class="text-xs">{{ log.bolao ?? '—' }}</p>
+                <p class="font-mono text-xs text-text-muted">{{ log.cupom }}</p>
+              </td>
+              <td class="px-4 py-3">
+                <template v-if="log.jogo">
+                  <p>{{ log.jogo.nome }}</p>
+                  <p class="text-xs text-text-muted">{{ log.jogo.data_hora_inicio }}</p>
+                </template>
+                <span v-else-if="log.orfao" class="rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+                  palpite apagado
+                </span>
+                <span v-else class="text-xs text-text-muted">{{ log.tipo ?? '—' }}</span>
+              </td>
+              <td class="px-4 py-3">
+                <span
+                  class="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                  :class="log.acao === 'removida' ? 'bg-danger/15 text-danger' : log.acao === 'criada' ? 'bg-primary/15 text-primary' : 'bg-bg-input text-text-secondary'"
+                >
+                  {{ log.acao }}
+                </span>
+                <p v-if="!log.mudou" class="mt-1 text-[10px] text-text-muted">sem mudança</p>
+              </td>
+              <td class="px-4 py-3 text-xs">
+                <p class="text-text-muted">{{ log.resumo_antes ?? 'sem palpite' }}</p>
+                <p class="mt-0.5 font-medium text-text">→ {{ log.resumo_depois ?? 'sem palpite' }}</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div v-if="totalPaginasLogs > 1" class="flex items-center justify-center gap-3">
+        <button
+          type="button"
+          class="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary transition hover:text-text disabled:opacity-40"
+          :disabled="paginaLogs <= 1 || carregandoLogs"
+          @click="buscarLogs(paginaLogs - 1)"
+        >
+          Anterior
+        </button>
+        <span class="text-sm text-text-muted">Página {{ paginaLogs }} de {{ totalPaginasLogs }}</span>
+        <button
+          type="button"
+          class="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary transition hover:text-text disabled:opacity-40"
+          :disabled="paginaLogs >= totalPaginasLogs || carregandoLogs"
+          @click="buscarLogs(paginaLogs + 1)"
+        >
+          Próxima
+        </button>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -421,7 +598,7 @@ const bolaoAtivo = usarBolaoAtivoStore()
 const torneio = ref<Torneio | null>(null)
 const mensagem = ref('')
 const erro = ref('')
-const tabAtiva = ref<'jogos' | 'regras' | 'torneio' | 'pagamentos'>('jogos')
+const tabAtiva = ref<'jogos' | 'regras' | 'torneio' | 'pagamentos' | 'logs'>('jogos')
 const faseSelecionadaId = ref<number | null>(null)
 const pontosRegras = ref<Record<number, string>>({})
 const resultadosJogos = ref<Record<number, { placar_mandante: string; placar_visitante: string; selecao_classificada_id: string }>>({})
@@ -445,6 +622,7 @@ const tabs = [
   { id: 'regras' as const, nome: 'Regras' },
   { id: 'torneio' as const, nome: 'Resultado Final' },
   { id: 'pagamentos' as const, nome: 'Pagamentos' },
+  { id: 'logs' as const, nome: 'Logs de Apostas' },
 ]
 
 type CupomPagamento = {
@@ -520,7 +698,157 @@ async function alternarPagamento(cupom: CupomPagamento) {
 
 watch(tabAtiva, (tab) => {
   if (tab === 'pagamentos') void carregarPagamentos()
+  if (tab === 'logs') {
+    void carregarUsuariosFiltroLogs()
+    if (!buscouLogs.value) void buscarLogs()
+  }
 })
+
+// ---- Logs de Apostas (auditoria de palpites) ----
+
+type UsuarioFiltroLogs = { id: number; nome: string; email: string }
+type LogApostaAdmin = {
+  id: number
+  quando_brt: string
+  acao: string
+  orfao: boolean
+  mudou: boolean
+  usuario: UsuarioFiltroLogs | null
+  cupom: string | null
+  bolao: string | null
+  tipo: string | null
+  jogo: { id: number; nome: string; data_hora_inicio: string | null } | null
+  resumo_antes: string | null
+  resumo_depois: string | null
+}
+type RespostaLogs = { logs: LogApostaAdmin[]; pagina: number; total_paginas: number; total: number }
+
+const usuariosFiltroLogs = ref<UsuarioFiltroLogs[]>([])
+const logsApostas = ref<LogApostaAdmin[]>([])
+const carregandoLogs = ref(false)
+const exportandoLogs = ref(false)
+const buscouLogs = ref(false)
+const paginaLogs = ref(1)
+const totalPaginasLogs = ref(1)
+const totalLogs = ref(0)
+const filtrosLogs = ref({
+  usuario_id: '',
+  torneio_id: '',
+  jogo_id: '',
+  acao: '',
+  escopo: 'todos',
+  apenas_mudancas: true,
+  de: '',
+  ate: '',
+})
+
+// O seletor de jogo usa os jogos do bolão carregado no painel (troque o bolão no topo
+// para listar os jogos do outro). O filtro de bolão do relatório é independente disso.
+const jogosParaFiltroLogs = computed(() =>
+  [...(torneio.value?.jogos ?? [])]
+    .filter((jogo) => jogo.data_hora_inicio)
+    .sort((a, b) => a.data_hora_inicio.localeCompare(b.data_hora_inicio)),
+)
+
+function rotuloJogoLogs(jogo: Torneio['jogos'][number]) {
+  const inicio = jogo.data_hora_inicio ?? ''
+  const dia = inicio ? `${inicio.substring(8, 10)}/${inicio.substring(5, 7)} ${inicio.substring(11, 16)}` : 'sem data'
+  return `${dia} — ${nomeMandanteAdmin(jogo)} x ${nomeVisitanteAdmin(jogo)}`
+}
+
+function montarQueryLogs(pagina: number) {
+  const params = new URLSearchParams()
+  const filtros = filtrosLogs.value
+  if (filtros.usuario_id) params.set('usuario_id', filtros.usuario_id)
+  if (filtros.torneio_id) params.set('torneio_id', filtros.torneio_id)
+  if (filtros.jogo_id) params.set('jogo_id', filtros.jogo_id)
+  if (filtros.acao) params.set('acao', filtros.acao)
+  if (filtros.escopo !== 'todos') params.set('escopo', filtros.escopo)
+  if (filtros.apenas_mudancas) params.set('apenas_mudancas', '1')
+  if (filtros.de) params.set('de', filtros.de)
+  if (filtros.ate) params.set('ate', filtros.ate)
+  params.set('page', String(pagina))
+  return params
+}
+
+async function carregarUsuariosFiltroLogs() {
+  if (usuariosFiltroLogs.value.length) return
+  try {
+    const resposta = await requisicaoApi<{ usuarios: UsuarioFiltroLogs[] }>('/admin/usuarios')
+    usuariosFiltroLogs.value = resposta.usuarios
+  } catch {
+    usuariosFiltroLogs.value = []
+  }
+}
+
+async function buscarLogs(pagina = 1) {
+  carregandoLogs.value = true
+  erro.value = ''
+  try {
+    const resposta = await requisicaoApi<RespostaLogs>(`/admin/logs-apostas?${montarQueryLogs(pagina)}`)
+    logsApostas.value = resposta.logs
+    paginaLogs.value = resposta.pagina
+    totalPaginasLogs.value = resposta.total_paginas
+    totalLogs.value = resposta.total
+    buscouLogs.value = true
+  } catch (error) {
+    erro.value = error instanceof Error ? error.message : 'Falha ao carregar logs de apostas.'
+  } finally {
+    carregandoLogs.value = false
+  }
+}
+
+function limparFiltrosLogs() {
+  filtrosLogs.value = { usuario_id: '', torneio_id: '', jogo_id: '', acao: '', escopo: 'todos', apenas_mudancas: true, de: '', ate: '' }
+  void buscarLogs()
+}
+
+// Exporta TODAS as páginas do filtro atual (trava de segurança em 40 páginas = 2000 linhas).
+async function exportarCsvLogs() {
+  exportandoLogs.value = true
+  erro.value = ''
+  try {
+    const linhas: LogApostaAdmin[] = []
+    let pagina = 1
+    let totalPaginas = 1
+    do {
+      const resposta = await requisicaoApi<RespostaLogs>(`/admin/logs-apostas?${montarQueryLogs(pagina)}`)
+      linhas.push(...resposta.logs)
+      totalPaginas = resposta.total_paginas
+      pagina++
+    } while (pagina <= totalPaginas && pagina <= 40)
+
+    const campo = (valor: unknown) => `"${String(valor ?? '').replaceAll('"', '""')}"`
+    const csv = [
+      ['quando_brt', 'usuario', 'email', 'bolao', 'cupom', 'jogo', 'acao', 'orfao', 'mudanca_real', 'antes', 'depois'].join(','),
+      ...linhas.map((log) => [
+        campo(log.quando_brt),
+        campo(log.usuario?.nome),
+        campo(log.usuario?.email),
+        campo(log.bolao),
+        campo(log.cupom),
+        campo(log.jogo?.nome ?? (log.orfao ? 'palpite apagado' : '')),
+        campo(log.acao),
+        campo(log.orfao ? 'sim' : 'nao'),
+        campo(log.mudou ? 'sim' : 'nao'),
+        campo(log.resumo_antes),
+        campo(log.resumo_depois),
+      ].join(',')),
+    ].join('\n')
+
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `logs-apostas-${new Date().toISOString().substring(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    erro.value = error instanceof Error ? error.message : 'Falha ao exportar CSV.'
+  } finally {
+    exportandoLogs.value = false
+  }
+}
 
 const selecoes = computed(() => torneio.value?.grupos.flatMap((g) => g.selecoes) ?? [])
 const regrasOrdenadas = computed(() =>
