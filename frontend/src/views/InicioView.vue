@@ -115,11 +115,31 @@
     <!-- Faixa de jogos do Brasileirão (TheSportsDB), sobreposta ao hero -->
     <section id="jogos" class="relative z-10 -mt-20 pb-4 sm:-mt-24">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div v-if="rodadaAtual" class="mb-3 flex items-center gap-2">
-          <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-sm">Brasileirão Série A</span>
-          <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-sm">Rodada {{ rodadaAtual }}</span>
+        <div v-if="rodadaAtual" class="mb-3 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-sm">Brasileirão Série A</span>
+            <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-sm">Rodada {{ rodadaAtual }}</span>
+          </div>
+          <span class="hidden text-xs font-semibold text-white/70 sm:block">{{ jogosRodada.length }} jogos na rodada</span>
         </div>
-        <div class="flex snap-x gap-4 overflow-x-auto pb-4 scrollbar-none">
+        <div class="group/faixa relative">
+        <button
+          type="button"
+          aria-label="Jogos anteriores"
+          class="absolute -left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-bg-card text-text-secondary shadow-lg transition hover:bg-primary hover:text-white sm:flex"
+          @click="rolarFaixa(-1)"
+        >
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <button
+          type="button"
+          aria-label="Próximos jogos"
+          class="absolute -right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-bg-card text-text-secondary shadow-lg transition hover:bg-primary hover:text-white sm:flex"
+          @click="rolarFaixa(1)"
+        >
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+        </button>
+        <div ref="faixaJogosRef" class="flex snap-x gap-4 overflow-x-auto pb-4 scrollbar-none">
           <article
             v-for="jogo in jogosRodada"
             :key="jogo.idEvent"
@@ -180,6 +200,7 @@
           >
             Os jogos da próxima rodada do Brasileirão aparecem aqui em instantes.
           </article>
+        </div>
         </div>
       </div>
     </section>
@@ -482,6 +503,14 @@ const autenticacao = usarAutenticacaoStore()
 const faqAberto = ref(-1)
 const jogosRodada = ref<EventoSportsDb[]>([])
 const rodadaAtual = ref<string | null>(null)
+const faixaJogosRef = ref<HTMLElement | null>(null)
+
+function rolarFaixa(direcao: number) {
+  const faixa = faixaJogosRef.value
+  if (!faixa) return
+  const larguraCard = faixa.querySelector(':scope > *')?.clientWidth ?? 288
+  faixa.scrollBy({ left: direcao * (larguraCard + 16) * 2, behavior: 'smooth' })
+}
 
 const estatisticasHero = [
   { label: 'Clubes', value: 20, caption: 'na Série A' },
