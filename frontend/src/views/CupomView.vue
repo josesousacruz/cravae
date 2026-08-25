@@ -32,7 +32,7 @@
         <div class="flex items-center gap-2.5">
           <svg class="h-6 w-6 shrink-0 text-[#32BCAD]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
           <p class="text-sm text-text-secondary">
-            Cupom <strong class="text-text">aguardando pagamento</strong>. Pague via Pix para confirmar sua participacao.
+            Cupom <strong class="text-text">aguardando pagamento</strong>. Pague via Pix para confirmar sua participação.
           </p>
         </div>
         <button
@@ -138,7 +138,7 @@
             <!-- ═══ Banner: Palpite de pódio (visível só enquanto o pódio estiver aberto) ═══ -->
             <div
               v-if="!podioFechado"
-              class="mb-4 overflow-hidden rounded-2xl border border-gold/40 bg-[radial-gradient(circle_at_0%_0%,rgba(251,191,36,0.16),transparent_45%),linear-gradient(135deg,#1a1404,#141414_62%)] shadow-lg shadow-black/30"
+              class="mb-4 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-bg-card to-bg-card shadow-sm"
             >
               <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gold/15 px-4 py-3 sm:px-5">
                 <div class="flex items-center gap-2.5">
@@ -416,7 +416,7 @@
                   <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <span class="text-[10px] font-black uppercase tracking-[0.28em] text-[#d4af37]">Chaveamento</span>
-                      <h2 class="mt-1 text-lg font-black text-white sm:text-2xl">Caminho ate a final</h2>
+                      <h2 class="mt-1 text-lg font-black text-white sm:text-2xl">Caminho até a final</h2>
                     </div>
                     <span class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
                       {{ gruposPreenchidos }}/{{ totalJogosGrupos }} jogos de grupos palpitados
@@ -622,7 +622,7 @@
       <!-- ═══════ Tab Meus Resultados ═══════ -->
       <section v-if="tabAtiva === 'resultados'">
         <div v-if="cupom.eventos_pontuacao?.length" class="rounded-2xl border border-border bg-bg-card p-5">
-          <h2 class="mb-4 text-lg font-bold">Eventos de Pontuacao</h2>
+          <h2 class="mb-4 text-lg font-bold">Eventos de Pontuação</h2>
           <div class="space-y-2">
             <div v-for="evento in cupom.eventos_pontuacao" :key="evento.id" class="flex items-center justify-between gap-3 rounded-lg bg-bg-input px-3.5 py-2.5">
               <div class="min-w-0">
@@ -634,7 +634,7 @@
           </div>
         </div>
         <div v-else class="rounded-2xl border border-border bg-bg-card py-12 text-center">
-          <p class="text-text-muted">Nenhum evento de pontuacao registrado ainda.</p>
+          <p class="text-text-muted">Nenhum evento de pontuação registrado ainda.</p>
         </div>
       </section>
 

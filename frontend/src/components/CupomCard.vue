@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-2xl border border-border bg-[#1a1f1a] p-5 transition-all hover:border-primary/40">
+  <div class="rounded-2xl border border-border bg-bg-card shadow-sm p-5 transition-all hover:border-primary/40">
     <!-- Top row: trophy image + info + badge -->
     <div class="flex items-start gap-4">
       <!-- Trophy placeholder -->

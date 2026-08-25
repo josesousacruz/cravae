@@ -17,7 +17,7 @@
       </div>
       <div class="min-w-0 flex-1">
         <p class="text-sm font-semibold text-text">Foto de perfil</p>
-        <p class="mt-0.5 text-xs text-text-muted">JPG, PNG ou WEBP, ate 4MB. Aparece no ranking.</p>
+        <p class="mt-0.5 text-xs text-text-muted">JPG, PNG ou WEBP, até 4MB. Aparece no ranking.</p>
         <button
           type="button"
           :disabled="enviandoFoto"
@@ -54,7 +54,7 @@
             type="text"
             inputmode="numeric"
             autocomplete="off"
-            placeholder="Somente numeros"
+            placeholder="Somente números"
             required
           />
           <span class="mt-1.5 block text-xs text-text-muted">O documento e usado para criar o cliente pagador no Asaas.</span>
@@ -115,7 +115,7 @@ async function aoSelecionarFoto(evento: Event) {
     await autenticacao.atualizarFoto(arquivo)
     mostrar('sucesso', 'Foto atualizada com sucesso.')
   } catch (error) {
-    mostrar('erro', error instanceof Error ? error.message : 'Nao foi possivel atualizar a foto.')
+    mostrar('erro', error instanceof Error ? error.message : 'Não foi possível atualizar a foto.')
   } finally {
     enviandoFoto.value = false
     alvo.value = ''
@@ -141,7 +141,7 @@ async function salvar() {
     })
     mostrar('sucesso', 'Perfil atualizado com sucesso.')
   } catch (error) {
-    mostrar('erro', error instanceof Error ? error.message : 'Nao foi possivel atualizar o perfil.')
+    mostrar('erro', error instanceof Error ? error.message : 'Não foi possível atualizar o perfil.')
   }
 }
 </script>

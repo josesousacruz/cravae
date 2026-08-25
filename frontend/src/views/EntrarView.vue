@@ -38,7 +38,7 @@
       </div>
 
       <p class="mt-4 text-center text-sm text-text-muted">
-        Nao tem conta?
+        Não tem conta?
         <RouterLink to="/cadastro" class="font-medium text-primary hover:underline">Cadastre-se</RouterLink>
       </p>
     </div>

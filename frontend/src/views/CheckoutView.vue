@@ -30,7 +30,7 @@
         </div>
 
         <p v-if="asaasAtivo && sincronizacaoErro" class="mt-3 text-xs text-warning">
-          Nao foi possivel confirmar no Asaas agora. Vamos tentar novamente automaticamente.
+          Não foi possível confirmar no Asaas agora. Vamos tentar novamente automaticamente.
         </p>
 
         <button
@@ -53,7 +53,7 @@
           :disabled="processandoDireto"
           @click="gerarPixDireto"
         >
-          {{ processandoDireto ? 'Gerando...' : 'Pagar com Pix (confirmacao manual)' }}
+          {{ processandoDireto ? 'Gerando...' : 'Pagar com Pix (confirmação manual)' }}
         </button>
 
         <RouterLink
@@ -87,10 +87,10 @@
               class="mt-3 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-bg transition-colors hover:bg-primary-hover"
               @click="copiarPix"
             >
-              Copiar codigo Pix
+              Copiar código Pix
             </button>
             <p class="mt-4 text-sm text-text-secondary">
-              Apos o pagamento, o cupom sera liberado automaticamente quando o Asaas confirmar o recebimento. Se o webhook atrasar, vamos verificar periodicamente.
+              Após o pagamento, o cupom será liberado automaticamente quando o Asaas confirmar o recebimento. Se o webhook atrasar, vamos verificar periodicamente.
             </p>
           </div>
         </div>
@@ -99,9 +99,9 @@
           <div class="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-bg-input text-primary">
             <span class="text-2xl font-bold">$</span>
           </div>
-          <h2 class="mt-4 text-lg font-bold text-text">Pix ainda nao gerado</h2>
+          <h2 class="mt-4 text-lg font-bold text-text">Pix ainda não gerado</h2>
           <p class="mt-2 max-w-sm text-sm text-text-secondary">
-            Gere o Pix para receber o QR Code e o codigo copia e cola do pagamento.
+            Gere o Pix para receber o QR Code e o código copia e cola do pagamento.
           </p>
         </div>
       </section>
@@ -140,9 +140,9 @@ const bolao = usarBolaoAtivoStore()
 
 const torneio = ref<Torneio | null>(null)
 const pedido = ref<PedidoCheckout | null>(null)
-// Asaas desativado: somente Pix com confirmacao manual fica ativo no checkout.
+// Asaas desativado: somente Pix com confirmação manual fica ativo no checkout.
 // Todo o fluxo Asaas (backend + frontend) segue intacto; para reativar, basta
-// voltar esta flag para true.
+// voltar está flag para true.
 const asaasAtivo = false
 
 const carregando = ref(true)
@@ -186,7 +186,7 @@ onMounted(async () => {
     const resposta = await requisicaoApi<{ torneio: Torneio }>(caminhoTorneio)
     torneio.value = resposta.torneio
   } catch {
-    mostrar('erro', 'Nao foi possivel carregar dados do torneio.')
+    mostrar('erro', 'Não foi possível carregar dados do torneio.')
   } finally {
     carregando.value = false
   }
@@ -216,7 +216,7 @@ async function gerarPagamento() {
     mostrar('sucesso', 'Pix gerado com sucesso.')
     iniciarConsulta()
   } catch (error) {
-    mostrar('erro', error instanceof Error ? error.message : 'Nao foi possivel gerar o Pix.')
+    mostrar('erro', error instanceof Error ? error.message : 'Não foi possível gerar o Pix.')
   } finally {
     processando.value = false
   }
@@ -237,7 +237,7 @@ async function gerarPixDireto() {
     cupomDireto.value = resposta.cupom ?? null
     modalPixAberto.value = true
   } catch (error) {
-    mostrar('erro', error instanceof Error ? error.message : 'Nao foi possivel gerar o Pix direto.')
+    mostrar('erro', error instanceof Error ? error.message : 'Não foi possível gerar o Pix direto.')
   } finally {
     processandoDireto.value = false
   }
@@ -247,7 +247,7 @@ function fecharModalDireto() {
   modalPixAberto.value = false
   // Garante que o painel mostre o cupom recém-criado (escopo pelo bolão ativo).
   if (torneio.value) bolao.definirAtivo(torneio.value.id)
-  mostrar('sucesso', 'Cupom criado. Ele sera liberado apos a confirmacao do pagamento.')
+  mostrar('sucesso', 'Cupom criado. Ele será liberado após a confirmação do pagamento.')
   router.push({ name: 'painel' })
 }
 
@@ -284,7 +284,7 @@ async function consultarPedido() {
       mostrar('erro', mensagemStatusFinal(resposta.pedido.status))
     }
   } catch {
-    sincronizacaoErro.value = 'Nao foi possivel consultar o pagamento no Asaas agora.'
+    sincronizacaoErro.value = 'Não foi possível consultar o pagamento no Asaas agora.'
   }
 }
 
@@ -292,7 +292,7 @@ function mensagemStatusFinal(status: string) {
   if (status === 'expirado') return 'Pagamento expirado. Gere um novo Pix para continuar.'
   if (status === 'cancelado') return 'Pagamento cancelado no Asaas.'
   if (status === 'estornado') return 'Pagamento estornado no Asaas.'
-  return 'Pagamento nao liberado.'
+  return 'Pagamento não liberado.'
 }
 
 async function copiarPix() {

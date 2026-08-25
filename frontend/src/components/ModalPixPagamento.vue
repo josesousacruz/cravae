@@ -40,8 +40,8 @@
 
         <!-- Copia e cola -->
         <div class="mb-4">
-          <button type="button" class="w-full rounded-xl bg-primary py-3 text-sm font-bold text-bg transition hover:bg-primary-hover" @click="copiar(copiaECola, 'Codigo Pix copiado.')">
-            Copiar codigo Pix (copia e cola)
+          <button type="button" class="w-full rounded-xl bg-primary py-3 text-sm font-bold text-bg transition hover:bg-primary-hover" @click="copiar(copiaECola, 'Código Pix copiado.')">
+            Copiar código Pix (copia e cola)
           </button>
         </div>
 
@@ -51,7 +51,7 @@
           <ol class="mb-3 list-decimal space-y-1 pl-4 text-xs text-text-secondary">
             <li>Pague {{ valorFormatado || 'o valor' }} usando o QR Code ou a chave Pix acima.</li>
             <li>Envie o comprovante no nosso WhatsApp.</li>
-            <li>Seu cupom e liberado manualmente apos a confirmacao.</li>
+            <li>Seu cupom é liberado manualmente após a confirmacao.</li>
           </ol>
           <a
             :href="whatsappUrl"
@@ -130,7 +130,7 @@ async function copiar(texto: string, sucesso: string) {
     await navigator.clipboard.writeText(texto)
     mostrar('sucesso', sucesso)
   } catch {
-    mostrar('erro', 'Nao foi possivel copiar.')
+    mostrar('erro', 'Não foi possível copiar.')
   }
 }
 </script>

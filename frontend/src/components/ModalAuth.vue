@@ -136,7 +136,7 @@
               v-model="formCadastro.cpfCnpj"
               type="text"
               inputmode="numeric"
-              placeholder="Somente numeros"
+              placeholder="Somente números"
               required
             />
           </div>
@@ -246,7 +246,7 @@ async function submeterCadastro() {
     emit('fechar')
     router.push({ name: 'boloes' })
   } catch {
-    mostrar('erro', autenticacao.erro || 'Nao foi possivel criar a conta. Tente novamente.')
+    mostrar('erro', autenticacao.erro || 'Não foi possível criar a conta. Tente novamente.')
   } finally {
     processando.value = false
   }

@@ -10,7 +10,7 @@
       </div>
       <div class="flex items-center gap-2">
         <button
-          v-for="filtro in ['Rodada', 'Mes']"
+          v-for="filtro in ['Rodada', 'Mês']"
           :key="filtro"
           type="button"
           class="inline-flex items-center gap-1 rounded-xl border border-border bg-bg-card px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-primary/30"
@@ -49,7 +49,7 @@
           <span class="shrink-0 font-bold text-primary">+{{ regra.pontos }} pts</span>
         </li>
       </ul>
-      <p v-else class="text-sm text-text-muted">Regras de pontuacao ainda nao configuradas.</p>
+      <p v-else class="text-sm text-text-muted">Regras de pontuação ainda não configuradas.</p>
     </div>
 
     <!-- Skeleton -->
@@ -58,9 +58,9 @@
     <!-- Podio -->
     <section
       v-else-if="podioOrdenado.length"
-      class="relative overflow-hidden rounded-[28px] border border-primary/30 bg-[radial-gradient(circle_at_top,#0f2a1f,transparent_60%),linear-gradient(180deg,#111513,#0a0c0b)] p-5 pt-6 shadow-[0_0_40px_-12px_rgba(16,185,129,0.4)]"
+      class="relative overflow-hidden rounded-[28px] border border-primary/25 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.10),transparent_60%),linear-gradient(180deg,#ffffff,#f4faf7)] p-5 pt-6 shadow-lg shadow-primary/10"
     >
-      <!-- Topo: titulo e compartilhar -->
+      <!-- Topo: título e compartilhar -->
       <div class="relative mb-2 flex items-center justify-center">
         <span class="inline-flex items-center gap-2 rounded-full border border-primary/50 bg-primary/10 px-5 py-2 text-sm font-bold uppercase tracking-wider text-primary shadow-[0_0_20px_-4px_rgba(16,185,129,0.6)]">
           🏆 Ranking 🏆
@@ -111,10 +111,10 @@
 
     <!-- Estado vazio -->
     <div v-else class="rounded-[28px] border border-border bg-bg-card py-12 text-center">
-      <p class="px-6 text-sm text-text-muted">Nenhum resultado disponivel. O ranking sera atualizado conforme os resultados forem lancados.</p>
+      <p class="px-6 text-sm text-text-muted">Nenhum resultado disponível. O ranking será atualizado conforme os resultados forem lançados.</p>
     </div>
 
-    <!-- Sua posicao atual -->
+    <!-- Sua posição atual -->
     <section
       v-if="minhaPosicao"
       class="relative overflow-hidden rounded-[28px] border border-violet-500/40 bg-[linear-gradient(135deg,rgba(139,92,246,0.18),rgba(139,92,246,0.04))] p-5 shadow-[0_0_30px_-12px_rgba(139,92,246,0.6)]"
@@ -127,14 +127,14 @@
           </div>
         </div>
         <div class="min-w-0 flex-1">
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-violet-300">Sua posicao atual</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-violet-300">Sua posição atual</p>
           <p class="truncate text-lg font-bold text-text">{{ minhaPosicao.item.cupom.usuario.nome }}</p>
           <p class="mt-0.5 text-xs text-text-secondary">
             {{ minhaPosicao.item.quantidade_placares_exatos }} exatos · {{ minhaPosicao.item.quantidade_classificados_corretos }} classificados
           </p>
         </div>
         <div class="shrink-0 text-right">
-          <p class="text-3xl font-black leading-none text-violet-400">#{{ minhaPosicao.posicao }}</p>
+          <p class="text-3xl font-black leading-none text-violet-600">#{{ minhaPosicao.posicao }}</p>
           <p class="mt-1 text-xl font-black leading-none text-text tabular-nums">{{ inteiro(minhaPosicao.item.pontuacao_total) }}</p>
           <p class="text-[11px] text-text-muted">pontos</p>
         </div>
@@ -164,7 +164,7 @@
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-2">
               <strong class="truncate text-sm text-text">{{ item.cupom.usuario.nome }}</strong>
-              <span v-if="item.cupom.id === cupomDestaque" class="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-bg">Voce</span>
+              <span v-if="item.cupom.id === cupomDestaque" class="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-bg">Você</span>
             </div>
             <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-text-muted">
               <span>Cupom {{ item.cupom.codigo }}</span>
@@ -181,7 +181,7 @@
 
         <div v-if="expandidoId === item.cupom.id" class="border-t border-border/70 px-4 py-3">
           <div v-if="carregandoId === item.cupom.id" class="py-2 text-center text-xs text-text-muted">Carregando pontuacoes...</div>
-          <div v-else-if="!cache[item.cupom.id]?.length" class="py-2 text-center text-xs text-text-muted">Nenhuma pontuacao registrada ainda.</div>
+          <div v-else-if="!cache[item.cupom.id]?.length" class="py-2 text-center text-xs text-text-muted">Nenhuma pontuação registrada ainda.</div>
           <div v-else class="space-y-2">
             <div v-for="evento in cache[item.cupom.id]" :key="evento.id" class="flex items-center justify-between gap-3 rounded-lg bg-bg-input px-3 py-2">
               <div class="min-w-0">
@@ -282,7 +282,7 @@ function primeiroNome(nome: string) {
 }
 
 function avisarEmBreve() {
-  mostrar('sucesso', 'Filtros de rodada e periodo em breve.')
+  mostrar('sucesso', 'Filtros de rodada e período em breve.')
 }
 
 async function compartilhar() {

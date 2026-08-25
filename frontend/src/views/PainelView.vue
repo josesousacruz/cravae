@@ -4,7 +4,7 @@
     <section class="rounded-2xl bg-gradient-to-r from-primary-dim/30 to-bg-card p-6 sm:p-8">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 class="text-xl font-bold sm:text-2xl">Ola, {{ autenticacao.nome }}</h1>
+          <h1 class="text-xl font-bold sm:text-2xl">Olá, {{ autenticacao.nome }}</h1>
           <p class="mt-1 text-sm text-text-secondary">
             Cada cupom representa um conjunto independente de apostas.
           </p>
@@ -20,7 +20,7 @@
         <span
           v-else
           class="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border bg-bg-input px-6 py-2.5 text-center text-sm font-semibold text-text-muted"
-          title="A compra de cupons esta encerrada ate o fim do campeonato"
+          title="A compra de cupons está encerrada até o fim do campeonato"
         >
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
           Compra de cupons encerrada
@@ -82,7 +82,7 @@
             </RouterLink>
           </template>
           <p v-else class="mx-auto mt-2 max-w-md text-sm text-text-secondary">
-            A compra de cupons esta encerrada ate o fim do campeonato.
+            A compra de cupons está encerrada até o fim do campeonato.
           </p>
         </div>
 

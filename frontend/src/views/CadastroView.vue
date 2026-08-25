@@ -26,7 +26,7 @@
 
         <label class="block">
           <span class="mb-1.5 block text-sm font-medium text-text-secondary">CPF/CNPJ</span>
-          <input v-model="cpfCnpj" type="text" inputmode="numeric" placeholder="Somente numeros" />
+          <input v-model="cpfCnpj" type="text" inputmode="numeric" placeholder="Somente números" />
         </label>
 
         <label class="block">
@@ -53,7 +53,7 @@
       </p>
 
       <p class="mt-4 text-center text-sm text-text-muted">
-        Ja tem conta?
+        Já tem conta?
         <RouterLink to="/entrar" class="font-medium text-primary hover:underline">Entrar</RouterLink>
       </p>
     </div>

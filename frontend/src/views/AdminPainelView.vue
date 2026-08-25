@@ -247,7 +247,7 @@
     <section v-if="tabAtiva === 'regras'" class="space-y-4">
       <div class="rounded-2xl border border-border bg-bg-card p-6">
         <h2 class="mb-1 text-lg font-bold">Adicionar regra</h2>
-        <p class="mb-4 text-sm text-text-secondary">Escolha uma categoria de pontuacao reconhecida e a fase (ou global). So pontua quem usa uma categoria conhecida.</p>
+        <p class="mb-4 text-sm text-text-secondary">Escolha uma categoria de pontuação reconhecida e a fase (ou global). Só pontua quem usa uma categoria conhecida.</p>
         <div class="grid gap-3 sm:grid-cols-2">
           <label class="block">
             <span class="mb-1.5 block text-xs text-text-muted">Categoria</span>
@@ -287,7 +287,7 @@
       </div>
 
       <div class="rounded-2xl border border-border bg-bg-card p-6">
-        <h2 class="mb-4 text-lg font-bold">Regras de Pontuacao</h2>
+        <h2 class="mb-4 text-lg font-bold">Regras de Pontuação</h2>
         <div class="space-y-3">
           <div
             v-for="regra in regrasOrdenadas"
@@ -400,7 +400,7 @@
             :disabled="marcandoId === cupom.id"
             @click="alternarPagamento(cupom)"
           >
-            {{ marcandoId === cupom.id ? 'Salvando...' : (cupom.status === 'ativo' ? 'Marcar como nao pago' : 'Marcar como pago') }}
+            {{ marcandoId === cupom.id ? 'Salvando...' : (cupom.status === 'ativo' ? 'Marcar como não pago' : 'Marcar como pago') }}
           </button>
         </div>
       </div>
