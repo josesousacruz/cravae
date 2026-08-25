@@ -37,10 +37,10 @@ Decisões fundadoras: ver `CLAUDE.md` (raiz). Este roadmap cobre só o delta em 
 
 Plano detalhado: `.planning/phases/08-assinaturas/PLAN.md`. Decisões (grilling 2026-08-25): mensal recorrente Asaas R$ 9,90; fundador 50% para sempre (primeiros N, default 100); cancelou → vira gratuito; prêmio por ciclo mensal (padrão Cartola); ranking único com selo; 1 cupom/usuário.
 
-- [ ] Plano 1 — dados: `planos`, `assinaturas`, `ciclos_assinatura`, cupom.origem
-- [ ] Plano 2 — fluxo: ServicoAssinatura, Asaas Assinaturas + webhook, cupom gratuito no cadastro, GET /planos com vagas
-- [ ] Plano 3 — elegibilidade: flag assinante no ranking, apuração mensal só de elegíveis, testes
-- [ ] Plano 4 — frontend: pricing na landing com contador, gestão no painel, selo no ranking
+- [x] Plano 1 — dados: `planos`, `assinaturas`, `ciclos_assinatura`, cupom.origem
+- [x] Plano 2 — fluxo: ServicoAssinatura, Asaas Assinaturas + webhook, cupom gratuito no cadastro, GET /planos com vagas
+- [x] Plano 3 — elegibilidade: flag assinante no ranking, apuração mensal só de elegíveis, testes
+- [x] Plano 4 — frontend: pricing na landing com contador, gestão no painel, selo no ranking
 
 ## Estado
 

@@ -80,6 +80,13 @@
                   </p>
                 </div>
                 <RouterLink
+                  to="/assinatura"
+                  class="mb-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-bg-card-hover hover:text-text"
+                  @click="dropdownAberto = false"
+                >
+                  Assinatura
+                </RouterLink>
+                <RouterLink
                   to="/perfil"
                   class="mb-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-bg-card-hover hover:text-text"
                   @click="dropdownAberto = false"

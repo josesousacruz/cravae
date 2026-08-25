@@ -15,7 +15,7 @@
           class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-center text-sm font-semibold text-bg shadow-lg shadow-primary/20 transition hover:bg-primary-hover"
         >
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-          Comprar cupom
+          Assinatura
         </RouterLink>
         <span
           v-else
@@ -78,7 +78,7 @@
               class="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-bg shadow-lg shadow-primary/20 transition hover:bg-primary-hover"
             >
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-              Comprar cupom
+              Assinatura
             </RouterLink>
           </template>
           <p v-else class="mx-auto mt-2 max-w-md text-sm text-text-secondary">
@@ -148,9 +148,7 @@ const bolao = usarBolaoAtivoStore()
 const comprasAbertas = computed(() => torneioStore.torneio?.compras_abertas === true)
 // Comprar sempre para o bolão ativo (senão o cupom cairia em outro bolão e o
 // filtro do painel o esconderia).
-const destinoCheckout = computed(() =>
-  bolao.ativoId ? { name: 'checkout', query: { torneio: bolao.ativoId } } : { name: 'checkout' },
-)
+const destinoCheckout = computed(() => ({ name: 'assinatura' }))
 const todosCupons = ref<Cupom[]>([])
 // Mostra apenas os cupons do bolão ativo (quando há um selecionado).
 const cupons = computed(() =>

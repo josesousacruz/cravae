@@ -14,6 +14,7 @@
           <a href="#jogos" class="transition hover:text-white">Jogos</a>
           <a href="#como-funciona" class="transition hover:text-white">Como funciona</a>
           <a href="#premio" class="transition hover:text-white">Prêmio</a>
+          <a href="#planos" class="transition hover:text-white">Planos</a>
           <a href="#pontuacao" class="transition hover:text-white">Pontuação</a>
           <a href="#faq" class="transition hover:text-white">FAQ</a>
         </nav>
@@ -273,6 +274,77 @@
       </div>
     </section>
 
+    <!-- Planos -->
+    <section id="planos" class="py-16 sm:py-20">
+      <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Planos</p>
+          <h2 class="mt-3 text-3xl font-black tracking-[-0.03em] text-text sm:text-4xl">
+            Jogar é grátis. Concorrer é para assinantes.
+          </h2>
+        </div>
+
+        <div class="mt-12 grid gap-5 sm:grid-cols-2">
+          <article class="rounded-2xl border border-border bg-bg-card p-7 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-text-muted">Gratuito</p>
+            <p class="mt-3 text-4xl font-black text-text">R$ 0</p>
+            <ul class="mt-5 space-y-2.5 text-sm text-text-secondary">
+              <li>✓ Palpites de todos os jogos, com goleadores</li>
+              <li>✓ Pontuação e posição no ranking</li>
+              <li class="text-text-muted">✗ Não concorre aos prêmios</li>
+            </ul>
+            <button
+              type="button"
+              class="mt-7 w-full rounded-xl border border-border-light py-3 text-sm font-bold text-text-secondary transition hover:border-primary hover:text-primary"
+              @click="$emit('abrirModalAuth', 'cadastro')"
+            >
+              Jogar grátis
+            </button>
+          </article>
+
+          <article
+            v-for="plano in planos"
+            :key="plano.id"
+            class="relative rounded-2xl border-2 border-primary bg-bg-card p-7 shadow-lg shadow-primary/10"
+          >
+            <span
+              v-if="plano.vagas_fundador_restantes > 0"
+              class="absolute -top-3.5 left-7 rounded-full bg-gold px-3.5 py-1 text-xs font-black text-white"
+            >
+              50% OFF — restam {{ plano.vagas_fundador_restantes }} vagas de fundador
+            </span>
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-primary">{{ plano.nome }}</p>
+            <p class="mt-3 text-4xl font-black text-text">
+              {{ precoPlano(plano) }}<span class="text-base font-medium text-text-muted">/mês</span>
+            </p>
+            <p v-if="plano.vagas_fundador_restantes > 0 && plano.preco_fundador_centavos !== null" class="mt-1 text-xs text-text-muted">
+              <s>{{ formatarCentavos(plano.preco_centavos) }}</s> — preço de fundador, vitalício enquanto a assinatura estiver ativa
+            </p>
+            <ul class="mt-5 space-y-2.5 text-sm text-text-secondary">
+              <li>✓ Tudo do gratuito</li>
+              <li>✓ Concorre aos prêmios de cada mês</li>
+              <li>✓ Selo de assinante no ranking</li>
+            </ul>
+            <RouterLink
+              v-if="autenticacao.estaAutenticado"
+              to="/assinatura"
+              class="mt-7 block w-full rounded-xl bg-primary py-3 text-center text-sm font-black text-white transition hover:bg-primary-hover"
+            >
+              Assinar agora
+            </RouterLink>
+            <button
+              v-else
+              type="button"
+              class="mt-7 w-full rounded-xl bg-primary py-3 text-sm font-black text-white transition hover:bg-primary-hover"
+              @click="$emit('abrirModalAuth', 'cadastro')"
+            >
+              Assinar agora
+            </button>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <!-- Vantagens -->
     <section id="vantagens" class="py-16 sm:py-20">
       <div class="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
@@ -476,7 +548,9 @@ import step02Asset from '../assets/step-02.webp'
 import step03Asset from '../assets/step-03.webp'
 import step04Asset from '../assets/step-04.webp'
 import step05Asset from '../assets/step-05.webp'
+import { requisicaoApi } from '../services/api'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
+import type { Plano } from '../tipos'
 
 type EventoSportsDb = {
   idEvent: string
@@ -501,6 +575,7 @@ const LIGA_BRASILEIRAO = 4351
 
 const autenticacao = usarAutenticacaoStore()
 const faqAberto = ref(-1)
+const planos = ref<Plano[]>([])
 const jogosRodada = ref<EventoSportsDb[]>([])
 const rodadaAtual = ref<string | null>(null)
 const faixaJogosRef = ref<HTMLElement | null>(null)
@@ -597,6 +672,17 @@ const faq = [
   },
 ]
 
+function precoPlano(plano: Plano) {
+  const centavos = plano.vagas_fundador_restantes > 0 && plano.preco_fundador_centavos !== null
+    ? plano.preco_fundador_centavos
+    : plano.preco_centavos
+  return formatarCentavos(centavos)
+}
+
+function formatarCentavos(centavos: number) {
+  return (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
 function temPlacar(jogo: EventoSportsDb) {
   return jogo.intHomeScore !== null && jogo.intHomeScore !== undefined && jogo.intHomeScore !== ''
 }
@@ -612,6 +698,13 @@ function formatarDataEvento(jogo: EventoSportsDb) {
 }
 
 onMounted(async () => {
+  try {
+    const respostaPlanos = await requisicaoApi<{ planos: Plano[] }>('/planos')
+    planos.value = respostaPlanos.planos
+  } catch {
+    planos.value = []
+  }
+
   try {
     const proximos = await fetch(`${SPORTSDB}/eventsnextleague.php?id=${LIGA_BRASILEIRAO}`).then((r) => r.json())
     const primeiro: EventoSportsDb | undefined = proximos?.events?.[0]

@@ -57,6 +57,12 @@ export const roteador = createRouter({
       meta: { requerAutenticacao: true },
     },
     {
+      path: '/assinatura',
+      name: 'assinatura',
+      component: () => import('../views/AssinaturaView.vue'),
+      meta: { requerAutenticacao: true },
+    },
+    {
       path: '/checkout',
       name: 'checkout',
       component: () => import('../views/CheckoutView.vue'),

@@ -18,6 +18,14 @@ class CupomController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        // Fase 08: o cupom nasce gratuito — garante o do usuário em cada
+        // torneio publicado (cobre contas criadas antes do modelo de assinatura).
+        $servicoAssinatura = app(\App\Services\ServicoAssinatura::class);
+
+        foreach (\App\Models\Torneio::query()->where('status', 'publicado')->get() as $torneio) {
+            $servicoAssinatura->garantirCupomGratuito($request->user(), $torneio);
+        }
+
         $cupons = Cupom::query()
             ->with(['pedidoCheckout', 'pontuacao', 'torneio:id,nome,edicao,valor_cupom'])
             ->where('usuario_id', $request->user()->id)

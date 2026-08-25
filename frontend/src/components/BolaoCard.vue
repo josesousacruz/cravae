@@ -47,10 +47,10 @@
         <!-- Ação secundária: comprar cupom -->
         <RouterLink
           v-if="bolao.status === 'publicado' && bolao.compras_abertas"
-          :to="{ name: 'checkout', query: { torneio: bolao.id } }"
+          :to="{ name: 'assinatura' }"
           class="inline-flex flex-1 items-center justify-center rounded-lg border border-border bg-bg-input px-3 py-2 text-center text-xs font-semibold text-text-secondary transition hover:border-primary/40 hover:text-text"
         >
-          Comprar cupom
+          Assinar
         </RouterLink>
       </div>
     </div>

@@ -103,6 +103,7 @@
           <p class="mt-3 truncate text-sm font-bold text-text" :title="lugar.item.cupom.usuario.nome">
             {{ primeiroNome(lugar.item.cupom.usuario.nome) }}
           </p>
+          <span v-if="lugar.item.assinante" class="mt-1 rounded-full border border-gold/50 bg-gold/10 px-2 py-0.5 text-[10px] font-bold text-gold">★ Assinante</span>
           <p class="mt-1 text-2xl font-black tabular-nums" :class="lugar.cor">{{ inteiro(lugar.item.pontuacao_total) }}</p>
           <p class="text-[11px] text-text-muted">pontos</p>
         </article>
@@ -165,6 +166,7 @@
             <div class="flex flex-wrap items-center gap-2">
               <strong class="truncate text-sm text-text">{{ item.cupom.usuario.nome }}</strong>
               <span v-if="item.cupom.id === cupomDestaque" class="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-bg">Você</span>
+              <span v-if="item.assinante" class="rounded-full border border-gold/50 bg-gold/10 px-2 py-0.5 text-[10px] font-bold text-gold">★ Assinante</span>
             </div>
             <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-text-muted">
               <span>Cupom {{ item.cupom.codigo }}</span>

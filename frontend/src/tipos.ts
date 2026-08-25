@@ -255,6 +255,7 @@ export type EventoPontuacao = {
 export type RankingItem = {
   id: number
   pontuacao_total: string
+  assinante?: boolean
   quantidade_placares_exatos: number
   quantidade_classificados_corretos: number
   quantidade_palpites_finais_corretos: number
@@ -297,4 +298,32 @@ export type Bolao = {
 export type RespostaBoloes = {
   ativos: Bolao[]
   encerrados: Bolao[]
+}
+
+export type Plano = {
+  id: number
+  nome: string
+  slug: string
+  preco_centavos: number
+  preco_fundador_centavos: number | null
+  vagas_fundador_restantes: number
+  max_cupons: number
+}
+
+export type CicloAssinatura = {
+  id: number
+  competencia: string
+  status: 'pendente' | 'pago' | 'falhou'
+  pago_em: string | null
+}
+
+export type Assinatura = {
+  id: number
+  status: 'ativa' | 'inadimplente' | 'cancelada'
+  fundador: boolean
+  preco_centavos_contratado: number
+  assinada_em: string
+  cancelada_em: string | null
+  plano?: Plano
+  ciclos?: CicloAssinatura[]
 }
