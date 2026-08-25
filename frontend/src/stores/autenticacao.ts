@@ -162,6 +162,9 @@ export const usarAutenticacaoStore = defineStore('autenticacao', () => {
     }
 
     definirToken(null)
+    // Preferências por usuário deixam de fazer sentido sem sessão.
+    localStorage.removeItem('bolao_ativo_id')
+    localStorage.removeItem('aviso_mata_mata_v1')
     perfil.value = 'visitante'
     id.value = null
     nome.value = 'Visitante'

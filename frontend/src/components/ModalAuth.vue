@@ -223,7 +223,7 @@ async function submeterEntrar() {
     await autenticacao.entrar(formEntrar.email, formEntrar.senha)
     mostrar('sucesso', 'Login realizado com sucesso.')
     emit('fechar')
-    router.push({ name: 'boloes' })
+    router.push({ name: 'palpites' })
   } catch {
     mostrar('erro', autenticacao.erro || 'Email ou senha incorretos. Verifique seus dados e tente novamente.')
   } finally {
@@ -244,7 +244,7 @@ async function submeterCadastro() {
     )
     mostrar('sucesso', 'Conta criada! Bem-vindo ao Cravaê.')
     emit('fechar')
-    router.push({ name: 'boloes' })
+    router.push({ name: 'palpites' })
   } catch {
     mostrar('erro', autenticacao.erro || 'Não foi possível criar a conta. Tente novamente.')
   } finally {

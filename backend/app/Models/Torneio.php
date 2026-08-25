@@ -22,6 +22,7 @@ class Torneio extends Model
         'data_fechamento_podio',
         'valor_cupom',
         'compras_abertas',
+        'principal',
     ];
 
     protected function casts(): array
@@ -32,6 +33,7 @@ class Torneio extends Model
             'data_fechamento_podio' => 'datetime',
             'valor_cupom' => 'decimal:2',
             'compras_abertas' => 'boolean',
+            'principal' => 'boolean',
         ];
     }
 

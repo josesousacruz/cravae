@@ -47,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/assinaturas', [AssinaturaController::class, 'contratar']);
     Route::post('/assinatura/cancelar', [AssinaturaController::class, 'cancelar']);
     Route::post('/assinatura/confirmar-ciclo-sandbox', [AssinaturaController::class, 'confirmarCicloSandbox']);
+    Route::get('/meu-cupom', [CupomController::class, 'meu']);
     Route::get('/cupons', [CupomController::class, 'index']);
     Route::get('/cupons/{cupom}', [CupomController::class, 'show']);
     Route::get('/cupons/{cupom}/bracket', [CupomController::class, 'bracket']);

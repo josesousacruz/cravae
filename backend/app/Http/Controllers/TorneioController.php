@@ -16,9 +16,12 @@ class TorneioController extends Controller
 {
     public function publico(): JsonResponse
     {
+        // Fase 09 (Palpite Primeiro): a home mostra o torneio marcado como
+        // principal; sem nenhum marcado, cai no publicado de menor id.
         $torneio = Torneio::query()
             ->where('status', 'publicado')
-            ->latest('id')
+            ->orderByDesc('principal')
+            ->orderBy('id')
             ->firstOrFail();
 
         return response()->json([

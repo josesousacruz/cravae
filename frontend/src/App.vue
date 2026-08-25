@@ -1,16 +1,6 @@
 <template>
   <div class="min-h-screen flex flex-col">
-    <AppHeader
-      v-if="!landingAtiva"
-      @abrir-modal-auth="abrirModalAuth"
-      @toggle-menu="menuAberto = !menuAberto"
-    />
-    <MobileMenu
-      v-if="!landingAtiva"
-      :aberto="menuAberto"
-      @fechar="menuAberto = false"
-      @abrir-modal-auth="abrirModalAuth"
-    />
+    <AppHeader v-if="!landingAtiva" @abrir-modal-auth="abrirModalAuth" />
     <main :class="classeMain">
       <RouterView v-slot="{ Component }">
         <Transition name="fade" mode="out-in">
@@ -18,13 +8,13 @@
         </Transition>
       </RouterView>
     </main>
+    <BottomTabBar v-if="tabBarVisivel" />
     <ToastContainer />
     <ModalAuth
       v-if="modalAuthAberto"
       :tab-inicial="modalAuthTab"
       @fechar="modalAuthAberto = false"
     />
-    <AvisoMataMata />
   </div>
 </template>
 
@@ -33,23 +23,25 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import { usarAutenticacaoStore } from './stores/autenticacao'
 import AppHeader from './components/AppHeader.vue'
-import MobileMenu from './components/MobileMenu.vue'
+import BottomTabBar from './components/BottomTabBar.vue'
 import ToastContainer from './components/ToastContainer.vue'
 import ModalAuth from './components/ModalAuth.vue'
-import AvisoMataMata from './components/AvisoMataMata.vue'
 
 const autenticacao = usarAutenticacaoStore()
 const route = useRoute()
 const router = useRouter()
 
-const menuAberto = ref(false)
 const modalAuthAberto = ref(false)
 const modalAuthTab = ref<'entrar' | 'cadastro'>('entrar')
 const landingAtiva = computed(() => route.name === 'inicio')
+const tabBarVisivel = computed(() => autenticacao.estaAutenticado && route.name !== 'inicio')
 const classeMain = computed(() => {
   if (landingAtiva.value) return 'w-full flex-1'
-  if (route.name === 'cupom') return 'mx-auto w-full max-w-none flex-1 px-2 py-6 sm:px-3 lg:px-4'
-  return 'mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6'
+  const espacoTabBar = tabBarVisivel.value ? ' pb-24 sm:pb-8' : ''
+  if (route.name === 'palpites' || route.name === 'cupom') {
+    return `mx-auto w-full max-w-none flex-1 px-2 py-6 sm:px-3 lg:px-4${espacoTabBar}`
+  }
+  return `mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6${espacoTabBar}`
 })
 
 function abrirModalAuth(tab: 'entrar' | 'cadastro') {

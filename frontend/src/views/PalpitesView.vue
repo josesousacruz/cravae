@@ -1,75 +1,13 @@
 <template>
-  <div class="mx-auto" :class="tabAtiva === 'palpites' && subTabAtiva === 'chaveamento' ? 'max-w-none' : 'max-w-6xl'">
+  <div class="mx-auto" :class="subTabAtiva === 'chaveamento' ? 'max-w-none' : 'max-w-6xl'">
     <!-- Loading -->
     <div v-if="carregando" class="flex items-center justify-center py-20">
       <span class="text-text-muted">Carregando...</span>
     </div>
 
     <div v-else-if="cupom && torneio" class="space-y-4 pb-24 sm:pb-0">
-      <!-- Breadcrumb -->
-      <nav class="text-sm text-text-muted">
-        <RouterLink to="/painel" class="hover:text-text-secondary transition">Meus Cupons</RouterLink>
-        <span class="mx-2">&gt;</span>
-        <span>Cupom {{ cupom.codigo }}</span>
-      </nav>
-
-      <!-- Header -->
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <h1 class="text-xl font-bold">Cupom {{ cupom.codigo }}</h1>
-        <span
-          class="rounded-full px-3 py-1 text-xs font-semibold"
-          :class="cupom.status === 'ativo' ? 'bg-primary text-bg' : 'bg-warning/20 text-warning'"
-        >
-          {{ cupom.status === 'ativo' ? 'Cupom ativo' : 'Aguardando pagamento' }}
-        </span>
-      </div>
-
-      <!-- Banner de pendencia: pagamento em destaque -->
-      <div
-        v-if="cupom.status !== 'ativo'"
-        class="flex flex-col gap-3 rounded-2xl border border-[#32BCAD]/30 bg-[#32BCAD]/10 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div class="flex items-center gap-2.5">
-          <svg class="h-6 w-6 shrink-0 text-[#32BCAD]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
-          <p class="text-sm text-text-secondary">
-            Cupom <strong class="text-text">aguardando pagamento</strong>. Pague via Pix para confirmar sua participação.
-          </p>
-        </div>
-        <button
-          type="button"
-          class="flex shrink-0 items-center justify-center gap-2.5 rounded-xl bg-[#32BCAD] px-5 py-3 text-sm font-bold text-black shadow-lg shadow-[#32BCAD]/25 transition-all hover:bg-[#2aa99b] hover:shadow-[#32BCAD]/40"
-          @click="modalPagamentoAberto = true"
-        >
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h3c.621 0 1.125.504 1.125 1.125v3c0 .621-.504 1.125-1.125 1.125h-3A1.125 1.125 0 013.75 7.875v-3zM3.75 16.125c0-.621.504-1.125 1.125-1.125h3c.621 0 1.125.504 1.125 1.125v3c0 .621-.504 1.125-1.125 1.125h-3a1.125 1.125 0 01-1.125-1.125v-3zM15 4.875c0-.621.504-1.125 1.125-1.125h3c.621 0 1.125.504 1.125 1.125v3c0 .621-.504 1.125-1.125 1.125h-3A1.125 1.125 0 0115 7.875v-3zM13.5 13.5h3m-3 3h.008v.008H13.5V16.5zm3 3h.008v.008H16.5V19.5zm3-3h.008v.008H19.5V16.5zm0 3h.008v.008H19.5V19.5z" /></svg>
-          <span>Pagar via Pix{{ valorCupomFormatado ? ` · ${valorCupomFormatado}` : '' }}</span>
-        </button>
-      </div>
-
-      <ModalPixPagamento
-        :aberto="modalPagamentoAberto"
-        :cupom-codigo="cupom.codigo"
-        :valor="cupom.pedido_checkout?.valor"
-        @fechar="modalPagamentoAberto = false"
-      />
-
-      <!-- Tabs: Palpites / Ranking / Meus Resultados -->
-      <div class="hidden overflow-x-auto border-b border-border sm:flex">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          @click="tabAtiva = tab.id"
-          class="flex items-center gap-2 whitespace-nowrap px-5 py-3 text-sm transition cursor-pointer"
-          :class="tabAtiva === tab.id ? 'border-b-2 border-primary text-primary font-medium' : 'text-text-muted hover:text-text-secondary'"
-        >
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" :d="tab.icone" />
-          </svg>
-          {{ tab.nome }}
-        </button>
-      </div>
-
-      <!-- ═══════ Tab Palpites ═══════ -->
-      <section v-if="tabAtiva === 'palpites'" class="min-w-0 overflow-x-hidden">
+      <!-- Palpites (home) -->
+      <section class="min-w-0 overflow-x-hidden">
         <div class="min-w-0 gap-6" :class="subTabAtiva === 'chaveamento' ? '' : 'lg:grid lg:grid-cols-[minmax(0,1fr)_300px]'">
           <!-- Main column -->
           <div class="min-w-0 space-y-4">
@@ -78,10 +16,25 @@
               <button @click="faseAnterior" class="shrink-0 rounded-lg p-1.5 text-text-muted transition hover:bg-bg-input hover:text-text" :disabled="indiceFase <= 0">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
               </button>
-              <h2 class="min-w-0 truncate text-center text-sm font-bold sm:text-base">{{ tituloFaseAtual }}</h2>
+              <div class="min-w-0 flex-1 text-center">
+                <h2 class="min-w-0 truncate text-sm font-bold sm:text-base">{{ tituloFaseAtual }}</h2>
+                <div v-if="progressoRodada.total" class="mx-auto mt-1.5 max-w-[240px]">
+                  <div class="h-1.5 overflow-hidden rounded-full bg-bg-input">
+                    <div class="h-full rounded-full bg-primary transition-all" :style="{ width: `${Math.round((progressoRodada.comPalpite / progressoRodada.total) * 100)}%` }" />
+                  </div>
+                  <p class="mt-1 text-[11px] text-text-muted">
+                    {{ progressoRodada.comPalpite }}/{{ progressoRodada.total }} jogos palpitados<span v-if="progressoRodada.adiados"> · {{ progressoRodada.adiados }} adiado{{ progressoRodada.adiados > 1 ? 's' : '' }}</span>
+                  </p>
+                </div>
+              </div>
               <button @click="faseProxima" class="shrink-0 rounded-lg p-1.5 text-text-muted transition hover:bg-bg-input hover:text-text">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
               </button>
+            </div>
+
+            <div v-if="progressoRodada.completa && !somenteLeituraAtivo" class="flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary-dim px-4 py-2.5 text-sm font-semibold text-primary">
+              <span>Rodada completa ✓ Boa sorte!</span>
+              <RouterLink to="/ranking" class="shrink-0 text-xs font-bold underline-offset-2 hover:underline">Ver ranking →</RouterLink>
             </div>
 
             <!-- Day selector — horizontal scroll, compact -->
@@ -406,6 +359,21 @@
               <div v-if="!jogosDoDia.length" class="rounded-2xl border border-border bg-bg-card py-12 text-center">
                 <p class="text-text-muted">Nenhum jogo neste dia.</p>
               </div>
+
+              <!-- Conversão (só gratuito): após o último jogo do dia, nunca entre jogos -->
+              <div
+                v-if="elegivelNoMes === false && !bannerConversaoDispensado && !somenteLeituraAtivo"
+                class="relative rounded-2xl border border-gold/40 bg-gradient-to-br from-ambar/15 via-bg-card to-bg-card p-5"
+              >
+                <button type="button" class="absolute right-3 top-3 text-text-muted transition hover:text-text" aria-label="Dispensar" @click="dispensarBannerConversao">✕</button>
+                <p class="text-sm font-bold text-text">Você palpita de graça e aparece no ranking.</p>
+                <p class="mt-1 text-sm text-text-secondary">
+                  Assinantes concorrem ao prêmio do mês.<span v-if="vagasFundador"> Vagas de fundador: {{ vagasFundador }}/100 — R$ 4,95/mês vitalício.</span>
+                </p>
+                <RouterLink to="/assinatura" class="mt-3 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-hover">
+                  Quero concorrer
+                </RouterLink>
+              </div>
             </div>
 
             </template>
@@ -609,34 +577,11 @@
         </div>
       </section>
 
-      <!-- ═══════ Tab Ranking ═══════ -->
-      <section v-if="tabAtiva === 'ranking'">
-        <RankingConteudo :cupom-destaque="cupom.id" />
-      </section>
+      
 
-      <!-- ═══════ Tab Histórico ═══════ -->
-      <section v-if="tabAtiva === 'historico'">
-        <HistoricoPalpites :cupom-id="cupom.id" />
-      </section>
+      
 
-      <!-- ═══════ Tab Meus Resultados ═══════ -->
-      <section v-if="tabAtiva === 'resultados'">
-        <div v-if="cupom.eventos_pontuacao?.length" class="rounded-2xl border border-border bg-bg-card p-5">
-          <h2 class="mb-4 text-lg font-bold">Eventos de Pontuação</h2>
-          <div class="space-y-2">
-            <div v-for="evento in cupom.eventos_pontuacao" :key="evento.id" class="flex items-center justify-between gap-3 rounded-lg bg-bg-input px-3.5 py-2.5">
-              <div class="min-w-0">
-                <span class="block text-sm">{{ evento.descricao }}</span>
-                <span v-if="descricaoJogo(evento)" class="mt-0.5 block truncate text-xs text-text-muted">{{ descricaoJogo(evento) }}</span>
-              </div>
-              <span class="shrink-0 text-sm font-bold text-primary">+{{ evento.pontos }} pts</span>
-            </div>
-          </div>
-        </div>
-        <div v-else class="rounded-2xl border border-border bg-bg-card py-12 text-center">
-          <p class="text-text-muted">Nenhum evento de pontuação registrado ainda.</p>
-        </div>
-      </section>
+      
 
       <!-- Seletor de goleador: elenco real com foto, busca e gol contra -->
       <Teleport to="body">
@@ -700,42 +645,27 @@
         </div>
       </Teleport>
 
-      <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg-card/95 px-2 py-2 backdrop-blur sm:hidden">
-        <div class="mx-auto grid max-w-md grid-cols-4 gap-1">
-          <button
-            v-for="tab in tabs"
-            :key="`mobile-${tab.id}`"
-            type="button"
-            class="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition"
-            :class="tabAtiva === tab.id ? 'text-primary' : 'text-text-muted'"
-            @click="tabAtiva = tab.id"
-          >
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" :d="tab.icone" />
-            </svg>
-            <span>{{ tab.nome === 'Meus Resultados' ? 'Resultados' : tab.nome }}</span>
-          </button>
-        </div>
-      </nav>
+      
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch, type PropType } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { useToast } from '../composables/useToast'
 import type { Aposta, BracketJogoCupom, Cupom, ElencosJogo, GolPalpite, Jogador, RankingItem, ResumoBracketReal, Selecao, Torneio } from '../tipos'
 import tacaCopaAsset from '../assets/taca-copa-transparente.png'
-import HistoricoPalpites from '../components/HistoricoPalpites.vue'
-import ModalPixPagamento from '../components/ModalPixPagamento.vue'
-import RankingConteudo from '../components/RankingConteudo.vue'
-import { useEventosCupom } from '../composables/useEventosCupom'
+import { usarMeuCupomStore } from '../stores/meuCupom'
 
-const rota = useRoute()
+const props = defineProps<{ cupomId?: number; somenteLeitura?: boolean }>()
+
+const meuCupomStore = usarMeuCupomStore()
+// Fase 09: sem :id na rota, a tela opera sobre o cupom único do usuário.
+const idAlvo = computed(() => props.cupomId ?? meuCupomStore.cupom?.id ?? null)
+const somenteLeituraAtivo = computed(() => props.somenteLeitura === true)
 const { mostrar } = useToast()
-const { descricaoJogo } = useEventosCupom()
 
 const torneio = ref<Torneio | null>(null)
 const cupom = ref<Cupom | null>(null)
@@ -754,28 +684,12 @@ const palpitePodio = ref<{ campeao: number | null; vice: number | null; terceiro
 const ranking = ref<RankingItem[]>([])
 const carregando = ref(true)
 const carregandoRanking = ref(false)
-const modalPagamentoAberto = ref(false)
-const valorCupomFormatado = computed(() => {
-  const numero = Number(cupom.value?.pedido_checkout?.valor)
-  return Number.isFinite(numero) && numero > 0
-    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numero)
-    : ''
-})
-
-const tabAtiva = ref<'palpites' | 'ranking' | 'resultados' | 'historico'>('palpites')
 const subTabAtiva = ref<'jogos' | 'chaveamento'>('jogos')
 const indiceFase = ref(0)
 // Relogio reativo (atualizado a cada segundo) para o fechamento do podio e a contagem regressiva.
 const agoraMs = ref(Date.now())
 let relogioTimer: ReturnType<typeof setInterval> | null = null
 const diaSelecionado = ref('')
-
-const tabs = [
-  { id: 'palpites' as const, nome: 'Palpites', icone: 'M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125' },
-  { id: 'ranking' as const, nome: 'Ranking', icone: 'M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872' },
-  { id: 'resultados' as const, nome: 'Meus Resultados', icone: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z' },
-  { id: 'historico' as const, nome: 'Histórico', icone: 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z' },
-]
 
 const subTabs = [
   { id: 'jogos' as const, nome: 'Jogos' },
@@ -1168,6 +1082,7 @@ const primeiroJogoEliminatorioDiaMs = computed(() => {
 // (data_fechamento da rodada e um override opcional); mata-mata fecha POR DIA,
 // no inicio do primeiro jogo eliminatorio do dia.
 function jogoFechado(jogo: JogoCupom): boolean {
+  if (props.somenteLeitura) return true
   if (!jogo.data_hora_inicio) return false
 
   // Pontos corridos (Cravaê): cada jogo fecha no SEU horário de início.
@@ -1237,6 +1152,7 @@ const prazoPodioMs = computed<number | null>(() => {
 })
 
 const podioFechado = computed(() => {
+  if (props.somenteLeitura) return true
   const prazo = prazoPodioMs.value
   if (prazo === null) return false
   return agoraMs.value >= prazo
@@ -1305,6 +1221,43 @@ const tituloFaseAtual = computed(() => {
 })
 
 // Jogos da fase/rodada atual
+// Fase 09: progresso da rodada (adiado sai do denominador quando marcado).
+const progressoRodada = computed(() => {
+  const jogos = jogosFaseAtual.value.filter((j) => j.status !== 'adiado')
+  const adiados = jogosFaseAtual.value.length - jogos.length
+  const comPalpite = jogos.filter((j) => encontrouPalpite(j)).length
+  return { total: jogos.length, comPalpite, adiados, completa: jogos.length > 0 && comPalpite >= jogos.length }
+})
+
+function encontrouPalpite(jogo: JogoCupom): boolean {
+  const tipo = faseDeLiga(jogo.fase.tipo) ? 'placar_jogo_grupos' : 'placar_jogo_eliminatoria'
+  return Boolean(encontrarAposta(tipo, jogo.id))
+}
+
+// Assinatura: banner de conversão (só gratuito) e pill do topo.
+const elegivelNoMes = ref<boolean | null>(null)
+const vagasFundador = ref<number | null>(null)
+const bannerConversaoDispensado = ref(localStorage.getItem('banner_assinatura_v1') === String(new Date().getMonth()))
+
+function dispensarBannerConversao() {
+  localStorage.setItem('banner_assinatura_v1', String(new Date().getMonth()))
+  bannerConversaoDispensado.value = true
+}
+
+async function carregarAssinatura() {
+  if (props.somenteLeitura) return
+  try {
+    const [a, p] = await Promise.all([
+      requisicaoApi<{ elegivel_no_mes: boolean }>('/assinatura'),
+      requisicaoApi<{ planos: { vagas_fundador_restantes: number }[] }>('/planos'),
+    ])
+    elegivelNoMes.value = a.elegivel_no_mes
+    vagasFundador.value = p.planos[0]?.vagas_fundador_restantes ?? null
+  } catch {
+    elegivelNoMes.value = null
+  }
+}
+
 const jogosFaseAtual = computed(() => {
   if (!torneio.value || !faseAtual.value) return []
   let jogos: JogoCupom[] = faseDeLiga(faseAtual.value.tipo)
@@ -1556,9 +1509,9 @@ function montarRemocoes(): number[] {
 
 async function recarregarEstadoDerivado() {
   const [rC, rA, rB] = await Promise.all([
-    requisicaoApi<{ cupom: Cupom }>(`/cupons/${rota.params.id}`),
-    requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${rota.params.id}/apostas`),
-    requisicaoApi<{ bracket: BracketJogoCupom[]; resumo: ResumoBracketReal }>(`/cupons/${rota.params.id}/bracket`),
+    requisicaoApi<{ cupom: Cupom }>(`/cupons/${idAlvo.value}`),
+    requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${idAlvo.value}/apostas`),
+    requisicaoApi<{ bracket: BracketJogoCupom[]; resumo: ResumoBracketReal }>(`/cupons/${idAlvo.value}/bracket`),
   ])
 
   cupom.value = rC.cupom
@@ -1569,6 +1522,7 @@ async function recarregarEstadoDerivado() {
 }
 
 async function autoSalvar() {
+  if (props.somenteLeitura) return
   if (!torneio.value) return
   if (salvando.value) {
     salvarNovamente = true
@@ -1584,10 +1538,10 @@ async function autoSalvar() {
   salvarNovamente = false
   try {
     if (apostasArr?.length) {
-      await requisicaoApi(`/cupons/${rota.params.id}/apostas/lote`, { metodo: 'POST', corpo: { apostas: apostasArr } })
+      await requisicaoApi(`/cupons/${idAlvo.value}/apostas/lote`, { metodo: 'POST', corpo: { apostas: apostasArr } })
     }
     if (remocoes.length) {
-      await requisicaoApi(`/cupons/${rota.params.id}/apostas/remover`, { metodo: 'POST', corpo: { jogos: remocoes } })
+      await requisicaoApi(`/cupons/${idAlvo.value}/apostas/remover`, { metodo: 'POST', corpo: { jogos: remocoes } })
     }
     await recarregarEstadoDerivado()
     ultimoSalvo.value = true
@@ -1666,14 +1620,14 @@ function preencherFormulario(modo: 'substituir' | 'mesclar' = 'substituir') {
 async function carregarDados() {
   carregando.value = true
   try {
-    const rC = await requisicaoApi<{ cupom: Cupom }>(`/cupons/${rota.params.id}`)
+    const rC = await requisicaoApi<{ cupom: Cupom }>(`/cupons/${idAlvo.value}`)
     cupom.value = rC.cupom
 
     const caminhoTorneio = rC.cupom.torneio_id ? `/torneios/${rC.cupom.torneio_id}` : '/torneio'
     const [rT, rA, rB] = await Promise.all([
       requisicaoApi<{ torneio: Torneio }>(caminhoTorneio),
-      requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${rota.params.id}/apostas`),
-      requisicaoApi<{ bracket: BracketJogoCupom[]; resumo: ResumoBracketReal }>(`/cupons/${rota.params.id}/bracket`),
+      requisicaoApi<{ apostas: Aposta[] }>(`/cupons/${idAlvo.value}/apostas`),
+      requisicaoApi<{ bracket: BracketJogoCupom[]; resumo: ResumoBracketReal }>(`/cupons/${idAlvo.value}/bracket`),
     ])
     torneio.value = rT.torneio
     apostas.value = rA.apostas
@@ -1750,12 +1704,16 @@ async function recarregarTudo() {
 // Navegar entre cupons (mesma rota, só muda o :id) reusa o componente — sem isto, o
 // cupom novo continuaria mostrando os dados (palpites/jogos) do cupom anterior, dando
 // a impressão de "palpite repetido em outro bolão".
-watch(() => rota.params.id, () => {
-  recarregarTudo()
+watch(idAlvo, (novo, antigo) => {
+  if (novo && novo !== antigo) recarregarTudo()
 })
 
 onMounted(async () => {
-  await recarregarTudo()
+  if (!props.cupomId) {
+    await meuCupomStore.carregar()
+    carregarAssinatura()
+  }
+  if (idAlvo.value) await recarregarTudo()
 })
 </script>
 

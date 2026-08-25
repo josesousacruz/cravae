@@ -41,19 +41,34 @@ class CupomController extends Controller
     {
         abort_unless($cupom->usuario_id === $request->user()->id, 403);
 
-        $cupom->load([
-            'pedidoCheckout',
-            'pontuacao',
-            'eventosPontuacao' => fn ($query) => $query->latest('id')->with([
-                'jogo.selecaoMandante',
-                'jogo.selecaoVisitante',
-                'jogo.resultado',
-            ]),
-        ]);
+        return $this->respostaCupom($cupom);
+    }
 
-        return response()->json([
-            'cupom' => $cupom,
-        ]);
+    /**
+     * Fase 09 (Palpite Primeiro): cupom do usuário no torneio principal.
+     * Garante o cupom gratuito na primeira chamada e responde com o mesmo
+     * payload do show().
+     */
+    public function meu(Request $request): JsonResponse
+    {
+        $torneioPrincipal = \App\Models\Torneio::query()
+            ->where('status', 'publicado')
+            ->where('principal', true)
+            ->orderBy('id')
+            ->first();
+
+        if (! $torneioPrincipal) {
+            return response()->json([
+                'mensagem' => 'Nenhum torneio principal publicado no momento.',
+            ], 404);
+        }
+
+        $cupom = app(\App\Services\ServicoAssinatura::class)
+            ->garantirCupomGratuito($request->user(), $torneioPrincipal);
+
+        // O cupom recém-criado só carrega os atributos do insert; recarrega do
+        // banco para responder exatamente com a mesma estrutura do show().
+        return $this->respostaCupom($cupom->refresh());
     }
 
     public function bracket(Request $request, Cupom $cupom): JsonResponse
@@ -89,5 +104,25 @@ class CupomController extends Controller
         $filtros['apenas_mudancas'] = $request->boolean('apenas_mudancas');
 
         return response()->json($servico->relatorio($filtros));
+    }
+
+    /**
+     * Payload padrão de um cupom (compartilhado por show() e meu()).
+     */
+    private function respostaCupom(Cupom $cupom): JsonResponse
+    {
+        $cupom->load([
+            'pedidoCheckout',
+            'pontuacao',
+            'eventosPontuacao' => fn ($query) => $query->latest('id')->with([
+                'jogo.selecaoMandante',
+                'jogo.selecaoVisitante',
+                'jogo.resultado',
+            ]),
+        ]);
+
+        return response()->json([
+            'cupom' => $cupom,
+        ]);
     }
 }

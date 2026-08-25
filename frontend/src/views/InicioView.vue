@@ -22,7 +22,7 @@
         <div class="flex items-center gap-3">
           <RouterLink
             v-if="autenticacao.estaAutenticado"
-            to="/painel"
+            to="/palpites"
             class="hidden rounded-full border border-white/25 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 sm:inline-flex"
           >
             Meus Cupons
@@ -37,10 +37,10 @@
             </button>
             <button
               type="button"
-              class="rounded-full bg-lime-400 px-4 py-2 text-sm font-bold text-topo shadow-lg transition hover:scale-[1.02] hover:brightness-105"
+              class="rounded-full bg-ambar px-4 py-2 text-sm font-bold text-topo shadow-lg transition hover:scale-[1.02] hover:brightness-105"
               @click="$emit('abrirModalAuth', autenticacao.estaAutenticado ? 'entrar' : 'cadastro')"
             >
-              {{ autenticacao.estaAutenticado ? 'Abrir painel' : 'Criar conta' }}
+              {{ autenticacao.estaAutenticado ? 'Meus palpites' : 'Criar conta' }}
             </button>
           </template>
         </div>
@@ -49,17 +49,17 @@
 
     <!-- Hero escuro-verde -->
     <section class="relative overflow-hidden bg-gradient-to-br from-topo via-topo-claro to-topo pb-28 sm:pb-32">
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_75%_20%,rgba(163,230,53,0.18),transparent_45%),radial-gradient(circle_at_15%_85%,rgba(16,185,129,0.15),transparent_40%)]" />
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_75%_20%,rgba(231,184,75,0.18),transparent_45%),radial-gradient(circle_at_15%_85%,rgba(16,185,129,0.15),transparent_40%)]" />
 
       <div class="relative mx-auto grid max-w-7xl gap-14 px-4 pt-12 sm:px-6 lg:grid-cols-[1.02fr_1fr] lg:px-8 lg:pt-16">
         <div class="max-w-xl">
-          <div class="inline-flex items-center gap-2 rounded-full border border-lime-300/40 bg-lime-300/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-lime-300">
-            <span class="h-1.5 w-1.5 rounded-full bg-lime-300" />
+          <div class="inline-flex items-center gap-2 rounded-full border border-ambar/50 bg-ambar/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-ambar">
+            <span class="h-1.5 w-1.5 rounded-full bg-ambar" />
             Brasileirão Série A
           </div>
           <h1 class="mt-7 text-4xl font-black leading-[1.02] tracking-[-0.03em] text-white sm:text-6xl">
             Crave o placar.
-            <span class="block text-lime-300">Crave quem marca.</span>
+            <span class="block text-ambar">Crave quem marca.</span>
           </h1>
           <p class="mt-5 max-w-lg text-base leading-8 text-emerald-100/85 sm:text-lg">
             O bolão do Brasileirão em que você palpita o placar de cada jogo da rodada e quem faz os gols. Quanto mais você crava, mais sobe no ranking — e mais perto fica do prêmio.
@@ -68,15 +68,15 @@
           <div class="mt-9 flex flex-col gap-4 sm:flex-row">
             <RouterLink
               v-if="autenticacao.estaAutenticado"
-              to="/painel"
-              class="inline-flex items-center justify-center gap-2 rounded-full bg-lime-400 px-7 py-4 text-sm font-black text-topo shadow-xl transition hover:scale-[1.02] hover:brightness-105"
+              to="/palpites"
+              class="inline-flex items-center justify-center gap-2 rounded-full bg-ambar px-7 py-4 text-sm font-black text-topo shadow-xl transition hover:scale-[1.02] hover:brightness-105"
             >
-              Abrir meus cupons
+              Abrir meus palpites
             </RouterLink>
             <template v-else>
               <button
                 type="button"
-                class="inline-flex items-center justify-center gap-2 rounded-full bg-lime-400 px-7 py-4 text-sm font-black text-topo shadow-xl transition hover:scale-[1.02] hover:brightness-105"
+                class="inline-flex items-center justify-center gap-2 rounded-full bg-ambar px-7 py-4 text-sm font-black text-topo shadow-xl transition hover:scale-[1.02] hover:brightness-105"
                 @click="$emit('abrirModalAuth', 'cadastro')"
               >
                 Quero participar
@@ -105,7 +105,7 @@
         </div>
 
         <div class="relative hidden min-h-[26rem] lg:block">
-          <div class="absolute inset-x-10 top-10 h-72 rounded-full bg-lime-400/15 blur-[110px]" />
+          <div class="absolute inset-x-10 top-10 h-72 rounded-full bg-ambar/15 blur-[110px]" />
           <img :src="heroLeftAsset" alt="" class="absolute left-[2%] top-[16%] w-[28%] rotate-[-14deg] opacity-70 drop-shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
           <img :src="heroCenterAsset" alt="Tela do app" class="relative z-10 mx-auto w-[52%] min-w-[16rem] drop-shadow-[0_32px_80px_rgba(0,0,0,0.55)]">
           <img :src="heroRightAsset" alt="" class="absolute right-[1%] top-[24%] w-[29%] rotate-[15deg] opacity-85 drop-shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
@@ -179,7 +179,7 @@
 
               <RouterLink
                 v-if="autenticacao.estaAutenticado"
-                to="/painel"
+                to="/palpites"
                 class="mt-5 block w-full rounded-xl bg-white/90 py-2 text-center text-xs font-bold text-topo backdrop-blur-sm transition hover:bg-white"
               >
                 Fazer meu palpite
@@ -244,10 +244,10 @@
     <section id="premio" class="py-6">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-topo to-topo-claro px-6 py-10 shadow-xl sm:px-12 sm:py-14">
-          <div class="absolute inset-0 bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.15),transparent_45%)]" />
+          <div class="absolute inset-0 bg-[radial-gradient(circle_at_85%_30%,rgba(231,184,75,0.15),transparent_45%)]" />
 
           <div class="relative max-w-2xl">
-            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-lime-300">Prêmio do bolão</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-ambar">Prêmio do bolão</p>
             <h2 class="mt-3 text-3xl font-black tracking-[-0.03em] text-white sm:text-4xl">
               Quanto mais cupons na disputa, maior o prêmio final
             </h2>
@@ -257,15 +257,15 @@
             <button
               v-if="!autenticacao.estaAutenticado"
               type="button"
-              class="mt-7 inline-flex items-center justify-center rounded-full bg-lime-400 px-7 py-3.5 text-sm font-black text-topo shadow-xl transition hover:scale-[1.02] hover:brightness-105"
+              class="mt-7 inline-flex items-center justify-center rounded-full bg-ambar px-7 py-3.5 text-sm font-black text-topo shadow-xl transition hover:scale-[1.02] hover:brightness-105"
               @click="$emit('abrirModalAuth', 'cadastro')"
             >
               Garantir meu cupom
             </button>
             <RouterLink
               v-else
-              to="/painel"
-              class="mt-7 inline-flex items-center justify-center rounded-full bg-lime-400 px-7 py-3.5 text-sm font-black text-topo shadow-xl transition hover:scale-[1.02] hover:brightness-105"
+              to="/palpites"
+              class="mt-7 inline-flex items-center justify-center rounded-full bg-ambar px-7 py-3.5 text-sm font-black text-topo shadow-xl transition hover:scale-[1.02] hover:brightness-105"
             >
               Comprar mais um cupom
             </RouterLink>
@@ -447,10 +447,10 @@
         <div class="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <RouterLink
             v-if="autenticacao.estaAutenticado"
-            to="/painel"
+            to="/palpites"
             class="inline-flex items-center justify-center rounded-full bg-primary px-7 py-3 text-sm font-black text-white transition hover:bg-primary-hover"
           >
-            Ir para meu painel
+            Ir para meus palpites
           </RouterLink>
           <template v-else>
             <button
@@ -512,10 +512,10 @@
           <div class="mt-5">
             <RouterLink
               v-if="autenticacao.estaAutenticado"
-              to="/painel"
+              to="/palpites"
               class="inline-flex rounded-full border border-primary/40 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white"
             >
-              Abrir painel
+              Meus palpites
             </RouterLink>
             <button
               v-else
@@ -602,8 +602,8 @@ const passos = [
   },
   {
     numero: '02',
-    titulo: 'Compre seu cupom',
-    descricao: 'Pagamento via Pix. Um cupom vale o campeonato inteiro.',
+    titulo: 'Assine se quiser concorrer',
+    descricao: 'Jogar é grátis. A assinatura coloca você na disputa pelos prêmios de cada mês.',
     imagem: step02Asset,
   },
   {

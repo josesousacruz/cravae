@@ -12,20 +12,13 @@
 
       <!-- Desktop nav -->
       <nav class="hidden sm:flex items-center gap-1">
-        <RouterLink
-          to="/boloes"
-          class="rounded-lg px-3 py-2 text-sm font-medium text-emerald-100/80 transition-colors hover:bg-white/10 hover:text-white"
-          active-class="!bg-white/15 !text-white"
-        >
-          Bolões
-        </RouterLink>
         <template v-if="autenticacao.estaAutenticado">
           <RouterLink
-            to="/painel"
+            to="/palpites"
             class="rounded-lg px-3 py-2 text-sm font-medium text-emerald-100/80 transition-colors hover:bg-white/10 hover:text-white"
             active-class="!bg-white/15 !text-white"
           >
-            Painel
+            Palpites
           </RouterLink>
           <RouterLink
             to="/ranking"
@@ -35,74 +28,34 @@
             Ranking
           </RouterLink>
           <RouterLink
-            v-if="autenticacao.eAdministrador"
-            to="/admin"
+            to="/resultados"
             class="rounded-lg px-3 py-2 text-sm font-medium text-emerald-100/80 transition-colors hover:bg-white/10 hover:text-white"
             active-class="!bg-white/15 !text-white"
           >
-            Admin
+            Resultados
+          </RouterLink>
+          <RouterLink
+            to="/perfil"
+            class="rounded-lg px-3 py-2 text-sm font-medium text-emerald-100/80 transition-colors hover:bg-white/10 hover:text-white"
+            active-class="!bg-white/15 !text-white"
+          >
+            Perfil
           </RouterLink>
 
-          <SeletorBolao class="ml-1" />
-
-          <!-- User dropdown -->
-          <div class="relative ml-2">
-            <button
-              type="button"
-              class="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/10"
-              @click="dropdownAberto = !dropdownAberto"
-            >
-              <AvatarIniciais :nome="autenticacao.nome" :foto="autenticacao.fotoUrl" tamanho="sm" />
-              <span class="text-sm font-medium text-white">{{ autenticacao.nome }}</span>
-              <svg class="h-4 w-4 text-emerald-200/70 transition-transform" :class="{ 'rotate-180': dropdownAberto }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            <Transition
-              enter-active-class="transition duration-150 ease-out"
-              enter-from-class="opacity-0 scale-95"
-              enter-to-class="opacity-100 scale-100"
-              leave-active-class="transition duration-100 ease-in"
-              leave-from-class="opacity-100 scale-100"
-              leave-to-class="opacity-0 scale-95"
-            >
-              <div
-                v-if="dropdownAberto"
-                class="absolute right-0 top-full mt-1 w-64 rounded-xl border border-border bg-bg-card p-4 shadow-xl"
-              >
-                <div class="mb-3 border-b border-border pb-3">
-                  <p class="text-sm font-medium text-text">{{ autenticacao.nome }}</p>
-                  <p class="text-xs text-text-muted">{{ autenticacao.email }}</p>
-                  <p class="mt-1 text-xs text-text-muted">{{ autenticacao.telefone || 'Não informado' }}</p>
-                  <p class="mt-1 text-xs" :class="autenticacao.cpfCnpj ? 'text-text-muted' : 'text-warning'">
-                    {{ autenticacao.cpfCnpj ? 'CPF/CNPJ informado' : 'CPF/CNPJ pendente' }}
-                  </p>
-                </div>
-                <RouterLink
-                  to="/assinatura"
-                  class="mb-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-bg-card-hover hover:text-text"
-                  @click="dropdownAberto = false"
-                >
-                  Assinatura
-                </RouterLink>
-                <RouterLink
-                  to="/perfil"
-                  class="mb-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-bg-card-hover hover:text-text"
-                  @click="dropdownAberto = false"
-                >
-                  Editar perfil
-                </RouterLink>
-                <button
-                  type="button"
-                  class="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-text-muted transition-colors hover:bg-bg-card-hover hover:text-danger"
-                  @click="sair"
-                >
-                  Sair
-                </button>
-              </div>
-            </Transition>
-          </div>
+          <!-- Pill de assinatura -->
+          <span
+            v-if="elegivelNoMes"
+            class="ml-2 rounded-full bg-ambar px-3 py-1.5 text-xs font-bold text-[#17301f]"
+          >
+            ★ Assinante
+          </span>
+          <RouterLink
+            v-else-if="assinaturaCarregada"
+            to="/assinatura"
+            class="ml-2 rounded-full bg-ambar px-3 py-1.5 text-xs font-bold text-[#17301f] transition hover:brightness-105"
+          >
+            Assinar
+          </RouterLink>
         </template>
 
         <template v-else>
@@ -125,43 +78,66 @@
 
       <!-- Mobile right -->
       <div class="flex sm:hidden items-center gap-2">
-        <AvatarIniciais v-if="autenticacao.estaAutenticado" :nome="autenticacao.nome" :foto="autenticacao.fotoUrl" tamanho="sm" />
-        <button
-          type="button"
-          class="rounded-lg p-2 text-emerald-100/80 transition-colors hover:bg-white/10 hover:text-white"
-          @click="$emit('toggleMenu')"
-        >
-          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
+        <RouterLink v-if="autenticacao.estaAutenticado" to="/perfil">
+          <AvatarIniciais :nome="autenticacao.nome" :foto="autenticacao.fotoUrl" tamanho="sm" />
+        </RouterLink>
+        <template v-else>
+          <button
+            type="button"
+            class="rounded-lg px-3 py-2 text-sm font-medium text-emerald-100/80 transition-colors hover:bg-white/10 hover:text-white"
+            @click="$emit('abrirModalAuth', 'entrar')"
+          >
+            Entrar
+          </button>
+          <button
+            type="button"
+            class="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+            @click="$emit('abrirModalAuth', 'cadastro')"
+          >
+            Cadastrar
+          </button>
+        </template>
       </div>
     </div>
   </header>
-
-  <!-- Click outside to close dropdown -->
-  <div v-if="dropdownAberto" class="fixed inset-0 z-40" @click="dropdownAberto = false" />
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
+import { requisicaoApi } from '../services/api'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
+import type { Assinatura } from '../tipos'
 import AvatarIniciais from './AvatarIniciais.vue'
-import SeletorBolao from './SeletorBolao.vue'
 
 defineEmits<{
   abrirModalAuth: [tab: 'entrar' | 'cadastro']
-  toggleMenu: []
 }>()
 
 const autenticacao = usarAutenticacaoStore()
-const router = useRouter()
-const dropdownAberto = ref(false)
+const elegivelNoMes = ref(false)
+const assinaturaCarregada = ref(false)
 
-async function sair() {
-  dropdownAberto.value = false
-  await autenticacao.sair()
-  router.push('/')
-}
+// Busca a assinatura uma única vez assim que houver usuário autenticado
+// (cobre tanto o mount já logado quanto o login via modal).
+watch(
+  () => autenticacao.estaAutenticado,
+  async (logado) => {
+    if (!logado) {
+      elegivelNoMes.value = false
+      assinaturaCarregada.value = false
+      return
+    }
+    if (assinaturaCarregada.value) return
+    try {
+      const resposta = await requisicaoApi<{ assinatura: Assinatura | null; elegivel_no_mes: boolean }>('/assinatura')
+      elegivelNoMes.value = resposta.elegivel_no_mes
+    } catch {
+      elegivelNoMes.value = false
+    } finally {
+      assinaturaCarregada.value = true
+    }
+  },
+  { immediate: true },
+)
 </script>

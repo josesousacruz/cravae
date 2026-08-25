@@ -167,6 +167,7 @@
               <strong class="truncate text-sm text-text">{{ item.cupom.usuario.nome }}</strong>
               <span v-if="item.cupom.id === cupomDestaque" class="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-bg">Você</span>
               <span v-if="item.assinante" class="rounded-full border border-gold/50 bg-gold/10 px-2 py-0.5 text-[10px] font-bold text-gold">★ Assinante</span>
+              <span v-if="item.assinante === false && item.cupom.id === cupomDestaque" class="text-[10px] text-text-muted">não concorre · <RouterLink to="/assinatura" class="underline" @click.stop>assinar</RouterLink></span>
             </div>
             <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-text-muted">
               <span>Cupom {{ item.cupom.codigo }}</span>
@@ -200,11 +201,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi, urlAsset } from '../services/api'
 import { usarTorneioStore } from '../stores/torneio'
-import { usarBolaoAtivoStore } from '../stores/bolaoAtivo'
 import { usarAutenticacaoStore } from '../stores/autenticacao'
 import { useEventosCupom } from '../composables/useEventosCupom'
 import { useToast } from '../composables/useToast'
@@ -216,7 +216,6 @@ const props = defineProps<{
 
 const rota = useRoute()
 const torneioStore = usarTorneioStore()
-const bolao = usarBolaoAtivoStore()
 const autenticacao = usarAutenticacaoStore()
 const { mostrar } = useToast()
 const { expandidoId, cache, carregandoId, alternar, descricaoJogo } = useEventosCupom()
@@ -304,9 +303,8 @@ async function compartilhar() {
 async function carregarRanking() {
   carregando.value = true
   try {
-    if (bolao.lista.length === 0) await bolao.carregar()
-    // Ranking SEMPRE do bolão ativo (não do torneio público mais recente).
-    await torneioStore.carregar(bolao.ativoId)
+    // Ranking do torneio principal (GET /torneio público).
+    await torneioStore.carregar()
     if (torneioStore.torneio) {
       const resposta = await requisicaoApi<RespostaRanking>(`/torneios/${torneioStore.torneio.id}/ranking`)
       ranking.value = resposta.ranking
@@ -321,7 +319,4 @@ async function carregarRanking() {
 }
 
 onMounted(carregarRanking)
-
-// Troca de bolão no seletor → recarrega o ranking do bolão ativo.
-watch(() => bolao.ativoId, carregarRanking)
 </script>
