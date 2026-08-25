@@ -1,6 +1,6 @@
 <template>
   <nav class="fixed bottom-0 inset-x-0 z-40 border-t border-border bg-bg-card pb-[env(safe-area-inset-bottom)] sm:hidden">
-    <div class="grid grid-cols-4">
+    <div class="grid grid-cols-5">
       <RouterLink
         v-for="item in itens"
         :key="item.rota"
@@ -24,6 +24,11 @@ import { RouterLink, useRoute } from 'vue-router'
 const rota = useRoute()
 
 const itens = [
+  {
+    nome: 'Início',
+    rota: '/home',
+    icone: 'M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75',
+  },
   {
     nome: 'Palpites',
     rota: '/palpites',

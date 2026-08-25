@@ -19,6 +19,12 @@ export const roteador = createRouter({
       component: InicioView,
     },
     {
+      path: '/home',
+      name: 'home',
+      component: () => import('../views/HomeView.vue'),
+      meta: { requerAutenticacao: true },
+    },
+    {
       path: '/palpites',
       name: 'palpites',
       component: PalpitesView,
@@ -103,7 +109,7 @@ function validarRota(
 
   // Autenticado na landing sem modal explícito: direto para o palpite.
   if (to.name === 'inicio' && autenticacao.estaAutenticado && !to.query.modal) {
-    return { name: 'palpites' }
+    return { name: 'home' }
   }
 
   return true

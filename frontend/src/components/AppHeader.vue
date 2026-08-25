@@ -14,6 +14,13 @@
       <nav class="hidden sm:flex items-center gap-1">
         <template v-if="autenticacao.estaAutenticado">
           <RouterLink
+            to="/home"
+            class="rounded-lg px-3 py-2 text-sm font-medium text-emerald-100/80 transition-colors hover:bg-white/10 hover:text-white"
+            active-class="!bg-white/15 !text-white"
+          >
+            Início
+          </RouterLink>
+          <RouterLink
             to="/palpites"
             class="rounded-lg px-3 py-2 text-sm font-medium text-emerald-100/80 transition-colors hover:bg-white/10 hover:text-white"
             active-class="!bg-white/15 !text-white"
