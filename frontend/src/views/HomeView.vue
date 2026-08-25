@@ -260,7 +260,15 @@ const fraseStatus = computed(() => {
 })
 
 function escudoDe(jogo: Jogo) {
-  return jogo.selecao_mandante?.escudo_url ?? ''
+  // Ajuste provisório a pedido do dono (torcedor do Vitória), até existir a
+  // feature "clube do coração": jogos do Vitória mostram o Vitória; jogos do
+  // Bahia mostram o adversário.
+  const mandante = jogo.selecao_mandante
+  const visitante = jogo.selecao_visitante
+  if (visitante?.sigla === 'VIT') return visitante.escudo_url ?? ''
+  if (mandante?.sigla === 'BAH') return visitante?.escudo_url ?? ''
+  if (visitante?.sigla === 'BAH') return mandante?.escudo_url ?? ''
+  return mandante?.escudo_url ?? ''
 }
 
 const textoFechamento = computed(() => {
