@@ -11,6 +11,48 @@
         <div class="min-w-0 gap-6" :class="subTabAtiva === 'chaveamento' ? '' : 'lg:grid lg:grid-cols-[minmax(0,1fr)_300px]'">
           <!-- Main column -->
           <div class="min-w-0 space-y-4">
+            <!-- Contexto pessoal + status (estilo Cartola) -->
+            <template v-if="!somenteLeituraAtivo">
+              <div class="flex items-center gap-3 rounded-2xl border border-border bg-bg-card px-4 py-3">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-black text-white">
+                  {{ autenticacao.nome.slice(0, 1).toUpperCase() }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-bold text-text">{{ autenticacao.nome }}</p>
+                  <p class="text-xs text-text-muted">{{ nomeMesAtual }}</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-lg font-black leading-none text-primary tabular-nums">{{ pontosNoMes }} pts</p>
+                  <p class="mt-0.5 text-[11px] text-text-muted">{{ posicaoNoMes ? `${posicaoNoMes}º no mês` : 'sem pontos no mês' }}</p>
+                </div>
+              </div>
+
+              <div v-if="textoProximoFechamento" class="flex items-center gap-2 rounded-xl bg-topo px-4 py-2.5 text-sm font-bold text-white">
+                <svg class="h-4 w-4 shrink-0 text-ambar" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                {{ textoProximoFechamento }}
+              </div>
+
+              <RouterLink
+                v-if="elegivelNoMes === false && !temAssinatura"
+                to="/assinatura"
+                class="flex items-center justify-between gap-3 rounded-xl border border-gold/50 bg-ambar/15 px-4 py-2.5 text-sm"
+              >
+                <span class="min-w-0 truncate">
+                  <span class="mr-2 rounded bg-ambar px-1.5 py-0.5 text-[10px] font-black uppercase text-[#17301f]">Fundador</span>
+                  <span class="font-semibold text-text">Só R$ 4,95/mês, vitalício<span v-if="vagasFundador"> — restam {{ vagasFundador }} vagas</span></span>
+                </span>
+                <span class="shrink-0 font-black text-gold">Assina que vale →</span>
+              </RouterLink>
+              <RouterLink
+                v-else-if="elegivelNoMes === false && temAssinatura"
+                to="/assinatura"
+                class="flex items-center justify-between gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-2.5 text-sm"
+              >
+                <span class="min-w-0 truncate font-semibold text-text">Confirme o pagamento de {{ nomeMesAtual }} para concorrer ao prêmio</span>
+                <span class="shrink-0 font-black text-warning">Regularizar →</span>
+              </RouterLink>
+            </template>
+
             <!-- Fase navigator -->
             <div class="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-border bg-bg-card px-3 py-3 sm:px-4">
               <button @click="faseAnterior" class="shrink-0 rounded-lg p-1.5 text-text-muted transition hover:bg-bg-input hover:text-text" :disabled="indiceFase <= 0">
@@ -360,20 +402,7 @@
                 <p class="text-text-muted">Nenhum jogo neste dia.</p>
               </div>
 
-              <!-- Conversão (só gratuito): após o último jogo do dia, nunca entre jogos -->
-              <div
-                v-if="elegivelNoMes === false && !bannerConversaoDispensado && !somenteLeituraAtivo"
-                class="relative rounded-2xl border border-gold/40 bg-gradient-to-br from-ambar/15 via-bg-card to-bg-card p-5"
-              >
-                <button type="button" class="absolute right-3 top-3 text-text-muted transition hover:text-text" aria-label="Dispensar" @click="dispensarBannerConversao">✕</button>
-                <p class="text-sm font-bold text-text">Você palpita de graça e aparece no ranking.</p>
-                <p class="mt-1 text-sm text-text-secondary">
-                  Assinantes concorrem ao prêmio do mês.<span v-if="vagasFundador"> Vagas de fundador: {{ vagasFundador }}/100 — R$ 4,95/mês vitalício.</span>
-                </p>
-                <RouterLink to="/assinatura" class="mt-3 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-hover">
-                  Quero concorrer
-                </RouterLink>
-              </div>
+              
             </div>
 
             </template>
@@ -657,11 +686,13 @@ import { requisicaoApi } from '../services/api'
 import { useToast } from '../composables/useToast'
 import type { Aposta, BracketJogoCupom, Cupom, ElencosJogo, GolPalpite, Jogador, RankingItem, ResumoBracketReal, Selecao, Torneio } from '../tipos'
 import tacaCopaAsset from '../assets/taca-copa-transparente.png'
+import { usarAutenticacaoStore } from '../stores/autenticacao'
 import { usarMeuCupomStore } from '../stores/meuCupom'
 
 const props = defineProps<{ cupomId?: number; somenteLeitura?: boolean }>()
 
 const meuCupomStore = usarMeuCupomStore()
+const autenticacao = usarAutenticacaoStore()
 // Fase 09: sem :id na rota, a tela opera sobre o cupom único do usuário.
 const idAlvo = computed(() => props.cupomId ?? meuCupomStore.cupom?.id ?? null)
 const somenteLeituraAtivo = computed(() => props.somenteLeitura === true)
@@ -1236,23 +1267,51 @@ function encontrouPalpite(jogo: JogoCupom): boolean {
 
 // Assinatura: banner de conversão (só gratuito) e pill do topo.
 const elegivelNoMes = ref<boolean | null>(null)
+const temAssinatura = ref(false)
 const vagasFundador = ref<number | null>(null)
-const bannerConversaoDispensado = ref(localStorage.getItem('banner_assinatura_v1') === String(new Date().getMonth()))
+const pontosNoMes = ref(0)
+const posicaoNoMes = ref<number | null>(null)
+const nomeMesAtual = new Date().toLocaleDateString('pt-BR', { month: 'long' }).replace(/^./, (c) => c.toUpperCase())
 
-function dispensarBannerConversao() {
-  localStorage.setItem('banner_assinatura_v1', String(new Date().getMonth()))
-  bannerConversaoDispensado.value = true
-}
+// Barra de status estilo Cartola: o próximo jogo da rodada a fechar.
+const proximoFechamento = computed(() => {
+  const abertos = jogosFaseAtual.value
+    .map((j) => instanteBrt(j.data_hora_inicio))
+    .filter((ms) => ms > agoraMs.value)
+    .sort((a, b) => a - b)
+  return abertos[0] ?? null
+})
 
+const textoProximoFechamento = computed(() => {
+  if (proximoFechamento.value === null) return ''
+  const restante = proximoFechamento.value - agoraMs.value
+  const horas = Math.floor(restante / 3_600_000)
+  const minutos = Math.floor((restante % 3_600_000) / 60_000)
+  if (horas >= 48) return `Próximo jogo fecha em ${Math.floor(horas / 24)} dias`
+  if (horas > 0) return `Próximo jogo fecha em ${horas}h${String(minutos).padStart(2, '0')}`
+  return `Próximo jogo fecha em ${minutos}min`
+})
 async function carregarAssinatura() {
   if (props.somenteLeitura) return
   try {
+    const competencia = new Date().toISOString().slice(0, 7)
     const [a, p] = await Promise.all([
       requisicaoApi<{ elegivel_no_mes: boolean }>('/assinatura'),
       requisicaoApi<{ planos: { vagas_fundador_restantes: number }[] }>('/planos'),
     ])
     elegivelNoMes.value = a.elegivel_no_mes
+    temAssinatura.value = Boolean((a as { assinatura?: { status?: string } }).assinatura && (a as { assinatura?: { status?: string } }).assinatura?.status !== 'cancelada')
     vagasFundador.value = p.planos[0]?.vagas_fundador_restantes ?? null
+
+    try {
+      if (torneio.value) {
+        const mensal = await requisicaoApi<{ minha_posicao: { posicao: number; item: { pontuacao_total: string } } | null }>(`/torneios/${torneio.value.id}/ranking?competencia=${competencia}`)
+        pontosNoMes.value = Math.round(Number(mensal.minha_posicao?.item.pontuacao_total ?? 0))
+        posicaoNoMes.value = mensal.minha_posicao?.posicao ?? null
+      }
+    } catch {
+      // resumo pessoal é opcional; a faixa de assinatura não depende dele
+    }
   } catch {
     elegivelNoMes.value = null
   }
@@ -1711,9 +1770,9 @@ watch(idAlvo, (novo, antigo) => {
 onMounted(async () => {
   if (!props.cupomId) {
     await meuCupomStore.carregar()
-    carregarAssinatura()
   }
   if (idAlvo.value) await recarregarTudo()
+  if (!props.cupomId) carregarAssinatura()
 })
 </script>
 

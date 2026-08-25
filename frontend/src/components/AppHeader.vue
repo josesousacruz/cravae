@@ -54,7 +54,7 @@
             to="/assinatura"
             class="ml-2 rounded-full bg-ambar px-3 py-1.5 text-xs font-bold text-[#17301f] transition hover:brightness-105"
           >
-            Assinar
+            {{ temAssinatura ? 'Regularizar' : 'Assinar' }}
           </RouterLink>
         </template>
 
@@ -117,6 +117,7 @@ defineEmits<{
 const autenticacao = usarAutenticacaoStore()
 const elegivelNoMes = ref(false)
 const assinaturaCarregada = ref(false)
+const temAssinatura = ref(false)
 
 // Busca a assinatura uma única vez assim que houver usuário autenticado
 // (cobre tanto o mount já logado quanto o login via modal).
@@ -132,6 +133,7 @@ watch(
     try {
       const resposta = await requisicaoApi<{ assinatura: Assinatura | null; elegivel_no_mes: boolean }>('/assinatura')
       elegivelNoMes.value = resposta.elegivel_no_mes
+      temAssinatura.value = Boolean(resposta.assinatura && resposta.assinatura.status !== 'cancelada')
     } catch {
       elegivelNoMes.value = false
     } finally {
