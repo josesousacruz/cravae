@@ -5,7 +5,7 @@ import { mkdirSync } from 'node:fs'
 const APP = 'http://localhost:5173'
 const API = 'http://127.0.0.1:8888/api'
 const OUT = 'C:/Projetos/Bolão Copa 2026/tools/mockup/raw'
-const CUPOM_ID = 10
+const CUPOM_ID = 7
 mkdirSync(OUT, { recursive: true })
 
 const KILL_ANIM = '*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}'
@@ -24,6 +24,7 @@ async function token() {
 async function newPage(browser, tok) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 })
   if (tok) await ctx.addInitScript(t => localStorage.setItem('token_acesso', t), tok)
+  await ctx.addInitScript(() => localStorage.setItem('aviso_mata_mata_v1', '1'))
   const page = await ctx.newPage()
   page.on('pageerror', e => console.log('  pageerror:', String(e).split('\n')[0]))
   return { ctx, page }
