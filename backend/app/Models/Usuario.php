@@ -60,6 +60,19 @@ class Usuario extends Authenticatable
         return $this->hasMany(PedidoCheckout::class, 'usuario_id');
     }
 
+    public function assinaturaAtual(): ?Assinatura
+    {
+        return $this->assinaturas()
+            ->whereIn('status', [Assinatura::STATUS_ATIVA, Assinatura::STATUS_INADIMPLENTE])
+            ->latest('assinada_em')
+            ->first();
+    }
+
+    public function assinaturas(): HasMany
+    {
+        return $this->hasMany(Assinatura::class, 'usuario_id');
+    }
+
     public function cupons(): HasMany
     {
         return $this->hasMany(Cupom::class, 'usuario_id');

@@ -17,6 +17,7 @@ class Cupom extends Model
         'pedido_checkout_id',
         'codigo',
         'status',
+        'origem',
     ];
 
     public function usuario(): BelongsTo
