@@ -565,7 +565,7 @@
 
           <!-- Sidebar: Ranking ao Vivo -->
           <div v-if="subTabAtiva !== 'chaveamento'" class="hidden lg:block">
-            <div class="sticky top-20 overflow-hidden rounded-3xl border border-primary/20 bg-[radial-gradient(circle_at_top,#123225,transparent_40%),linear-gradient(180deg,#111513,#0b0d0c)] p-4">
+            <div class="sticky top-20 overflow-hidden rounded-3xl border border-primary/20 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.10),transparent_45%),linear-gradient(180deg,#ffffff,#f4faf7)] shadow-lg shadow-primary/10 p-4">
               <div class="mb-4 flex items-center justify-between gap-2">
                 <h3 class="text-sm font-bold">Ranking ao Vivo</h3>
                 <span class="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">Top 3</span>
