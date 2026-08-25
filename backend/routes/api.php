@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssinaturaController;
 use App\Http\Controllers\AutenticacaoController;
 use App\Http\Controllers\ApostaController;
 use App\Http\Controllers\BolaoController;
@@ -26,6 +27,7 @@ Route::get('/status', function () {
 
 Route::get('/torneio', [TorneioController::class, 'publico']);
 Route::get('/boloes', [BolaoController::class, 'index']);
+Route::get('/planos', [AssinaturaController::class, 'planos']);
 Route::get('/torneios/{torneio}/ranking', [TorneioController::class, 'ranking']);
 Route::get('/torneios/{torneio}', [TorneioController::class, 'show']);
 Route::get('/ranking/cupons/{cupom}/eventos', [TorneioController::class, 'eventosCupom']);
@@ -41,6 +43,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/usuario', [AutenticacaoController::class, 'atualizarPerfil']);
     Route::post('/usuario/foto', [AutenticacaoController::class, 'atualizarFoto'])->middleware('throttle:10,1');
     Route::post('/sair', [AutenticacaoController::class, 'sair']);
+    Route::get('/assinatura', [AssinaturaController::class, 'minha']);
+    Route::post('/assinaturas', [AssinaturaController::class, 'contratar']);
+    Route::post('/assinatura/cancelar', [AssinaturaController::class, 'cancelar']);
+    Route::post('/assinatura/confirmar-ciclo-sandbox', [AssinaturaController::class, 'confirmarCicloSandbox']);
     Route::get('/cupons', [CupomController::class, 'index']);
     Route::get('/cupons/{cupom}', [CupomController::class, 'show']);
     Route::get('/cupons/{cupom}/bracket', [CupomController::class, 'bracket']);

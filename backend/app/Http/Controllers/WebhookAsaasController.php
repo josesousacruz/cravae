@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Assinatura;
 use App\Models\EventoWebhookAsaas;
 use App\Models\PedidoCheckout;
 use App\Services\ServicoCheckout;
@@ -56,6 +57,10 @@ class WebhookAsaasController extends Controller
 
     private function processarEvento(EventoWebhookAsaas $registro, array $payload): void
     {
+        if ($this->processarEventoAssinatura($registro, $payload)) {
+            return;
+        }
+
         $pedido = $this->localizarPedido($payload);
 
         if (! $pedido) {
@@ -81,6 +86,50 @@ class WebhookAsaasController extends Controller
             'status' => 'processado',
             'processado_at' => now(),
         ])->save();
+    }
+
+    /**
+     * Pagamentos de assinatura (payment.subscription presente): marcam o
+     * ciclo da competência de vencimento como pago. Retorna true quando o
+     * evento foi tratado como assinatura.
+     */
+    private function processarEventoAssinatura(EventoWebhookAsaas $registro, array $payload): bool
+    {
+        $idAssinaturaAsaas = Arr::get($payload, 'payment.subscription');
+
+        if (! $idAssinaturaAsaas) {
+            return false;
+        }
+
+        $assinatura = Assinatura::query()->where('id_assinatura_asaas', $idAssinaturaAsaas)->first();
+
+        if (! $assinatura) {
+            $referencia = (string) Arr::get($payload, 'payment.externalReference');
+
+            if (str_starts_with($referencia, 'assinatura:')) {
+                $assinatura = Assinatura::query()->find((int) substr($referencia, strlen('assinatura:')));
+            }
+        }
+
+        if (! $assinatura) {
+            $registro->forceFill(['status' => 'ignorado', 'processado_at' => now()])->save();
+
+            return true;
+        }
+
+        if (in_array($registro->evento, ['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED'], true)) {
+            $competencia = substr((string) (Arr::get($payload, 'payment.dueDate') ?: now()->toDateString()), 0, 7);
+
+            app(\App\Services\ServicoAssinatura::class)->registrarPagamentoCiclo(
+                $assinatura,
+                $competencia,
+                Arr::get($payload, 'payment.id'),
+            );
+        }
+
+        $registro->forceFill(['status' => 'processado', 'processado_at' => now()])->save();
+
+        return true;
     }
 
     private function localizarPedido(array $payload): ?PedidoCheckout

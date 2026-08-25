@@ -59,11 +59,10 @@ class MultiBolaoTest extends TestCase
         $this->assertSame($torneio->id, $cupom->torneio_id);
     }
 
-    public function test_compra_usa_compras_abertas_do_torneio_escolhido(): void
+    public function test_compra_de_cupom_responde_410_no_modelo_de_assinatura(): void
     {
         $this->seed();
         $torneio = \App\Models\Torneio::query()->where('status', 'publicado')->firstOrFail();
-        $torneio->forceFill(['compras_abertas' => false, 'valor_cupom' => 25.00])->save();
 
         $usuario = \App\Models\Usuario::factory()->create([
             'perfil' => 'usuario',
@@ -71,13 +70,8 @@ class MultiBolaoTest extends TestCase
         ]);
         \Laravel\Sanctum\Sanctum::actingAs($usuario);
 
-        $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->assertForbidden();
-
-        $torneio->forceFill(['compras_abertas' => true])->save();
         $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])
-            ->assertCreated()
-            ->assertJsonPath('pedido.valor', '25.00')
-            ->assertJsonPath('pedido.torneio_id', $torneio->id);
+            ->assertStatus(410);
     }
 
     public function test_lista_boloes_separa_ativos_e_encerrados(): void
@@ -107,27 +101,6 @@ class MultiBolaoTest extends TestCase
             ->assertOk()
             ->assertJsonPath('torneio.id', $torneio->id)
             ->assertJsonStructure(['torneio' => ['id', 'nome', 'fases', 'jogos', 'grupos']]);
-    }
-
-    public function test_compra_bloqueada_para_torneio_nao_publicado(): void
-    {
-        $this->seed();
-        $encerrado = \App\Models\Torneio::query()->create([
-            'nome' => 'Bolao Encerrado',
-            'edicao' => '2025',
-            'status' => 'encerrado',
-            'valor_cupom' => 10.00,
-            'compras_abertas' => true, // mesmo com compras "abertas", torneio encerrado nao vende
-        ]);
-
-        $usuario = \App\Models\Usuario::factory()->create([
-            'perfil' => 'usuario',
-            'cpf_cnpj' => '12345678909',
-        ]);
-        \Laravel\Sanctum\Sanctum::actingAs($usuario);
-
-        $this->postJson('/api/pedidos-checkout', ['torneio_id' => $encerrado->id])
-            ->assertForbidden();
     }
 
     public function test_show_torneio_nao_publicado_retorna_404(): void

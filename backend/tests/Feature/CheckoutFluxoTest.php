@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\Cupom;
+use App\Models\PedidoCheckout;
 use App\Models\Torneio;
 use App\Models\Usuario;
-use App\Services\ServicoCheckout;
+use App\Services\ServicoAssinatura;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -13,12 +16,11 @@ class CheckoutFluxoTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_criar_pedido_usa_valor_cupom_do_torneio(): void
+    public function test_compra_de_cupom_responde_410_no_modelo_de_assinatura(): void
     {
         $this->seed();
 
         $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
-        $torneio->forceFill(['valor_cupom' => 15.00])->save();
 
         $usuario = Usuario::factory()->create([
             'nome' => 'Checkout User',
@@ -29,29 +31,8 @@ class CheckoutFluxoTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $response = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id]);
-
-        $response
-            ->assertCreated()
-            ->assertJsonPath('pedido.valor', '15.00');
-    }
-
-    public function test_compra_encerrada_bloqueia_criacao_de_pedido(): void
-    {
-        $this->seed();
-        Torneio::query()->where('status', 'publicado')->update(['compras_abertas' => false]);
-        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
-
-        $usuario = Usuario::factory()->create([
-            'nome' => 'Compra Fechada',
-            'email' => 'compra-fechada@example.com',
-            'telefone' => '11999990009',
-            'perfil' => 'usuario',
-        ]);
-
-        Sanctum::actingAs($usuario);
-
-        $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->assertForbidden();
+        $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])
+            ->assertStatus(410);
     }
 
     public function test_admin_abre_e_fecha_a_compra_de_cupons(): void
@@ -99,31 +80,9 @@ class CheckoutFluxoTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_checkout_rejeita_valor_enviado_pelo_cliente(): void
-    {
-        $this->seed();
-        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
-
-        $usuario = Usuario::factory()->create([
-            'nome' => 'Valor Cliente',
-            'email' => 'valor-cliente@example.com',
-            'telefone' => '11999990004',
-            'perfil' => 'usuario',
-        ]);
-
-        Sanctum::actingAs($usuario);
-
-        $this->postJson('/api/pedidos-checkout', [
-            'torneio_id' => $torneio->id,
-            'valor' => 1,
-        ])->assertStatus(422)
-            ->assertJsonValidationErrors(['valor']);
-    }
-
     public function test_rota_de_simulacao_de_pagamento_nao_fica_disponivel_para_usuario(): void
     {
         $this->seed();
-        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
 
         $usuario = Usuario::factory()->create([
             'nome' => 'Sem Simulacao',
@@ -134,9 +93,15 @@ class CheckoutFluxoTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->assertCreated()->json('pedido');
+        $pedido = PedidoCheckout::query()->create([
+            'usuario_id' => $usuario->id,
+            'valor' => 10,
+            'status' => 'pendente',
+            'forma_pagamento' => 'pix',
+            'referencia_checkout' => 'pedido-sem-simulacao',
+        ]);
 
-        $this->postJson("/api/pedidos-checkout/{$pedido['id']}/simular-pagamento")
+        $this->postJson("/api/pedidos-checkout/{$pedido->id}/simular-pagamento")
             ->assertNotFound();
     }
 
@@ -154,8 +119,16 @@ class CheckoutFluxoTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $pedidoResponse = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id]);
-        $pedidoId = $pedidoResponse->json('pedido.id');
+        $cupom = Cupom::query()->create([
+            'usuario_id' => $usuario->id,
+            'torneio_id' => $torneio->id,
+            'codigo' => strtoupper(Str::random(10)),
+            'status' => 'aguardando_pagamento',
+        ]);
+
+        $pedidoId = $this->postJson("/api/cupons/{$cupom->id}/pagamento")
+            ->assertOk()
+            ->json('pedido.id');
 
         $response = $this->postJson("/api/pedidos-checkout/{$pedidoId}/confirmar-sandbox");
 
@@ -165,7 +138,7 @@ class CheckoutFluxoTest extends TestCase
             ->assertJsonPath('cupom.status', 'ativo');
     }
 
-    public function test_multiplos_cupons_por_usuario(): void
+    public function test_cupom_gratuito_e_unico_por_usuario_e_torneio(): void
     {
         $this->seed();
         $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
@@ -177,20 +150,16 @@ class CheckoutFluxoTest extends TestCase
             'perfil' => 'usuario',
         ]);
 
-        Sanctum::actingAs($usuario);
+        $servico = app(ServicoAssinatura::class);
+        $primeiro = $servico->garantirCupomGratuito($usuario, $torneio);
+        $segundo = $servico->garantirCupomGratuito($usuario, $torneio);
 
-        $pedido1 = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id]);
-        $this->postJson("/api/pedidos-checkout/{$pedido1->json('pedido.id')}/confirmar-sandbox");
-
-        $pedido2 = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id]);
-        $this->postJson("/api/pedidos-checkout/{$pedido2->json('pedido.id')}/confirmar-sandbox");
-
-        $cuponsResponse = $this->getJson('/api/cupons');
-        $cuponsResponse->assertOk();
-
-        $cupons = $cuponsResponse->json('cupons');
-        $this->assertCount(2, $cupons);
-        $this->assertNotEquals($cupons[0]['id'], $cupons[1]['id']);
+        $this->assertSame($primeiro->id, $segundo->id);
+        $this->assertSame('ativo', $primeiro->status);
+        $this->assertSame(1, Cupom::query()
+            ->where('usuario_id', $usuario->id)
+            ->where('torneio_id', $torneio->id)
+            ->count());
     }
 
     public function test_pagamento_duplicado_retorna_cupom_existente(): void
@@ -207,8 +176,16 @@ class CheckoutFluxoTest extends TestCase
 
         Sanctum::actingAs($usuario);
 
-        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id]);
-        $pedidoId = $pedido->json('pedido.id');
+        $cupom = Cupom::query()->create([
+            'usuario_id' => $usuario->id,
+            'torneio_id' => $torneio->id,
+            'codigo' => strtoupper(Str::random(10)),
+            'status' => 'aguardando_pagamento',
+        ]);
+
+        $pedidoId = $this->postJson("/api/cupons/{$cupom->id}/pagamento")
+            ->assertOk()
+            ->json('pedido.id');
 
         $primeiro = $this->postJson("/api/pedidos-checkout/{$pedidoId}/confirmar-sandbox");
         $cupomId1 = $primeiro->json('cupom.id');

@@ -49,6 +49,12 @@ class TorneioController extends Controller
             ->orderByDesc('quantidade_palpites_finais_corretos')
             ->get();
 
+        // Fase 08: selo de assinante — elegível ao prêmio da competência corrente.
+        $elegiveis = app(\App\Services\ServicoAssinatura::class)->usuariosElegiveisNaCompetencia();
+        $ranking->each(function ($item) use ($elegiveis) {
+            $item->setAttribute('assinante', in_array($item->cupom?->usuario_id, $elegiveis, true));
+        });
+
         $usuarioId = Auth::guard('sanctum')->id();
 
         $minhaPosicao = null;

@@ -62,6 +62,29 @@ class ServicoAsaas
             ->post("/v3/sandbox/payment/{$asaasPagamentoId}/confirm", []));
     }
 
+    /**
+     * Cria uma assinatura mensal no Asaas (cobrança recorrente Pix).
+     */
+    public function criarAssinatura(Usuario $usuario, int $precoCentavos, string $descricao, string $referenciaExterna): array
+    {
+        return $this->validarResposta($this->clienteHttp()->post('/v3/subscriptions', [
+            'customer' => $usuario->asaas_cliente_id,
+            'billingType' => 'PIX',
+            'value' => round($precoCentavos / 100, 2),
+            'nextDueDate' => now()->toDateString(),
+            'cycle' => 'MONTHLY',
+            'description' => $descricao,
+            'externalReference' => $referenciaExterna,
+        ]));
+    }
+
+    public function cancelarAssinatura(string $asaasAssinaturaId): array
+    {
+        return $this->validarResposta($this->clienteHttp()
+            ->withBody('')
+            ->delete("/v3/subscriptions/{$asaasAssinaturaId}"));
+    }
+
     private function clienteHttp(): PendingRequest
     {
         $accessToken = (string) config('services.asaas.access_token');

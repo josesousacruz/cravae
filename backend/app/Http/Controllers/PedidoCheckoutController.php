@@ -23,6 +23,9 @@ class PedidoCheckoutController extends Controller
 
     public function store(CriarPedidoCheckoutRequest $request): JsonResponse
     {
+        // Fase 08: a venda de cupom deu lugar ao modelo de assinatura.
+        abort(410, 'A compra de cupom foi substituída pela assinatura. Assine para concorrer aos prêmios.');
+
         $torneio = Torneio::query()->findOrFail($request->integer('torneio_id'));
         $this->garantirComprasAbertas($torneio);
 

@@ -26,6 +26,14 @@ class AutenticacaoController extends Controller
             'perfil' => 'usuario',
         ]);
 
+        // Modelo de assinatura (fase 08): todo usuário nasce no tier gratuito,
+        // com um cupom por torneio publicado para já poder palpitar.
+        $servicoAssinatura = app(\App\Services\ServicoAssinatura::class);
+
+        foreach (\App\Models\Torneio::query()->where('status', 'publicado')->get() as $torneio) {
+            $servicoAssinatura->garantirCupomGratuito($usuario, $torneio);
+        }
+
         return response()->json([
             'token' => $usuario->createToken('web')->plainTextToken,
             'usuario' => $usuario,

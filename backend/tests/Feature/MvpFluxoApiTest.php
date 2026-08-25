@@ -22,7 +22,7 @@ class MvpFluxoApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_usuario_consegue_comprar_cupom_apostar_e_entrar_no_ranking(): void
+    public function test_usuario_consegue_obter_cupom_apostar_e_entrar_no_ranking(): void
     {
         $this->seed();
 
@@ -37,13 +37,13 @@ class MvpFluxoApiTest extends TestCase
         Sanctum::actingAs($usuario);
 
         $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
-        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])
-            ->assertCreated()
-            ->json('pedido');
-
-        $cupomResposta = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])
-            ->assertOk()
-            ->json('cupom');
+        $cupomResposta = Cupom::query()->create([
+            'usuario_id' => $usuario->id,
+            'torneio_id' => $torneio->id,
+            'codigo' => strtoupper(\Illuminate\Support\Str::random(10)),
+            'status' => 'ativo',
+            'origem' => 'gratuito',
+        ]);
 
         $grupoA = $torneio->grupos()->where('nome', 'Grupo A')->firstOrFail();
         $jogoGrupoA = Jogo::query()->where('grupo_id', $grupoA->id)->firstOrFail();
@@ -193,13 +193,13 @@ class MvpFluxoApiTest extends TestCase
         Sanctum::actingAs($usuario);
 
         $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
-        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])
-            ->assertCreated()
-            ->json('pedido');
-
-        $cupomResposta = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])
-            ->assertOk()
-            ->json('cupom');
+        $cupomResposta = Cupom::query()->create([
+            'usuario_id' => $usuario->id,
+            'torneio_id' => $torneio->id,
+            'codigo' => strtoupper(\Illuminate\Support\Str::random(10)),
+            'status' => 'ativo',
+            'origem' => 'gratuito',
+        ]);
 
         $jogoGrupo = Jogo::query()->whereHas('fase', fn ($query) => $query->where('tipo', 'grupos'))->firstOrFail();
         Rodada::query()->whereKey($jogoGrupo->rodada_id)->update(['data_fechamento' => now()->addDay()]);
@@ -289,8 +289,13 @@ class MvpFluxoApiTest extends TestCase
         Sanctum::actingAs($usuario);
 
         $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
-        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->json('pedido');
-        $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])->json('cupom');
+        $cupom = Cupom::query()->create([
+            'usuario_id' => $usuario->id,
+            'torneio_id' => $torneio->id,
+            'codigo' => strtoupper(\Illuminate\Support\Str::random(10)),
+            'status' => 'ativo',
+            'origem' => 'gratuito',
+        ]);
 
         $jogo = Jogo::query()->whereHas('fase', fn ($query) => $query->where('slug', 'fase_de_grupos'))->firstOrFail();
 

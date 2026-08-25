@@ -26,10 +26,15 @@ class MataMataRealidadeTest extends TestCase
         ]);
         Sanctum::actingAs($usuario);
         $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
-        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->assertCreated()->json('pedido');
-        $cupom = $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox", [])->assertOk()->json('cupom');
+        $cupom = Cupom::query()->create([
+            'usuario_id' => $usuario->id,
+            'torneio_id' => $torneio->id,
+            'codigo' => strtoupper(\Illuminate\Support\Str::random(10)),
+            'status' => 'ativo',
+            'origem' => 'gratuito',
+        ]);
 
-        return [$usuario, Cupom::query()->findOrFail($cupom['id']), $torneio];
+        return [$usuario, $cupom, $torneio];
     }
 
     public function test_palpite_eliminatoria_usa_participantes_reais_sem_exigir_grupos(): void

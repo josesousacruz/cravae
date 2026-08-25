@@ -22,11 +22,11 @@ class AsaasCheckoutTest extends TestCase
         $usuario = Usuario::factory()->create();
         Sanctum::actingAs($usuario);
 
-        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
-        $response = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id]);
+        $cupom = $this->criarCupomAguardandoPagamento($usuario);
+        $response = $this->postJson("/api/cupons/{$cupom->id}/pagamento");
 
         $response
-            ->assertCreated()
+            ->assertOk()
             ->assertJsonPath('pedido.status', 'pendente')
             ->assertJsonPath('pedido.asaas_status', 'PENDING')
             ->assertJsonPath('pedido.pix_copia_cola', 'pix-copia-e-cola')
@@ -41,8 +41,8 @@ class AsaasCheckoutTest extends TestCase
         $usuario = Usuario::factory()->create();
         Sanctum::actingAs($usuario);
 
-        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
-        $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])
+        $cupom = $this->criarCupomAguardandoPagamento($usuario);
+        $this->postJson("/api/cupons/{$cupom->id}/pagamento")
             ->assertStatus(503)
             ->assertJsonPath('message', 'Integracao Asaas nao configurada.');
     }
@@ -112,8 +112,8 @@ class AsaasCheckoutTest extends TestCase
         $usuario = Usuario::factory()->create();
         Sanctum::actingAs($usuario);
 
-        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
-        $pedido = $this->postJson('/api/pedidos-checkout', ['torneio_id' => $torneio->id])->assertCreated()->json('pedido');
+        $cupom = $this->criarCupomAguardandoPagamento($usuario);
+        $pedido = $this->postJson("/api/cupons/{$cupom->id}/pagamento")->assertOk()->json('pedido');
 
         $this->postJson("/api/pedidos-checkout/{$pedido['id']}/confirmar-sandbox")
             ->assertOk()
@@ -235,6 +235,18 @@ class AsaasCheckoutTest extends TestCase
 
         $this->assertSame('pago', $pendente->fresh()->status);
         $this->assertSame('pago', $pago->fresh()->status);
+    }
+
+    private function criarCupomAguardandoPagamento(Usuario $usuario): Cupom
+    {
+        $torneio = Torneio::query()->where('status', 'publicado')->firstOrFail();
+
+        return Cupom::query()->create([
+            'usuario_id' => $usuario->id,
+            'torneio_id' => $torneio->id,
+            'codigo' => strtoupper(\Illuminate\Support\Str::random(10)),
+            'status' => 'aguardando_pagamento',
+        ]);
     }
 
     private function criarPedidoPendente(Usuario $usuario, string $asaasPagamentoId = 'pay_teste_sync'): PedidoCheckout
