@@ -42,6 +42,10 @@ Plano detalhado: `.planning/phases/08-assinaturas/PLAN.md`. Decisões (grilling 
 - [x] Plano 3 — elegibilidade: flag assinante no ranking, apuração mensal só de elegíveis, testes
 - [x] Plano 4 — frontend: pricing na landing com contador, gestão no painel, selo no ranking
 
+## Fase F — Palpite Primeiro (pós-login) — CONCLUÍDA 2026-08-25
+
+Blueprint: artifact "Palpite Primeiro" (síntese de 3 propostas + 2 juízes). Login cai direto em /palpites; nav de 4 itens (Palpites·Ranking·Resultados·Perfil), BottomTabBar mobile; Bolões/Painel/Checkout/SeletorBolao/bolaoAtivo mortos; PalpitesView = ex-CupomView sem :id (store meuCupom; props cupomId/somenteLeitura para o viewer de temporadas em /cupons/:id); backend: torneios.principal + GET /meu-cupom. Paleta oficial da marca (verde campo #0A3A2A, âmbar #E7B84B, osso) + Archivo/Space Grotesk. Decisões: adiado sai do denominador do progresso; sem contas antigas (lançamento zerado); "inscrições encerradas" não existe — só fechamento por jogo.
+
 ## Estado
 
 - 2026-07-21: fork criado a partir do bolão (código + banco `cravafc`), rebrand inicial aplicado (tema lima, nome, manifest, favicon, CLAUDE.md).
