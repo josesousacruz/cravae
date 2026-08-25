@@ -8,19 +8,29 @@
         </svg>
         <h1 class="text-2xl font-bold text-text">Ranking</h1>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex rounded-xl border border-border bg-bg-card p-1 text-sm font-bold">
         <button
-          v-for="filtro in ['Rodada', 'Mês']"
-          :key="filtro"
           type="button"
-          class="inline-flex items-center gap-1 rounded-xl border border-border bg-bg-card px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-primary/30"
-          @click="avisarEmBreve"
+          class="rounded-lg px-3 py-1.5 transition"
+          :class="recorte === 'mes' ? 'bg-primary text-white' : 'text-text-muted hover:text-text'"
+          @click="recorte = 'mes'"
         >
-          {{ filtro }}
-          <svg class="h-4 w-4 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
+          {{ nomeMesAtual }}
+        </button>
+        <button
+          type="button"
+          class="rounded-lg px-3 py-1.5 transition"
+          :class="recorte === 'geral' ? 'bg-primary text-white' : 'text-text-muted hover:text-text'"
+          @click="recorte = 'geral'"
+        >
+          Geral
         </button>
       </div>
     </header>
+
+    <p v-if="recorte === 'mes'" class="-mt-1 text-xs font-medium text-gold">
+      Disputa de {{ nomeMesAtual }} — vale o prêmio do mês para assinantes.
+    </p>
 
     <!-- Progresso de partidas + Pontos -->
     <div class="flex items-center justify-between gap-3">
@@ -112,30 +122,30 @@
 
     <!-- Estado vazio -->
     <div v-else class="rounded-[28px] border border-border bg-bg-card py-12 text-center">
-      <p class="px-6 text-sm text-text-muted">Nenhum resultado disponível. O ranking será atualizado conforme os resultados forem lançados.</p>
+      <p class="px-6 text-sm text-text-muted">{{ recorte === 'mes' ? `Ainda sem pontos em ${nomeMesAtual} — eles entram junto com os resultados das rodadas do mês.` : 'Nenhum resultado disponível. O ranking será atualizado conforme os resultados forem lançados.' }}</p>
     </div>
 
     <!-- Sua posição atual -->
     <section
       v-if="minhaPosicao"
-      class="relative overflow-hidden rounded-[28px] border border-violet-500/40 bg-[linear-gradient(135deg,rgba(139,92,246,0.18),rgba(139,92,246,0.04))] p-5 shadow-[0_0_30px_-12px_rgba(139,92,246,0.6)]"
+      class="relative overflow-hidden rounded-[28px] border border-gold/40 bg-[linear-gradient(135deg,rgba(231,184,75,0.16),rgba(231,184,75,0.03))] p-5 shadow-sm"
     >
       <div class="flex items-center gap-4">
-        <div class="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-violet-400/60">
+        <div class="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-gold/60">
           <img v-if="minhaFoto" :src="minhaFoto" :alt="autenticacao.nome" class="h-full w-full object-cover" />
-          <div v-else class="flex h-full w-full items-center justify-center bg-bg-input text-lg font-bold text-violet-300">
+          <div v-else class="flex h-full w-full items-center justify-center bg-bg-input text-lg font-bold text-gold">
             {{ iniciais(minhaPosicao.item.cupom.usuario.nome) }}
           </div>
         </div>
         <div class="min-w-0 flex-1">
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-violet-300">Sua posição atual</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-gold">Sua posição atual</p>
           <p class="truncate text-lg font-bold text-text">{{ minhaPosicao.item.cupom.usuario.nome }}</p>
           <p class="mt-0.5 text-xs text-text-secondary">
             {{ minhaPosicao.item.quantidade_placares_exatos }} exatos · {{ minhaPosicao.item.quantidade_classificados_corretos }} classificados
           </p>
         </div>
         <div class="shrink-0 text-right">
-          <p class="text-3xl font-black leading-none text-violet-600">#{{ minhaPosicao.posicao }}</p>
+          <p class="text-3xl font-black leading-none text-gold">#{{ minhaPosicao.posicao }}</p>
           <p class="mt-1 text-xl font-black leading-none text-text tabular-nums">{{ inteiro(minhaPosicao.item.pontuacao_total) }}</p>
           <p class="text-[11px] text-text-muted">pontos</p>
         </div>
@@ -144,7 +154,7 @@
 
     <!-- Classificacao geral -->
     <section v-if="!carregando && ranking.length" class="space-y-3">
-      <h2 class="px-1 text-base font-bold text-text">Classificacao Geral</h2>
+      <h2 class="px-1 text-base font-bold text-text">{{ recorte === 'mes' ? `Classificação de ${nomeMesAtual}` : 'Classificação geral' }}</h2>
 
       <div
         v-for="(item, i) in ranking"
@@ -201,7 +211,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi, urlAsset } from '../services/api'
 import { usarTorneioStore } from '../stores/torneio'
@@ -225,6 +235,9 @@ const minhaPosicao = ref<MinhaPosicao | null>(null)
 const partidas = ref({ finalizadas: 0, total: 0 })
 const carregando = ref(true)
 const mostrarPontos = ref(false)
+const recorte = ref<'mes' | 'geral'>('mes')
+const competenciaAtual = new Date().toISOString().slice(0, 7)
+const nomeMesAtual = new Date().toLocaleDateString('pt-BR', { month: 'long' }).replace(/^./, (c) => c.toUpperCase())
 
 const cupomDestaque = computed(() => {
   if (props.cupomDestaque != null) return props.cupomDestaque
@@ -282,9 +295,6 @@ function primeiroNome(nome: string) {
   return nome.trim().split(/\s+/)[0] ?? nome
 }
 
-function avisarEmBreve() {
-  mostrar('sucesso', 'Filtros de rodada e período em breve.')
-}
 
 async function compartilhar() {
   const url = window.location.href
@@ -306,17 +316,20 @@ async function carregarRanking() {
     // Ranking do torneio principal (GET /torneio público).
     await torneioStore.carregar()
     if (torneioStore.torneio) {
-      const resposta = await requisicaoApi<RespostaRanking>(`/torneios/${torneioStore.torneio.id}/ranking`)
+      const sufixo = recorte.value === 'mes' ? `?competencia=${competenciaAtual}` : ''
+      const resposta = await requisicaoApi<RespostaRanking>(`/torneios/${torneioStore.torneio.id}/ranking${sufixo}`)
       ranking.value = resposta.ranking
       minhaPosicao.value = resposta.minha_posicao
       partidas.value = resposta.partidas
     }
   } catch {
-    // Erro silencioso
+    ranking.value = []
+    minhaPosicao.value = null
   } finally {
     carregando.value = false
   }
 }
 
+watch(recorte, carregarRanking)
 onMounted(carregarRanking)
 </script>

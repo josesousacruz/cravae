@@ -40,6 +40,13 @@ class TorneioController extends Controller
 
     public function ranking(Torneio $torneio): JsonResponse
     {
+        // Fase 10: ?competencia=YYYY-MM recorta a disputa do mês (prêmio mensal).
+        $competencia = request()->query('competencia');
+
+        if (is_string($competencia) && preg_match('/^\d{4}-\d{2}$/', $competencia)) {
+            return $this->rankingDaCompetencia($torneio, $competencia);
+        }
+
         $ranking = PontuacaoCupom::query()
             ->with([
                 'cupom:id,usuario_id,codigo',
@@ -82,6 +89,93 @@ class TorneioController extends Controller
         return response()->json([
             'ranking' => $ranking,
             'minha_posicao' => $minhaPosicao,
+            'partidas' => [
+                'finalizadas' => $partidasFinalizadas,
+                'total' => $totalPartidas,
+            ],
+        ]);
+    }
+
+    /**
+     * Disputa do mês: soma os eventos de pontuação de jogos que INICIAM na
+     * competência. Eventos sem jogo (pódio/artilheiro/campeão) ficam fora do
+     * recorte mensal — pertencem só ao ranking geral.
+     */
+    private function rankingDaCompetencia(Torneio $torneio, string $competencia): JsonResponse
+    {
+        $inicio = \Carbon\Carbon::createFromFormat('Y-m', $competencia)->startOfMonth();
+        $fim = $inicio->copy()->endOfMonth();
+
+        $linhas = \App\Models\EventoPontuacao::query()
+            ->join('jogos', 'jogos.id', '=', 'eventos_pontuacao.jogo_id')
+            ->join('regras_pontuacao', 'regras_pontuacao.id', '=', 'eventos_pontuacao.regra_pontuacao_id')
+            ->where('jogos.torneio_id', $torneio->id)
+            ->whereBetween('jogos.data_hora_inicio', [$inicio, $fim])
+            ->groupBy('eventos_pontuacao.cupom_id')
+            ->selectRaw('eventos_pontuacao.cupom_id')
+            ->selectRaw('SUM(eventos_pontuacao.pontos) as pontuacao_total')
+            ->selectRaw("SUM(CASE WHEN regras_pontuacao.chave LIKE 'placar_exato%' THEN 1 ELSE 0 END) as quantidade_placares_exatos")
+            ->selectRaw('COUNT(*) as quantidade_acertos')
+            ->orderByDesc('pontuacao_total')
+            ->orderByDesc('quantidade_placares_exatos')
+            ->orderByDesc('quantidade_acertos')
+            ->get();
+
+        $cupons = \App\Models\Cupom::query()
+            ->with('usuario:id,nome,foto')
+            ->whereIn('id', $linhas->pluck('cupom_id'))
+            ->get()
+            ->keyBy('id');
+
+        $elegiveis = app(\App\Services\ServicoAssinatura::class)->usuariosElegiveisNaCompetencia($competencia);
+
+        $ranking = $linhas->map(function ($linha) use ($cupons, $elegiveis) {
+            $cupom = $cupons->get($linha->cupom_id);
+
+            return [
+                'id' => $linha->cupom_id,
+                'cupom_id' => $linha->cupom_id,
+                'pontuacao_total' => (string) $linha->pontuacao_total,
+                'quantidade_placares_exatos' => (int) $linha->quantidade_placares_exatos,
+                'quantidade_classificados_corretos' => 0,
+                'quantidade_palpites_finais_corretos' => (int) $linha->quantidade_acertos,
+                'assinante' => in_array($cupom?->usuario_id, $elegiveis, true),
+                'cupom' => [
+                    'id' => $cupom?->id,
+                    'usuario_id' => $cupom?->usuario_id,
+                    'codigo' => $cupom?->codigo,
+                    'usuario' => [
+                        'id' => $cupom?->usuario?->id,
+                        'nome' => $cupom?->usuario?->nome,
+                        'foto' => $cupom?->usuario?->foto,
+                    ],
+                ],
+            ];
+        })->values();
+
+        $usuarioId = Auth::guard('sanctum')->id();
+        $minhaPosicao = null;
+
+        if ($usuarioId) {
+            $indice = $ranking->search(fn ($item) => ($item['cupom']['usuario_id'] ?? null) === $usuarioId);
+
+            if ($indice !== false) {
+                $minhaPosicao = ['posicao' => $indice + 1, 'item' => $ranking[$indice]];
+            }
+        }
+
+        $consultaPartidas = Jogo::query()
+            ->where('torneio_id', $torneio->id)
+            ->whereBetween('data_hora_inicio', [$inicio, $fim]);
+        $totalPartidas = (clone $consultaPartidas)->count();
+        $partidasFinalizadas = $consultaPartidas
+            ->whereHas('resultado', fn ($query) => $query->whereNotNull('placar_mandante')->whereNotNull('placar_visitante'))
+            ->count();
+
+        return response()->json([
+            'ranking' => $ranking,
+            'minha_posicao' => $minhaPosicao,
+            'competencia' => $competencia,
             'partidas' => [
                 'finalizadas' => $partidasFinalizadas,
                 'total' => $totalPartidas,
