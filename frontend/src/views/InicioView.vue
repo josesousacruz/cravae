@@ -3,12 +3,10 @@
     <header class="sticky top-0 z-50 border-b border-primary/15 bg-[#070909]/90 backdrop-blur-xl">
       <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:h-20 sm:px-6 lg:px-8">
         <RouterLink to="/" class="flex items-center gap-3">
-          <div class="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-sm font-black tracking-[0.2em] text-primary">
-            IW
-          </div>
+          <img src="/favicon.svg" alt="Cravaê" class="h-11 w-11 rounded-2xl border border-primary/30">
           <div>
-            <p class="text-sm font-bold tracking-[0.18em] text-white">INTER WORLD CUP</p>
-            <p class="text-[11px] uppercase tracking-[0.3em] text-primary/80">Bolão 2026</p>
+            <p class="text-sm font-bold tracking-[0.18em] text-white">CRAVAÊ</p>
+            <p class="text-[11px] uppercase tracking-[0.3em] text-primary/80">Brasileirão</p>
           </div>
         </RouterLink>
 
@@ -55,7 +53,7 @@
         <div class="max-w-xl">
           <div class="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-gold">
             <span class="h-1.5 w-1.5 rounded-full bg-gold" />
-            Copa do Mundo 2026
+            Brasileirão Série A
           </div>
           <h1 class="mt-8 text-5xl font-black leading-[0.95] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
             Compre seu cupom,
@@ -63,7 +61,7 @@
             <span class="block">e dispute o prêmio</span>
           </h1>
           <p class="mt-6 max-w-lg text-base leading-8 text-zinc-300 sm:text-xl">
-            Cada cupom é uma entrada independente no bolão da Copa 2026. Acompanhe sua pontuação, suba no ranking e veja quem leva o prêmio no fim da competição.
+            Cada cupom é uma entrada independente no Brasileirão: crava o placar e os goleadores de cada rodada, acompanhe sua pontuação e veja quem leva o prêmio no fim do campeonato.
           </p>
 
           <div class="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -164,7 +162,7 @@
             O jeito mais claro de fazer bolão
           </h2>
           <p class="mt-6 max-w-xl text-lg leading-8 text-zinc-400">
-            O Inter World Cup concentra o essencial da Copa 2026 em um único fluxo: cupons independentes, palpites completos, cálculo auditável e ranking atualizado conforme os resultados são lançados.
+            O Cravaê concentra o essencial do Brasileirão em um único fluxo: cupons independentes, palpites de placar e goleadores, cálculo auditável e ranking atualizado conforme os resultados são lançados.
           </p>
 
           <ul class="mt-8 space-y-4">
@@ -298,7 +296,7 @@
           <p class="text-xs font-semibold uppercase tracking-[0.3em] text-primary">FAQ</p>
           <h2 class="mt-4 text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">
             Perguntas frequentes sobre o
-            <span class="block text-primary">Inter World Cup</span>
+            <span class="block text-primary">Cravaê</span>
           </h2>
         </div>
 
@@ -357,11 +355,11 @@
       <div class="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] lg:px-8">
         <div>
           <div class="flex items-center gap-3">
-            <img src="/favicon.svg" alt="Inter World Cup" class="h-11 w-11 rounded-2xl shadow-[0_0_24px_rgba(16,185,129,0.18)]">
+            <img src="/favicon.svg" alt="Cravaê" class="h-11 w-11 rounded-2xl shadow-[0_0_24px_rgba(163,230,53,0.18)]">
 
             <div>
-              <p class="text-sm font-bold tracking-[0.18em] text-white">INTER WORLD CUP</p>
-              <p class="text-[11px] uppercase tracking-[0.3em] text-primary/80">Bolão 2026</p>
+              <p class="text-sm font-bold tracking-[0.18em] text-white">CRAVAÊ</p>
+              <p class="text-[11px] uppercase tracking-[0.3em] text-primary/80">Brasileirão</p>
             </div>
           </div>
           <p class="mt-6 max-w-sm text-sm leading-7 text-zinc-500">
@@ -413,7 +411,7 @@
       </div>
 
       <div class="mx-auto mt-12 max-w-7xl border-t border-white/5 px-4 pt-6 text-xs text-zinc-600 sm:px-6 lg:px-8">
-        © 2026 Inter World Cup. Todos os direitos reservados.
+        © 2026 Cravaê. Todos os direitos reservados.
       </div>
     </footer>
   </div>

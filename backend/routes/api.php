@@ -19,7 +19,7 @@ RateLimiter::for('entrar', function (Request $request) {
 
 Route::get('/status', function () {
     return response()->json([
-        'aplicacao' => 'Inter World Cup',
+        'aplicacao' => config('app.name'),
         'status' => 'ok',
     ]);
 });
@@ -30,6 +30,7 @@ Route::get('/torneios/{torneio}/ranking', [TorneioController::class, 'ranking'])
 Route::get('/torneios/{torneio}', [TorneioController::class, 'show']);
 Route::get('/ranking/cupons/{cupom}/eventos', [TorneioController::class, 'eventosCupom']);
 Route::get('/jogos/{jogo}/palpiteiros', [TorneioController::class, 'palpiteiros']);
+Route::get('/jogos/{jogo}/elencos', [TorneioController::class, 'elencosDoJogo']);
 
 Route::post('/cadastro', [AutenticacaoController::class, 'cadastrar']);
 Route::post('/entrar', [AutenticacaoController::class, 'entrar'])->middleware('throttle:entrar');

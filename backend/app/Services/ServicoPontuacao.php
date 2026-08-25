@@ -113,11 +113,13 @@ class ServicoPontuacao
         $placarExato = (int) $conteudo['placar_mandante'] === $resultado->placar_mandante
             && (int) $conteudo['placar_visitante'] === $resultado->placar_visitante;
 
+        $bonusGoleadores = $this->pontuarGoleadores($aposta, $regras, $placarExato);
+
         if ($placarExato) {
             $pontos = $this->obterPontosRegra($regras, 'placar_exato_fase_grupos', $aposta->fase_id);
             $this->registrarEvento($aposta, $regras, 'placar_exato_fase_grupos', $pontos, 'Placar exato da fase de grupos');
 
-            return [$pontos, true];
+            return [$pontos + $bonusGoleadores, true];
         }
 
         $golsMandanteCorretos = (int) $conteudo['placar_mandante'] === (int) $resultado->placar_mandante;
@@ -131,7 +133,7 @@ class ServicoPontuacao
             $pontos = $this->obterPontosRegra($regras, 'vencedor_e_acertou_gols', $aposta->fase_id);
             $this->registrarEvento($aposta, $regras, 'vencedor_e_acertou_gols', $pontos, 'Vencedor e gols de um dos times');
 
-            return [$pontos, false];
+            return [$pontos + $bonusGoleadores, false];
         }
 
         if ($acertouVencedor) {
@@ -142,17 +144,146 @@ class ServicoPontuacao
             $pontos = $this->obterPontosRegra($regras, $chave, $aposta->fase_id);
             $this->registrarEvento($aposta, $regras, $chave, $pontos, $descricao);
 
-            return [$pontos, false];
+            return [$pontos + $bonusGoleadores, false];
         }
 
         if ($golsMandanteCorretos || $golsVisitanteCorretos) {
             $pontos = $this->obterPontosRegra($regras, 'acertou_1_placar', $aposta->fase_id);
             $this->registrarEvento($aposta, $regras, 'acertou_1_placar', $pontos, 'Acertou um placar');
 
-            return [$pontos, false];
+            return [$pontos + $bonusGoleadores, false];
         }
 
-        return [0, false];
+        return [$bonusGoleadores, false];
+    }
+
+    /**
+     * Bônus dos goleadores de um palpite de placar. Compara os autores
+     * palpitados com os reais como MULTICONJUNTO por lado (a ordem dos gols
+     * não importa): cada acerto vale a regra `goleador_acertado`. Se o placar
+     * é exato e TODOS os gols reais foram atribuídos corretamente (0x0 conta:
+     * zero autores é trivialmente correto), soma a regra
+     * `placar_exato_goleadores`. Lado real sem lista de goleadores (sync ainda
+     * não trouxe a timeline) só é considerado conhecido quando o placar do
+     * lado é 0.
+     */
+    private function pontuarGoleadores(Aposta $aposta, Collection $regras, bool $placarExato): int
+    {
+        $resultado = $aposta->jogo?->resultado;
+        $conteudo = $aposta->conteudo;
+
+        $ladoConhecido = function (?array $reais, int $placarLado): ?array {
+            if (is_array($reais)) {
+                return $reais;
+            }
+
+            return $placarLado === 0 ? [] : null;
+        };
+
+        $reaisMandante = $ladoConhecido($resultado->goleadores_mandante, (int) $resultado->placar_mandante);
+        $reaisVisitante = $ladoConhecido($resultado->goleadores_visitante, (int) $resultado->placar_visitante);
+
+        $acertos = 0;
+        $ladosCompletos = 0;
+
+        foreach ([
+            [$conteudo['goleadores_mandante'] ?? [], $reaisMandante],
+            [$conteudo['goleadores_visitante'] ?? [], $reaisVisitante],
+        ] as [$palpite, $reais]) {
+            if ($reais === null) {
+                continue; // Gols reais ainda desconhecidos: sem bônus neste lado.
+            }
+
+            $contagemPalpite = $this->contagemGoleadores(is_array($palpite) ? $palpite : []);
+            $contagemReal = $this->contagemGoleadoresReais($reais);
+
+            $acertosLado = 0;
+            foreach ($contagemPalpite as $chave => $quantidade) {
+                $acertosLado += min($quantidade, $contagemReal[$chave] ?? 0);
+            }
+
+            $acertos += $acertosLado;
+
+            if ($contagemPalpite === $contagemReal) {
+                $ladosCompletos++;
+            }
+        }
+
+        $bonus = 0;
+
+        if ($acertos > 0) {
+            $pontosPorGol = $this->obterPontosRegra($regras, 'goleador_acertado', $aposta->fase_id);
+            if ($pontosPorGol > 0) {
+                $bonus += $acertos * $pontosPorGol;
+                $this->registrarEvento(
+                    $aposta,
+                    $regras,
+                    'goleador_acertado',
+                    $acertos * $pontosPorGol,
+                    "Goleadores acertados ({$acertos})",
+                );
+            }
+        }
+
+        $todosConhecidos = $reaisMandante !== null && $reaisVisitante !== null;
+
+        if ($placarExato && $todosConhecidos && $ladosCompletos === 2) {
+            $pontosCheio = $this->obterPontosRegra($regras, 'placar_exato_goleadores', $aposta->fase_id);
+            if ($pontosCheio > 0) {
+                $bonus += $pontosCheio;
+                $this->registrarEvento($aposta, $regras, 'placar_exato_goleadores', $pontosCheio, 'Placar exato com todos os goleadores');
+            }
+        }
+
+        return $bonus;
+    }
+
+    /**
+     * Multiconjunto do palpite: ['j:123' => 2, 'contra' => 1]. Nulls (autor
+     * não palpitado) ficam de fora.
+     *
+     * @param  array<int, int|string|null>  $palpite
+     * @return array<string, int>
+     */
+    private function contagemGoleadores(array $palpite): array
+    {
+        $contagem = [];
+
+        foreach ($palpite as $item) {
+            if ($item === null || $item === '') {
+                continue;
+            }
+            $chave = $item === 'contra' ? 'contra' : 'j:'.(int) $item;
+            $contagem[$chave] = ($contagem[$chave] ?? 0) + 1;
+        }
+
+        ksort($contagem);
+
+        return $contagem;
+    }
+
+    /**
+     * Multiconjunto do resultado real. Formato persistido pelo sync/admin:
+     * [{"jogador_id": int|null, "contra": bool}, ...] — um item por gol.
+     *
+     * @param  array<int, mixed>  $reais
+     * @return array<string, int>
+     */
+    private function contagemGoleadoresReais(array $reais): array
+    {
+        $contagem = [];
+
+        foreach ($reais as $gol) {
+            if (! is_array($gol)) {
+                continue;
+            }
+            $chave = ($gol['contra'] ?? false) ? 'contra' : 'j:'.(int) ($gol['jogador_id'] ?? 0);
+            $contagem[$chave] = ($contagem[$chave] ?? 0) + 1;
+        }
+
+        ksort($contagem);
+
+        return $contagem;
     }
 
     /**

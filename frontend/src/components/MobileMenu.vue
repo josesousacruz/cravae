@@ -21,7 +21,7 @@
     >
       <div
         v-if="aberto"
-        class="fixed top-0 right-0 z-50 h-full w-[280px] border-l border-border bg-bg-card flex flex-col"
+        class="area-segura-y fixed top-0 right-0 z-50 h-full w-[280px] border-l border-border bg-bg-card flex flex-col"
       >
         <!-- Header -->
         <div class="flex items-center justify-between border-b border-border px-4 py-4">

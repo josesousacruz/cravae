@@ -137,6 +137,39 @@ class TorneioController extends Controller
         ]);
     }
 
+    /**
+     * Elencos dos dois clubes de um jogo, para o seletor de goleadores.
+     * Apenas jogadores ativos (transferidos somem do seletor, mas palpites
+     * já feitos com eles continuam valendo).
+     */
+    public function elencosDoJogo(Jogo $jogo): JsonResponse
+    {
+        $jogo->loadMissing(['selecaoMandante', 'selecaoVisitante']);
+
+        $elenco = fn (?int $selecaoId) => $selecaoId
+            ? \App\Models\Jogador::query()
+                ->where('selecao_id', $selecaoId)
+                ->where('ativo', true)
+                ->orderBy('nome')
+                ->get(['id', 'selecao_id', 'nome', 'apelido', 'posicao', 'numero_camisa', 'foto_url'])
+            : collect();
+
+        return response()->json([
+            'mandante' => [
+                'selecao_id' => $jogo->selecao_mandante_id,
+                'nome' => $jogo->selecaoMandante?->nome,
+                'escudo_url' => $jogo->selecaoMandante?->escudo_url,
+                'jogadores' => $elenco($jogo->selecao_mandante_id),
+            ],
+            'visitante' => [
+                'selecao_id' => $jogo->selecao_visitante_id,
+                'nome' => $jogo->selecaoVisitante?->nome,
+                'escudo_url' => $jogo->selecaoVisitante?->escudo_url,
+                'jogadores' => $elenco($jogo->selecao_visitante_id),
+            ],
+        ]);
+    }
+
     private function carregarRelacionamentos(Torneio $torneio): Torneio
     {
         return $torneio->load([

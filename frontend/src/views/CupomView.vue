@@ -107,7 +107,7 @@
             <!-- Sub-tabs -->
             <div class="flex gap-2 overflow-x-auto">
               <button
-                v-for="sub in subTabs"
+                v-for="sub in subTabsVisiveis"
                 :key="sub.id"
                 @click="subTabAtiva = sub.id"
                 class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition cursor-pointer"
@@ -282,9 +282,9 @@
                 <div class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 sm:gap-x-8">
                   <!-- Linha 1: bandeira mandante | placar | bandeira visitante -->
                   <img
-                    :src="bandeira(jogo.selecao_mandante?.sigla ?? '')"
+                    :src="escudoOuBandeira(jogo.selecao_mandante)"
                     :alt="jogo.selecao_mandante?.nome ?? 'A definir'"
-                    class="mx-auto h-10 w-14 rounded object-cover shadow"
+                    class="mx-auto h-11 w-14 rounded object-contain drop-shadow"
                     @error="($event.target as HTMLImageElement).style.visibility='hidden'"
                   />
 
@@ -309,9 +309,9 @@
                   </div>
 
                   <img
-                    :src="bandeira(jogo.selecao_visitante?.sigla ?? '')"
+                    :src="escudoOuBandeira(jogo.selecao_visitante)"
                     :alt="jogo.selecao_visitante?.nome ?? 'A definir'"
-                    class="mx-auto h-10 w-14 rounded object-cover shadow"
+                    class="mx-auto h-11 w-14 rounded object-contain drop-shadow"
                     @error="($event.target as HTMLImageElement).style.visibility='hidden'"
                   />
 
@@ -332,8 +332,54 @@
                   <p class="break-words text-center text-xs font-medium sm:text-sm">{{ jogo.selecao_visitante?.nome ?? 'A definir' }}</p>
                 </div>
 
+                <!-- Goleadores (liga): um autor por gol do placar palpitado -->
+                <div
+                  v-if="faseDeLiga(jogo.fase.tipo) && ((goleadoresPalpite[jogo.id]?.mandante.length ?? 0) > 0 || (goleadoresPalpite[jogo.id]?.visitante.length ?? 0) > 0)"
+                  class="mt-4 rounded-xl border border-primary/15 bg-primary/5 p-3"
+                >
+                  <div class="mb-2 flex items-center gap-1.5">
+                    <svg class="h-3.5 w-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
+                    <span class="text-[11px] font-semibold uppercase tracking-wide text-primary">Quem fez os gols?</span>
+                    <span class="text-[10px] text-text-muted">(opcional, vale bônus)</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1.5">
+                      <button
+                        v-for="(gol, i) in goleadoresPalpite[jogo.id]?.mandante ?? []"
+                        :key="`gm-${jogo.id}-${i}`"
+                        type="button"
+                        :disabled="jogoFechado(jogo)"
+                        class="flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-xs transition disabled:cursor-not-allowed disabled:opacity-60"
+                        :class="gol !== null ? 'border-primary/40 bg-primary/10 text-text' : 'border-dashed border-border text-text-muted hover:border-primary/40 hover:text-text-secondary'"
+                        @click="abrirSeletorGoleador(jogo, 'mandante', i)"
+                      >
+                        <img v-if="fotoGoleador(gol)" :src="fotoGoleador(gol)!" class="h-6 w-6 shrink-0 rounded-full bg-bg-input object-cover" alt="" />
+                        <span v-else-if="gol === 'contra'" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-warning/20 text-[10px] font-bold text-warning">GC</span>
+                        <span v-else class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-bg-input text-[10px] font-bold text-text-muted">{{ gol === null ? i + 1 : iniciaisNome(rotuloGoleador(gol)) }}</span>
+                        <span class="min-w-0 flex-1 truncate">{{ gol === null ? `Autor do gol ${i + 1}` : rotuloGoleador(gol) }}</span>
+                      </button>
+                    </div>
+                    <div class="space-y-1.5">
+                      <button
+                        v-for="(gol, i) in goleadoresPalpite[jogo.id]?.visitante ?? []"
+                        :key="`gv-${jogo.id}-${i}`"
+                        type="button"
+                        :disabled="jogoFechado(jogo)"
+                        class="flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-xs transition disabled:cursor-not-allowed disabled:opacity-60"
+                        :class="gol !== null ? 'border-primary/40 bg-primary/10 text-text' : 'border-dashed border-border text-text-muted hover:border-primary/40 hover:text-text-secondary'"
+                        @click="abrirSeletorGoleador(jogo, 'visitante', i)"
+                      >
+                        <img v-if="fotoGoleador(gol)" :src="fotoGoleador(gol)!" class="h-6 w-6 shrink-0 rounded-full bg-bg-input object-cover" alt="" />
+                        <span v-else-if="gol === 'contra'" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-warning/20 text-[10px] font-bold text-warning">GC</span>
+                        <span v-else class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-bg-input text-[10px] font-bold text-text-muted">{{ gol === null ? i + 1 : iniciaisNome(rotuloGoleador(gol)) }}</span>
+                        <span class="min-w-0 flex-1 truncate">{{ gol === null ? `Autor do gol ${i + 1}` : rotuloGoleador(gol) }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Knockout: penalties on draw -->
-                <div v-if="jogo.fase.tipo !== 'grupos' && placaresEliminatorios[jogo.id]" class="mt-4">
+                <div v-if="faseEliminatoria(jogo.fase.tipo) && placaresEliminatorios[jogo.id]" class="mt-4">
                   <div v-if="precisaPenaltis(jogo.id)" class="rounded-xl border border-primary/20 bg-primary/5 p-3">
                     <span class="mb-2 block text-xs font-medium text-primary">Empate: informe os penaltis</span>
                     <div class="flex items-center justify-center gap-2">
@@ -592,6 +638,68 @@
         </div>
       </section>
 
+      <!-- Seletor de goleador: elenco real com foto, busca e gol contra -->
+      <Teleport to="body">
+        <div v-if="seletorGoleador" class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center" @click.self="seletorGoleador = null">
+          <div class="flex max-h-[80vh] w-full max-w-md flex-col rounded-t-2xl bg-bg-card p-4 shadow-2xl sm:rounded-2xl">
+            <div class="mb-3 flex items-center justify-between gap-2">
+              <h3 class="min-w-0 truncate text-sm font-bold text-text">{{ tituloSeletor }}</h3>
+              <button type="button" class="rounded-lg p-1.5 text-text-muted transition hover:bg-bg-card-hover hover:text-text" @click="seletorGoleador = null">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <input
+              v-model="buscaGoleador"
+              type="text"
+              placeholder="Buscar jogador..."
+              class="mb-3"
+              autocomplete="off"
+            />
+
+            <div class="min-h-0 flex-1 space-y-1 overflow-y-auto">
+              <div v-if="carregandoElenco" class="py-6 text-center text-xs text-text-muted animate-pulse">Carregando elenco...</div>
+              <template v-else>
+                <button
+                  v-for="j in elencoDoSeletor"
+                  :key="j.id"
+                  type="button"
+                  class="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition hover:bg-bg-input"
+                  @click="escolherGoleador(j.id)"
+                >
+                  <img v-if="j.foto_url" :src="j.foto_url" class="h-9 w-9 shrink-0 rounded-full bg-bg-input object-cover" alt="" loading="lazy" />
+                  <span v-else class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-input text-xs font-bold text-text-muted">{{ iniciaisNome(j.nome) }}</span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-medium text-text">{{ j.apelido || j.nome }}</span>
+                    <span class="block text-[11px] text-text-muted">{{ j.posicao ?? '' }}<template v-if="j.numero_camisa"> · #{{ j.numero_camisa }}</template></span>
+                  </span>
+                </button>
+                <p v-if="!elencoDoSeletor.length" class="py-4 text-center text-xs text-text-muted">
+                  Nenhum jogador encontrado.
+                </p>
+              </template>
+            </div>
+
+            <div class="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-3">
+              <button
+                type="button"
+                class="flex items-center justify-center gap-1.5 rounded-xl border border-warning/40 bg-warning/10 py-2.5 text-xs font-semibold text-warning transition hover:bg-warning/20"
+                @click="escolherGoleador('contra')"
+              >
+                Gol contra
+              </button>
+              <button
+                type="button"
+                class="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-bg-input py-2.5 text-xs font-semibold text-text-secondary transition hover:text-text"
+                @click="escolherGoleador(null)"
+              >
+                Limpar
+              </button>
+            </div>
+          </div>
+        </div>
+      </Teleport>
+
       <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg-card/95 px-2 py-2 backdrop-blur sm:hidden">
         <div class="mx-auto grid max-w-md grid-cols-4 gap-1">
           <button
@@ -618,7 +726,7 @@ import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch, t
 import { RouterLink, useRoute } from 'vue-router'
 import { requisicaoApi } from '../services/api'
 import { useToast } from '../composables/useToast'
-import type { Aposta, BracketJogoCupom, Cupom, RankingItem, ResumoBracketReal, Selecao, Torneio } from '../tipos'
+import type { Aposta, BracketJogoCupom, Cupom, ElencosJogo, GolPalpite, Jogador, RankingItem, ResumoBracketReal, Selecao, Torneio } from '../tipos'
 import tacaCopaAsset from '../assets/taca-copa-transparente.png'
 import HistoricoPalpites from '../components/HistoricoPalpites.vue'
 import ModalPixPagamento from '../components/ModalPixPagamento.vue'
@@ -674,8 +782,109 @@ const subTabs = [
   { id: 'chaveamento' as const, nome: 'Chaveamento' },
 ]
 
+// Chaveamento só existe em torneio com mata-mata (Brasileirão não tem).
+const subTabsVisiveis = computed(() =>
+  jogosEliminatoriosDoCupom.value.length ? subTabs : subTabs.filter((s) => s.id === 'jogos'),
+)
+
 const placaresGrupos = ref<Record<number, { placar_mandante: string; placar_visitante: string }>>({})
 const placaresEliminatorios = ref<Record<number, { placar_mandante: string; placar_visitante: string; penal_mandante: string; penal_visitante: string }>>({})
+
+// ─── Goleadores (Cravaê): um autor por gol do placar palpitado ───
+const goleadoresPalpite = ref<Record<number, { mandante: GolPalpite[]; visitante: GolPalpite[] }>>({})
+const elencosCache = ref<Record<number, ElencosJogo>>({})
+const carregandoElenco = ref(false)
+const seletorGoleador = ref<{ jogoId: number; lado: 'mandante' | 'visitante'; indice: number } | null>(null)
+const buscaGoleador = ref('')
+
+// Redimensiona as listas de autores para casarem com o placar palpitado:
+// aumentar o placar abre novos slots (null); reduzir corta os excedentes.
+function sincronizarGoleadoresComPlacar(jogoId: number) {
+  const p = placaresGrupos.value[jogoId]
+  const atual = goleadoresPalpite.value[jogoId] ?? { mandante: [], visitante: [] }
+
+  const redimensionar = (lista: GolPalpite[], placar: string): GolPalpite[] => {
+    const alvo = placar === '' ? 0 : Number(placar)
+    const nova = lista.slice(0, alvo)
+    while (nova.length < alvo) nova.push(null)
+    return nova
+  }
+
+  goleadoresPalpite.value[jogoId] = {
+    mandante: redimensionar(atual.mandante, p?.placar_mandante ?? ''),
+    visitante: redimensionar(atual.visitante, p?.placar_visitante ?? ''),
+  }
+}
+
+async function carregarElencos(jogoId: number) {
+  if (elencosCache.value[jogoId]) return
+  try {
+    elencosCache.value[jogoId] = await requisicaoApi<ElencosJogo>(`/jogos/${jogoId}/elencos`)
+  } catch {
+    // Sem elenco: o seletor mostra apenas "Gol contra"/"Limpar".
+  }
+}
+
+// Nome dos jogadores já palpitados: garante o elenco carregado dos jogos visíveis.
+const jogadoresPorIdGlobal = computed(() => {
+  const mapa = new Map<number, Jogador>()
+  for (const elencos of Object.values(elencosCache.value)) {
+    for (const j of [...elencos.mandante.jogadores, ...elencos.visitante.jogadores]) mapa.set(j.id, j)
+  }
+  return mapa
+})
+
+async function abrirSeletorGoleador(jogo: JogoCupom, lado: 'mandante' | 'visitante', indice: number) {
+  if (jogoFechado(jogo)) return
+  buscaGoleador.value = ''
+  seletorGoleador.value = { jogoId: jogo.id, lado, indice }
+  carregandoElenco.value = !elencosCache.value[jogo.id]
+  await carregarElencos(jogo.id)
+  carregandoElenco.value = false
+}
+
+function escolherGoleador(valor: GolPalpite) {
+  const alvo = seletorGoleador.value
+  if (!alvo) return
+  const listas = goleadoresPalpite.value[alvo.jogoId]
+  if (!listas) return
+  listas[alvo.lado][alvo.indice] = valor
+  seletorGoleador.value = null
+  agendarAutoSave()
+}
+
+const elencoDoSeletor = computed<Jogador[]>(() => {
+  const alvo = seletorGoleador.value
+  if (!alvo) return []
+  const jogadores = elencosCache.value[alvo.jogoId]?.[alvo.lado]?.jogadores ?? []
+  const termo = buscaGoleador.value.trim().toLowerCase()
+  if (!termo) return jogadores
+  return jogadores.filter((j) => `${j.nome} ${j.apelido ?? ''}`.toLowerCase().includes(termo))
+})
+
+const tituloSeletor = computed(() => {
+  const alvo = seletorGoleador.value
+  if (!alvo) return ''
+  const nomeTime = elencosCache.value[alvo.jogoId]?.[alvo.lado]?.nome
+    ?? jogosPorId.value.get(alvo.jogoId)?.[alvo.lado === 'mandante' ? 'selecao_mandante' : 'selecao_visitante']?.nome
+    ?? ''
+  return `Gol ${alvo.indice + 1} · ${nomeTime}`
+})
+
+function rotuloGoleador(gol: GolPalpite): string {
+  if (gol === null) return ''
+  if (gol === 'contra') return 'Gol contra'
+  return jogadoresPorIdGlobal.value.get(gol)?.nome ?? '…'
+}
+
+function fotoGoleador(gol: GolPalpite): string | null {
+  if (typeof gol !== 'number') return null
+  return jogadoresPorIdGlobal.value.get(gol)?.foto_url ?? null
+}
+
+function iniciaisNome(nome: string): string {
+  return nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('')
+}
 
 // Auto-save
 const salvando = ref(false)
@@ -741,10 +950,21 @@ function temResultadoReal(jogo: JogoCupom): boolean {
   return !!r && r.placar_mandante !== null && r.placar_visitante !== null
 }
 
+// Fases de "liga" (grupos da Copa e pontos corridos do Brasileirão) usam o mesmo
+// palpite de placar simples (tipo placar_jogo_grupos no backend). O que muda é o
+// fechamento: pontos corridos fecha POR JOGO, no horário de início de cada um.
+function faseDeLiga(tipo: string): boolean {
+  return tipo === 'grupos' || tipo === 'pontos_corridos'
+}
+
+function faseEliminatoria(tipo: string): boolean {
+  return !faseDeLiga(tipo)
+}
+
 // Mata-mata cujo confronto real ainda nao foi definido (algum lado "A definir").
 // Palpitar nesse caso e ignorado pelo backend, entao a UI desabilita e nao envia.
 function jogoSemConfronto(jogo: JogoCupom): boolean {
-  return jogo.fase.tipo !== 'grupos' && (!jogo.selecao_mandante || !jogo.selecao_visitante)
+  return faseEliminatoria(jogo.fase.tipo) && (!jogo.selecao_mandante || !jogo.selecao_visitante)
 }
 
 function jogoIndisponivelPorId(jogoId: number): boolean {
@@ -757,7 +977,7 @@ function jogoIndisponivelPorId(jogoId: number): boolean {
 // fantasia) cujo classificado salvo NAO esta entre os times reais deste jogo. Tratamos
 // como vazio para o usuario repalpitar o confronto real (evita pre-preencher placar errado).
 function apostaEliminatoriaObsoleta(jogo: JogoCupom, aposta?: Aposta): boolean {
-  if (jogo.fase.tipo === 'grupos' || !aposta) return false
+  if (faseDeLiga(jogo.fase.tipo) || !aposta) return false
   const m = jogo.selecao_mandante?.id
   const v = jogo.selecao_visitante?.id
   if (!m || !v) return false // sem confronto real ainda: jogoSemConfronto cuida disso
@@ -845,6 +1065,12 @@ function bandeira(sigla: string): string {
   return `https://flagcdn.com/w80/${iso}.png`
 }
 
+// Clubes (Brasileirão) têm escudo próprio vindo da API; seleções caem na bandeira.
+function escudoOuBandeira(selecao: Selecao | null | undefined): string {
+  if (!selecao) return ''
+  return selecao.escudo_url || bandeira(selecao.sigla)
+}
+
 // Chaveamento mostra o resultado REAL (read-only): placar e vencedor reais do jogo.
 function placarChaveamento(jogo: BracketJogoCupom, lado: 'mandante' | 'visitante'): string {
   const r = jogo.resultado
@@ -862,14 +1088,14 @@ function ladosJogoChaveamento(jogo: BracketJogoCupom) {
     {
       chave: 'mandante',
       selecao: jogo.selecao_mandante,
-      bandeiraUrl: bandeira(jogo.selecao_mandante?.sigla ?? ''),
+      bandeiraUrl: escudoOuBandeira(jogo.selecao_mandante),
       placar: placarChaveamento(jogo, 'mandante'),
       vencedor: Boolean(vencedorId && jogo.selecao_mandante?.id === vencedorId),
     },
     {
       chave: 'visitante',
       selecao: jogo.selecao_visitante,
-      bandeiraUrl: bandeira(jogo.selecao_visitante?.sigla ?? ''),
+      bandeiraUrl: escudoOuBandeira(jogo.selecao_visitante),
       placar: placarChaveamento(jogo, 'visitante'),
       vencedor: Boolean(vencedorId && jogo.selecao_visitante?.id === vencedorId),
     },
@@ -893,7 +1119,7 @@ function precisaPenaltis(jogoId: number): boolean {
 
 function jogoCompleto(jogo: JogoCupom): boolean {
   if (!jogoPossuiPlacares(jogo.id)) return false
-  if (jogo.fase.tipo === 'grupos') return true
+  if (faseDeLiga(jogo.fase.tipo)) return true
   if (!precisaPenaltis(jogo.id)) return true
   const penal = placaresEliminatorios.value[jogo.id]
   return Boolean(
@@ -929,7 +1155,7 @@ const primeiroJogoRodadaDiaMs = computed(() => {
 const primeiroJogoEliminatorioDiaMs = computed(() => {
   const mapa = new Map<string, number>()
   for (const jogo of torneio.value?.jogos ?? []) {
-    if (jogo.fase.tipo === 'grupos' || !jogo.data_hora_inicio) continue
+    if (faseDeLiga(jogo.fase.tipo) || !jogo.data_hora_inicio) continue
     const dia = jogo.data_hora_inicio.substring(0, 10)
     const inicio = instanteBrt(jogo.data_hora_inicio)
     if (!mapa.has(dia) || inicio < (mapa.get(dia) as number)) mapa.set(dia, inicio)
@@ -943,6 +1169,11 @@ const primeiroJogoEliminatorioDiaMs = computed(() => {
 // no inicio do primeiro jogo eliminatorio do dia.
 function jogoFechado(jogo: JogoCupom): boolean {
   if (!jogo.data_hora_inicio) return false
+
+  // Pontos corridos (Cravaê): cada jogo fecha no SEU horário de início.
+  if (jogo.fase.tipo === 'pontos_corridos') {
+    return Date.now() >= instanteBrt(jogo.data_hora_inicio)
+  }
 
   let referenciaMs: number
   if (jogo.fase.tipo === 'grupos') {
@@ -961,8 +1192,8 @@ function jogoFechado(jogo: JogoCupom): boolean {
   return Date.now() >= referenciaMs
 }
 
-const jogosGruposDoTorneio = computed(() => torneio.value?.jogos.filter((jogo) => jogo.fase.tipo === 'grupos') ?? [])
-const jogosEliminatoriosDoCupom = computed(() => bracketCupom.value.filter((jogo) => jogo.fase.tipo !== 'grupos'))
+const jogosGruposDoTorneio = computed(() => torneio.value?.jogos.filter((jogo) => faseDeLiga(jogo.fase.tipo)) ?? [])
+const jogosEliminatoriosDoCupom = computed(() => bracketCupom.value.filter((jogo) => faseEliminatoria(jogo.fase.tipo)))
 
 const jogosPorId = computed(() => {
   const mapa = new Map<number, JogoCupom>()
@@ -1045,7 +1276,7 @@ function aoMudarPodio() {
 const fasesRodadas = computed(() => {
   if (!torneio.value) return []
   const items: { fase: typeof torneio.value.fases[0]; rodada?: typeof torneio.value.jogos[0]['rodada'] }[] = []
-  const faseGrupos = torneio.value.fases.find(f => f.tipo === 'grupos')
+  const faseGrupos = torneio.value.fases.find(f => faseDeLiga(f.tipo))
   if (faseGrupos) {
     const rodadaObjs = jogosGruposDoTorneio.value.filter(j => j.rodada).map(j => j.rodada!).filter((r, i, a) => a.findIndex(x => x.id === r.id) === i).sort((a, b) => a.ordem - b.ordem)
     for (const r of rodadaObjs) {
@@ -1066,15 +1297,20 @@ const fasesRodadas = computed(() => {
 
 const faseAtual = computed(() => fasesRodadas.value[indiceFase.value]?.fase)
 const rodadaAtual = computed(() => fasesRodadas.value[indiceFase.value]?.rodada)
-const tituloFaseAtual = computed(() => rodadaAtual.value ? `${faseAtual.value?.nome ?? 'Fase de Grupos'} - ${rodadaAtual.value.ordem}` : (faseAtual.value?.nome ?? 'Fase de Grupos'))
+const tituloFaseAtual = computed(() => {
+  if (!rodadaAtual.value) return faseAtual.value?.nome ?? 'Fase de Grupos'
+  // Pontos corridos: a rodada é a unidade que o usuário reconhece ("Rodada 15").
+  if (faseAtual.value?.tipo === 'pontos_corridos') return rodadaAtual.value.nome
+  return `${faseAtual.value?.nome ?? 'Fase de Grupos'} - ${rodadaAtual.value.ordem}`
+})
 
 // Jogos da fase/rodada atual
 const jogosFaseAtual = computed(() => {
   if (!torneio.value || !faseAtual.value) return []
-  let jogos: JogoCupom[] = faseAtual.value.tipo === 'grupos'
+  let jogos: JogoCupom[] = faseDeLiga(faseAtual.value.tipo)
     ? jogosGruposDoTorneio.value.filter(j => j.fase_id === faseAtual.value!.id)
     : jogosEliminatoriosDoCupom.value.filter(j => j.fase_id === faseAtual.value!.id && !j.bloqueado)
-  if (rodadaAtual.value && faseAtual.value.tipo === 'grupos') {
+  if (rodadaAtual.value && faseDeLiga(faseAtual.value.tipo)) {
     jogos = jogos.filter(j => j.rodada_id === rodadaAtual.value!.id)
   }
   return jogos.sort((a, b) => new Date(a.data_hora_inicio).getTime() - new Date(b.data_hora_inicio).getTime())
@@ -1104,8 +1340,24 @@ const jogosDoDia = computed(() => {
   return jogosFaseAtual.value.filter(j => j.data_hora_inicio.startsWith(diaSelecionado.value))
 })
 
+// Elencos dos jogos visíveis com autor palpitado: carrega para exibir nome/foto nos chips.
+watch(jogosDoDia, (jogos) => {
+  for (const jogo of jogos) {
+    const gols = goleadoresPalpite.value[jogo.id]
+    if (!gols || elencosCache.value[jogo.id]) continue
+    if ([...gols.mandante, ...gols.visitante].some((g) => typeof g === 'number')) {
+      void carregarElencos(jogo.id)
+    }
+  }
+}, { immediate: true })
+
 // Texto de fechamento do DIA selecionado (grupos: 1h antes do primeiro jogo do dia).
 const textoFechamento = computed(() => {
+  // Pontos corridos: cada jogo fecha no próprio horário; não há prazo único do dia.
+  if (faseAtual.value?.tipo === 'pontos_corridos') {
+    return 'Cada jogo fecha no seu horário'
+  }
+
   const doDia = jogosDoDia.value.filter((jogo) => jogo.data_hora_inicio)
   if (!doDia.length) return 'Sem prazo definido'
 
@@ -1171,6 +1423,7 @@ function incrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
   } else {
     placaresGrupos.value[jogoId][campo] = String(Number(current) + 1)
   }
+  aoMudarPlacarDeLiga(jogoId)
   agendarAutoSave()
 }
 
@@ -1183,7 +1436,14 @@ function decrementarPlacar(jogoId: number, lado: 'mandante' | 'visitante') {
   } else {
     placaresGrupos.value[jogoId][campo] = String(Number(current) - 1)
   }
+  aoMudarPlacarDeLiga(jogoId)
   agendarAutoSave()
+}
+
+// Mudou o placar de um jogo de liga: os slots de autor acompanham a quantidade de gols.
+function aoMudarPlacarDeLiga(jogoId: number) {
+  const jogo = jogosPorId.value.get(jogoId)
+  if (jogo && faseDeLiga(jogo.fase.tipo)) sincronizarGoleadoresComPlacar(jogoId)
 }
 
 function incrementarPenal(jogoId: number, lado: 'mandante' | 'visitante') {
@@ -1231,8 +1491,16 @@ function montarApostasParaEnvio() {
     if (jogoSemConfronto(jogo)) continue
     const p = placaresGrupos.value[jogo.id]
     if (!p || p.placar_mandante === '' || p.placar_visitante === '') continue
-    if (jogo.fase.tipo === 'grupos') {
-      apostasArr.push({ tipo: 'placar_jogo_grupos', jogo_id: jogo.id, placar_mandante: Number(p.placar_mandante), placar_visitante: Number(p.placar_visitante) })
+    if (faseDeLiga(jogo.fase.tipo)) {
+      const gols = goleadoresPalpite.value[jogo.id]
+      apostasArr.push({
+        tipo: 'placar_jogo_grupos',
+        jogo_id: jogo.id,
+        placar_mandante: Number(p.placar_mandante),
+        placar_visitante: Number(p.placar_visitante),
+        goleadores_mandante: gols?.mandante ?? [],
+        goleadores_visitante: gols?.visitante ?? [],
+      })
     } else {
       const e = placaresEliminatorios.value[jogo.id]
       if (!e) continue
@@ -1276,7 +1544,7 @@ function montarRemocoes(): number[] {
 
   for (const jogo of jogosDoCupom) {
     if (jogoFechado(jogo)) continue
-    const tipo = jogo.fase.tipo === 'grupos' ? 'placar_jogo_grupos' : 'placar_jogo_eliminatoria'
+    const tipo = faseDeLiga(jogo.fase.tipo) ? 'placar_jogo_grupos' : 'placar_jogo_eliminatoria'
     if (!encontrarAposta(tipo, jogo.id)) continue
     const p = placaresGrupos.value[jogo.id]
     const vazio = !p || (p.placar_mandante === '' && p.placar_visitante === '')
@@ -1357,7 +1625,7 @@ function preencherFormulario(modo: 'substituir' | 'mesclar' = 'substituir') {
   const sobrescrever = modo === 'substituir'
   const jogosDoCupom: JogoCupom[] = [...jogosGruposDoTorneio.value, ...jogosEliminatoriosDoCupom.value]
   for (const jogo of jogosDoCupom) {
-    const tipo = jogo.fase.tipo === 'grupos' ? 'placar_jogo_grupos' : 'placar_jogo_eliminatoria'
+    const tipo = faseDeLiga(jogo.fase.tipo) ? 'placar_jogo_grupos' : 'placar_jogo_eliminatoria'
     const aposta = encontrarAposta(tipo, jogo.id)
     // Palpite obsoleto (confronto antigo) nao pre-preenche: o usuario palpita o confronto real.
     const fonte = apostaEliminatoriaObsoleta(jogo, aposta) ? undefined : aposta
@@ -1367,7 +1635,14 @@ function preencherFormulario(modo: 'substituir' | 'mesclar' = 'substituir') {
         placar_visitante: String(fonte?.conteudo.placar_visitante ?? ''),
       }
     }
-    if (jogo.fase.tipo !== 'grupos' && (sobrescrever || !placaresEliminatorios.value[jogo.id])) {
+    if (faseDeLiga(jogo.fase.tipo) && (sobrescrever || !goleadoresPalpite.value[jogo.id])) {
+      goleadoresPalpite.value[jogo.id] = {
+        mandante: [...(fonte?.conteudo.goleadores_mandante ?? [])],
+        visitante: [...(fonte?.conteudo.goleadores_visitante ?? [])],
+      }
+      sincronizarGoleadoresComPlacar(jogo.id)
+    }
+    if (faseEliminatoria(jogo.fase.tipo) && (sobrescrever || !placaresEliminatorios.value[jogo.id])) {
       placaresEliminatorios.value[jogo.id] = {
         placar_mandante: String(fonte?.conteudo.placar_mandante ?? ''),
         placar_visitante: String(fonte?.conteudo.placar_visitante ?? ''),
@@ -1458,7 +1733,7 @@ function definirDiaInicial(): void {
     ?? jogos[jogos.length - 1]
 
   const idx = fasesRodadas.value.findIndex((item) =>
-    item.fase.tipo === 'grupos'
+    faseDeLiga(item.fase.tipo)
       ? (item.rodada?.id ?? null) === alvo.rodada_id
       : item.fase.id === alvo.fase_id,
   )

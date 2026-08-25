@@ -110,7 +110,7 @@ const props = defineProps<{
 
 const modalAberto = ref(false)
 
-const nomeBolao = computed(() => props.cupom.torneio?.nome ?? 'Inter World Cup')
+const nomeBolao = computed(() => props.cupom.torneio?.nome ?? 'Cravaê')
 
 const ehMataMata = computed(() => {
   const t = props.cupom.torneio

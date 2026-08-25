@@ -142,6 +142,44 @@ class ServicoTheSportsDb
     }
 
     /**
+     * Detalhes de um time (lookupteam): sigla (strTeamShort), escudo etc.
+     *
+     * @return array<string,mixed>|null
+     */
+    public function lookupTime(int $idTime): ?array
+    {
+        $resposta = $this->clienteHttp()->get('/lookupteam.php', ['id' => $idTime]);
+
+        return $resposta->json('teams.0');
+    }
+
+    /**
+     * Elenco completo de um time (lookup_all_players). ATENCAO: o plano free
+     * corta em ~10 jogadores; elenco completo exige chave premium.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function elencoDoTime(int $idTime): array
+    {
+        $resposta = $this->clienteHttp()->get('/lookup_all_players.php', ['id' => $idTime]);
+
+        return $resposta->json('player') ?? [];
+    }
+
+    /**
+     * Timeline de um evento (gols com autor/minuto, cartoes, substituicoes).
+     * ATENCAO: o plano free corta em ~5 entradas; timeline completa exige premium.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function timelineDoEvento(int $idEvento): array
+    {
+        $resposta = $this->clienteHttp()->get('/lookuptimeline.php', ['id' => $idEvento]);
+
+        return $resposta->json('timeline') ?? [];
+    }
+
+    /**
      * Imagem da liga (banner/poster/badge), para usar como capa do bolão.
      */
     public function imagemDaLiga(?int $idLiga = null): ?string

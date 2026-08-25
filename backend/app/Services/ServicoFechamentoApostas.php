@@ -49,6 +49,12 @@ class ServicoFechamentoApostas
         if (in_array($tipo, ['placar_jogo_grupos', 'placar_jogo_eliminatoria'], true)) {
             $jogo = Jogo::query()->with(['fase', 'rodada'])->findOrFail($dados['jogo_id']);
 
+            if ($jogo->fase?->tipo === 'pontos_corridos') {
+                // Cravaê (Brasileirão): cada jogo fecha individualmente no seu
+                // horário de início — rodadas se espalham por vários dias.
+                return $jogo->data_hora_inicio;
+            }
+
             if ($jogo->fase?->tipo === 'grupos') {
                 // Os palpites de grupos fecham POR DIA, 1h antes do primeiro jogo do dia.
                 // data_fechamento da rodada, se definido, e um override opcional.

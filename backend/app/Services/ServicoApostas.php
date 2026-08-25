@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Aposta;
 use App\Models\Cupom;
+use App\Models\Jogador;
 use App\Models\Jogo;
 use App\Models\LogAposta;
 use App\Models\Selecao;
@@ -183,6 +184,16 @@ class ServicoApostas
                     'penal_mandante' => $penalMandante,
                     'penal_visitante' => $penalVisitante,
                     'selecao_classificada_id' => $selecaoClassificadaId,
+                    'goleadores_mandante' => $this->normalizarGoleadores(
+                        $item['goleadores_mandante'] ?? null,
+                        $placarMandante,
+                        (int) $jogo->selecao_mandante_id,
+                    ),
+                    'goleadores_visitante' => $this->normalizarGoleadores(
+                        $item['goleadores_visitante'] ?? null,
+                        $placarVisitante,
+                        (int) $jogo->selecao_visitante_id,
+                    ),
                 ],
             ];
         }
@@ -224,6 +235,51 @@ class ServicoApostas
         throw ValidationException::withMessages([
             'apostas' => "Tipo de aposta nao suportado: {$tipo}.",
         ]);
+    }
+
+    /**
+     * Normaliza o palpite de autores dos gols de um lado: um item por gol do
+     * placar palpitado, na mesma ordem da lista enviada. Cada item é o id de um
+     * jogador do clube daquele lado, a string 'contra' (gol contra) ou null
+     * (autor não palpitado — sem bônus naquele gol). Lista maior que o placar é
+     * truncada; menor é completada com null.
+     *
+     * @return array<int, int|string|null>
+     */
+    private function normalizarGoleadores(mixed $lista, int $placar, int $selecaoId): array
+    {
+        if ($placar <= 0) {
+            return [];
+        }
+
+        $lista = is_array($lista) ? array_values($lista) : [];
+        $normalizada = [];
+
+        for ($i = 0; $i < $placar; $i++) {
+            $valor = $lista[$i] ?? null;
+
+            if ($valor === null || $valor === '' || $valor === 'contra') {
+                $normalizada[] = $valor === 'contra' ? 'contra' : null;
+                continue;
+            }
+
+            $jogadorId = (int) $valor;
+            $pertence = Jogador::query()
+                ->where('id', $jogadorId)
+                ->where('selecao_id', $selecaoId)
+                ->where('ativo', true)
+                ->exists();
+
+            if (! $pertence) {
+                throw ValidationException::withMessages([
+                    'apostas' => 'Goleador invalido: o jogador nao pertence ao elenco deste time.',
+                ]);
+            }
+
+            $normalizada[] = $jogadorId;
+        }
+
+        return $normalizada;
     }
 
     private function resolverClassificadoEliminatoria(

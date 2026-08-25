@@ -31,7 +31,7 @@ class ServicoAsaas
             'billingType' => 'PIX',
             'value' => (float) $pedido->valor,
             'dueDate' => now()->addDay()->toDateString(),
-            'description' => 'Cupom Inter World Cup 2026 - Pedido '.$pedido->id,
+            'description' => 'Cupom '.config('app.name').' - Pedido '.$pedido->id,
             'externalReference' => 'pedido_checkout:'.$pedido->id,
         ]));
     }

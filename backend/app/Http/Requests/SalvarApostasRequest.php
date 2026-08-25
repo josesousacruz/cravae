@@ -40,6 +40,12 @@ class SalvarApostasRequest extends FormRequest
             'apostas.*.placar_visitante' => ['nullable', 'integer', 'min:0'],
             'apostas.*.penal_mandante' => ['nullable', 'integer', 'min:0'],
             'apostas.*.penal_visitante' => ['nullable', 'integer', 'min:0'],
+            // Autores dos gols (Cravaê): um item por gol do placar palpitado.
+            // Cada item: id do jogador, a string 'contra' (gol contra) ou null.
+            'apostas.*.goleadores_mandante' => ['nullable', 'array', 'max:20'],
+            'apostas.*.goleadores_mandante.*' => ['nullable'],
+            'apostas.*.goleadores_visitante' => ['nullable', 'array', 'max:20'],
+            'apostas.*.goleadores_visitante.*' => ['nullable'],
         ];
     }
 

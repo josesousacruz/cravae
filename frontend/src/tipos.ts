@@ -60,6 +60,9 @@ export type Jogador = {
   selecao_id: number
   nome: string
   apelido: string | null
+  posicao?: string | null
+  numero_camisa?: number | null
+  foto_url?: string | null
 }
 
 export type Selecao = {
@@ -67,7 +70,30 @@ export type Selecao = {
   grupo_id: number | null
   nome: string
   sigla: string
+  escudo_url?: string | null
   jogadores?: Jogador[]
+}
+
+// Palpite de autor de um gol: id do jogador, 'contra' (gol contra) ou null (não palpitado).
+export type GolPalpite = number | 'contra' | null
+
+export type GolReal = {
+  jogador_id: number | null
+  contra: boolean
+  nome?: string | null
+  minuto?: number | null
+}
+
+export type ElencoLadoJogo = {
+  selecao_id: number | null
+  nome: string | null
+  escudo_url: string | null
+  jogadores: Jogador[]
+}
+
+export type ElencosJogo = {
+  mandante: ElencoLadoJogo
+  visitante: ElencoLadoJogo
 }
 
 export type Grupo = {
@@ -98,6 +124,8 @@ export type ResultadoJogo = {
   jogo_id: number
   placar_mandante: number | null
   placar_visitante: number | null
+  goleadores_mandante?: GolReal[] | null
+  goleadores_visitante?: GolReal[] | null
   selecao_classificada_id: number | null
 }
 
@@ -205,7 +233,10 @@ export type Aposta = {
   jogo_id: number | null
   selecao_id: number | null
   jogador_id: number | null
-  conteudo: Record<string, number | null>
+  conteudo: Record<string, number | null> & {
+    goleadores_mandante?: GolPalpite[]
+    goleadores_visitante?: GolPalpite[]
+  }
 }
 
 export type EventoPontuacao = {

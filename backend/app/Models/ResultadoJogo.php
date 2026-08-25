@@ -13,6 +13,8 @@ class ResultadoJogo extends Model
         'jogo_id',
         'placar_mandante',
         'placar_visitante',
+        'goleadores_mandante',
+        'goleadores_visitante',
         'selecao_classificada_id',
         'encerrado_at',
     ];
@@ -20,6 +22,8 @@ class ResultadoJogo extends Model
     protected function casts(): array
     {
         return [
+            'goleadores_mandante' => 'array',
+            'goleadores_visitante' => 'array',
             'encerrado_at' => 'datetime',
         ];
     }

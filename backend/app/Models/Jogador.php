@@ -11,10 +11,12 @@ class Jogador extends Model
 
     protected $fillable = [
         'selecao_id',
+        'id_externo',
         'nome',
         'apelido',
         'posicao',
         'numero_camisa',
+        'foto_url',
         'ativo',
     ];
 

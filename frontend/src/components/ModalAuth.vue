@@ -242,7 +242,7 @@ async function submeterCadastro() {
       formCadastro.senha,
       formCadastro.confirmarSenha,
     )
-    mostrar('sucesso', 'Conta criada! Bem-vindo ao Inter World Cup.')
+    mostrar('sucesso', 'Conta criada! Bem-vindo ao Cravaê.')
     emit('fechar')
     router.push({ name: 'boloes' })
   } catch {

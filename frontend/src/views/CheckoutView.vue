@@ -14,7 +14,7 @@
       <section class="rounded-2xl border border-border bg-bg-card p-6 sm:p-8">
         <p class="text-xs font-semibold uppercase tracking-wider text-primary">Pagamento Pix</p>
         <h1 class="mt-3 text-2xl font-bold text-text">Comprar cupom</h1>
-        <p class="mt-2 text-sm text-text-secondary">Inter World Cup - Copa 2026</p>
+        <p class="mt-2 text-sm text-text-secondary">Cravaê - Brasileirão</p>
 
         <p class="my-6 text-4xl font-bold text-primary">{{ valorCupomFormatado }}</p>
 

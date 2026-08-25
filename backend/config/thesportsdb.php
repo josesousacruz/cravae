@@ -27,6 +27,19 @@ return [
     'temporada_copa' => '2026',
 
     /*
+    |--------------------------------------------------------------------------
+    | Brasileirão Série A (Cravaê)
+    |--------------------------------------------------------------------------
+    |
+    | Liga 4351 na TheSportsDB. Temporada corrente do campeonato de pontos
+    | corridos (38 rodadas). Usada pelo import e pelo sync de rodadas.
+    |
+    */
+    'id_liga_brasileirao' => (int) env('THESPORTSDB_LIGA_BRASILEIRAO', 4351),
+    'temporada_brasileirao' => env('THESPORTSDB_TEMPORADA_BRASILEIRAO', '2026'),
+    'total_rodadas_brasileirao' => 38,
+
+    /*
     | Rodadas (intRound) consultadas na API via eventsround — único endpoint sem
     | teto no plano free (eventsseason corta em 15, eventsday em 3/dia).
     | 1, 2, 3 = as três rodadas da fase de grupos (24 jogos cada).

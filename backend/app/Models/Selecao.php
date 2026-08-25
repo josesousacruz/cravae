@@ -17,6 +17,7 @@ class Selecao extends Model
         'sigla',
         'id_externo',
         'slug',
+        'escudo_url',
         'ativo',
     ];
 

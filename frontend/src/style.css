@@ -1,18 +1,18 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-bg: #0a0a0a;
-  --color-bg-card: #141414;
-  --color-bg-card-hover: #1a1a1a;
-  --color-bg-input: #1e1e1e;
-  --color-border: #262626;
-  --color-border-light: #333333;
-  --color-text: #f5f5f5;
-  --color-text-secondary: #a3a3a3;
-  --color-text-muted: #737373;
-  --color-primary: #10b981;
-  --color-primary-hover: #059669;
-  --color-primary-dim: #064e3b;
+  --color-bg: #0b120e;
+  --color-bg-card: #121b15;
+  --color-bg-card-hover: #17231b;
+  --color-bg-input: #1a2820;
+  --color-border: #223227;
+  --color-border-light: #2e4436;
+  --color-text: #f2f8ee;
+  --color-text-secondary: #a4b3a4;
+  --color-text-muted: #71816f;
+  --color-primary: #a3e635;
+  --color-primary-hover: #bef264;
+  --color-primary-dim: #3f6212;
   --color-danger: #ef4444;
   --color-warning: #f59e0b;
   --color-gold: #fbbf24;
@@ -23,6 +23,25 @@
 body {
   @apply bg-bg text-text antialiased;
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Respeita as áreas seguras do dispositivo (notch / barra inferior do iPhone)
+   no modo standalone do PWA e em paisagem. Fora do iOS os valores são 0. */
+@supports (padding-top: env(safe-area-inset-top)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Cabeçalho fixo cobre a área do notch em vez de ficar sob ela. */
+  header {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .area-segura-y {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 input,
