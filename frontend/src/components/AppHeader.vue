@@ -3,7 +3,7 @@
     <div class="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
       <!-- Logo -->
       <RouterLink to="/" class="flex items-center gap-2.5">
-        <img src="/favicon.svg" alt="Cravaê" class="h-9 w-9" />
+        <img src="/marca/cravae-simbolo-branco.svg" alt="Cravaê" class="h-9 w-9" />
         <div>
           <p class="text-xs font-semibold uppercase tracking-widest text-white">Cravaê</p>
           <p class="text-[11px] text-emerald-200/80">Brasileirão</p>

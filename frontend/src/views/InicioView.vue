@@ -3,7 +3,7 @@
     <header class="sticky top-0 z-50 bg-gradient-to-r from-topo to-topo-claro shadow-md">
       <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:h-18 sm:px-6 lg:px-8">
         <RouterLink to="/" class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-lime-400 text-lg font-black text-topo">C</div>
+          <img src="/marca/cravae-simbolo-branco.svg" alt="Cravaê" class="h-10 w-10">
           <div>
             <p class="text-sm font-black tracking-[0.14em] text-white">CRAVAÊ</p>
             <p class="text-[11px] uppercase tracking-[0.3em] text-emerald-200/80">Bolão Brasileirão</p>
@@ -476,7 +476,7 @@
       <div class="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] lg:px-8">
         <div>
           <div class="flex items-center gap-3">
-            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-lime-400 text-lg font-black text-topo">C</div>
+            <img src="/marca/cravae-simbolo.svg" alt="Cravaê" class="h-11 w-11">
             <div>
               <p class="text-sm font-black tracking-[0.14em] text-text">CRAVAÊ</p>
               <p class="text-[11px] uppercase tracking-[0.3em] text-primary">Bolão Brasileirão</p>
@@ -590,7 +590,7 @@ function rolarFaixa(direcao: number) {
 const estatisticasHero = [
   { label: 'Clubes', value: 20, caption: 'na Série A' },
   { label: 'Rodadas', value: 38, caption: 'de disputa' },
-  { label: 'Cupom', value: 'R$ 10', caption: 'por campeonato' },
+  { label: 'Assinatura', value: 'R$ 4,95', caption: 'por mês · fundador' },
 ]
 
 const passos = [
@@ -651,8 +651,8 @@ const niveisPontuacao = [
 
 const faq = [
   {
-    pergunta: 'Como funciona a compra de cupom?',
-    resposta: 'Cada cupom é uma entrada independente para o campeonato, paga via Pix. Você pode comprar mais de um e usar estratégias diferentes em cada conjunto de palpites.',
+    pergunta: 'Quanto custa participar?',
+    resposta: 'Jogar é grátis: você palpita, pontua e aparece no ranking. Para concorrer aos prêmios de cada mês, assine por R$ 9,90/mês — os primeiros assinantes garantem o preço de fundador, R$ 4,95/mês vitalício.',
   },
   {
     pergunta: 'Até quando posso palpitar?',
