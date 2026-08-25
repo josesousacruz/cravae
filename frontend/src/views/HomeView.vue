@@ -12,7 +12,7 @@
         to="/assinatura"
         class="flex items-center justify-between gap-3 rounded-xl border border-gold/50 bg-ambar/15 px-4 py-2.5 text-sm"
       >
-        <span class="min-w-0 truncate">
+        <span class="min-w-0">
           <span class="mr-2 rounded bg-ambar px-1.5 py-0.5 text-[10px] font-black uppercase text-[#17301f]">Fundador</span>
           <span class="font-semibold text-text">Só R$ 4,95/mês, vitalício<span v-if="vagasFundador"> — restam {{ vagasFundador }} vagas</span></span>
         </span>
@@ -23,13 +23,13 @@
         to="/assinatura"
         class="flex items-center justify-between gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-2.5 text-sm"
       >
-        <span class="min-w-0 truncate font-semibold text-text">Confirme o pagamento de {{ nomeMes }} para concorrer ao prêmio</span>
+        <span class="min-w-0 font-semibold text-text">Confirme o pagamento de {{ nomeMes }} para concorrer ao prêmio</span>
         <span class="shrink-0 font-black text-warning">Regularizar →</span>
       </RouterLink>
 
       <div class="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
         <!-- Coluna do perfil (sidebar no desktop, formato Cartola) -->
-        <aside class="space-y-4">
+        <aside class="hidden space-y-4 lg:block">
           <section class="rounded-2xl border border-border bg-bg-card p-5 text-center">
             <div class="relative mx-auto h-24 w-24">
               <span class="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-primary-dim bg-primary text-3xl font-black text-white">
@@ -85,23 +85,50 @@
         </aside>
 
         <!-- Coluna principal -->
-        <div class="space-y-4">
+        <div class="min-w-0 space-y-4">
+          <!-- Cartão pessoal compacto (só mobile) -->
+          <section class="flex items-center gap-3 rounded-2xl border border-border bg-bg-card px-4 py-3 lg:hidden">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-base font-black text-white">
+              <img v-if="autenticacao.fotoUrl" :src="autenticacao.fotoUrl" :alt="autenticacao.nome" class="h-full w-full object-cover">
+              <template v-else>{{ autenticacao.nome.slice(0, 1).toUpperCase() }}</template>
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-black text-text">{{ autenticacao.nome }}</p>
+              <p v-if="elegivelNoMes" class="text-[11px] font-bold text-gold">★ Assinante</p>
+              <p v-else class="text-[11px] text-text-muted">Plano gratuito</p>
+            </div>
+            <div class="flex shrink-0 items-center gap-3 text-center">
+              <div>
+                <p class="text-sm font-black text-primary tabular-nums">{{ pontosNoMes }}</p>
+                <p class="text-[9px] font-bold uppercase text-text-muted">{{ nomeMes.slice(0, 3) }}</p>
+              </div>
+              <div>
+                <p class="text-sm font-black text-text tabular-nums">{{ posicaoNoMes ? `${posicaoNoMes}º` : '—' }}</p>
+                <p class="text-[9px] font-bold uppercase text-text-muted">Posição</p>
+              </div>
+              <div>
+                <p class="text-sm font-black text-text tabular-nums">{{ totalTemporada }}</p>
+                <p class="text-[9px] font-bold uppercase text-text-muted">Total</p>
+              </div>
+            </div>
+          </section>
+
           <!-- CTA de palpites (formato do card de escalação do Cartola) -->
           <section class="rounded-2xl border border-border bg-bg-card px-6 py-7 text-center">
             <p class="text-sm font-medium text-text-secondary">{{ fraseStatus }}</p>
 
-            <div class="mt-5 flex items-center justify-center">
+            <div class="mt-5 flex min-w-0 items-center justify-center overflow-hidden">
               <span
                 v-for="(jogo, i) in jogosRodada.slice(0, 10)"
                 :key="jogo.id"
-                class="relative inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-bg-card bg-bg shadow-sm"
-                :class="i > 0 ? '-ml-2.5' : ''"
+                class="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-bg-card bg-bg shadow-sm sm:h-12 sm:w-12"
+                :class="i > 0 ? '-ml-3 sm:-ml-2.5' : ''"
                 :style="{ zIndex: 10 - i }"
               >
                 <img
                   :src="escudoDe(jogo)"
                   :alt="jogo.selecao_mandante?.nome ?? ''"
-                  class="h-8 w-8 object-contain transition"
+                  class="h-6 w-6 object-contain transition sm:h-8 sm:w-8"
                   :class="palpitou(jogo.id) ? '' : 'opacity-35 grayscale'"
                 >
                 <span v-if="palpitou(jogo.id)" class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-black text-white">✓</span>
@@ -117,6 +144,23 @@
               class="mt-5 block w-full rounded-xl bg-ambar py-4 text-sm font-black uppercase tracking-[0.08em] text-[#17301f] shadow-lg transition hover:brightness-105"
             >
               {{ palpitesFeitos >= totalJogosRodada && totalJogosRodada > 0 ? 'Revisar meus palpites' : 'Fazer meus palpites' }}
+            </RouterLink>
+          </section>
+
+          <!-- Acesso rápido compacto (só mobile) -->
+          <section class="grid grid-cols-4 gap-2 lg:hidden">
+            <RouterLink
+              v-for="atalho in atalhos"
+              :key="`m-${atalho.rota}`"
+              :to="atalho.rota"
+              class="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-bg-card px-1 py-3 text-center transition hover:border-primary"
+            >
+              <span class="flex h-8 w-8 items-center justify-center rounded-full bg-ambar/15">
+                <svg class="h-4.5 w-4.5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" :d="atalho.icone" />
+                </svg>
+              </span>
+              <span class="text-[9px] font-black uppercase leading-tight text-text-secondary">{{ atalho.nome }}</span>
             </RouterLink>
           </section>
 
