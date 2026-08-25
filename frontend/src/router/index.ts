@@ -42,6 +42,11 @@ export const roteador = createRouter({
       meta: { requerAutenticacao: true },
     },
     {
+      path: '/como-jogar',
+      name: 'como-jogar',
+      component: () => import('../views/ComoJogarView.vue'),
+    },
+    {
       path: '/perfil',
       name: 'perfil',
       component: PerfilView,
