@@ -1,6 +1,8 @@
-# InterWorldCup — Bolão da Copa 2026
+# Cravaê — Fantasy do Brasileirão
 
-Plataforma de **bolão da Copa do Mundo 2026** com pagamentos **PIX**, pontuação dinâmica e sincronização automática de resultados. Usuários compram cupons, dão palpites na fase de grupos e no mata-mata, e disputam rankings em tempo real.
+Fantasy de palpites do **Campeonato Brasileiro Série A**. O usuário compra um cupom por campeonato via **PIX** e, rodada a rodada, crava o placar de cada jogo e o autor de cada gol, escolhido do elenco real. Resultados e gols são sincronizados automaticamente, e a pontuação é configurável em banco.
+
+O Cravaê nasceu do **bolão da Copa do Mundo 2026** (fase de grupos e mata-mata), que continua como base do projeto: checkout, cupons, ranking e pontuação vêm dele.
 
 ![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?logo=php&logoColor=white)
 ![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)
